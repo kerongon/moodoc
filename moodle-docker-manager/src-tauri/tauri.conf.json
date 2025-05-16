@@ -1,0 +1,35 @@
+{
+  "tauri": {
+    "bundle": {
+      "identifier": "com.example.moodle-docker-manager",
+      "icon": [
+        "icons/icon.png"
+      ],
+      "name": "Moodle Docker Manager",
+      "version": "0.1.0"
+    },
+    "build": {
+      "beforeBuildCommand": "",
+      "beforeRunCommand": "",
+      "distDir": "../dist",
+      "devPath": "http://localhost:3000"
+    },
+    "package": {
+      "productName": "Moodle Docker Manager",
+      "version": "0.1.0"
+    },
+    "tauri": {
+      "allowlist": {
+        "all": true
+      }
+    },
+    "window": {
+      "title": "Moodle Docker Manager",
+      "width": 800,
+      "height": 600,
+      "resizable": true,
+      "fullscreen": false,
+      "decorations": true
+    }
+  }
+}
