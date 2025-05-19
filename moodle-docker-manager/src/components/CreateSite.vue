@@ -32,11 +32,11 @@
     </div>
     
     <!-- Form Content -->
-    <form @submit.prevent="createSite" class="space-y-6">
+    <form @submit.prevent="createSite" class="space-y-4">
       <!-- Standard Tab Content -->
       <div v-if="activeTab === 'standard'">
         <!-- Site Name -->
-        <div class="mb-3">
+        <div class="mb-2">
           <label for="siteName" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center">
             <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 10-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm-1 4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" clip-rule="evenodd" />
@@ -100,9 +100,9 @@
         </div>
         
         <!-- Server Configuration Group -->
-        <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-          <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center">
-            <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <div class="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+          <h3 class="text-xs font-bold text-gray-700 dark:text-gray-200 mb-2 flex items-center">
+            <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
             </svg>
             Server Configuration
@@ -136,7 +136,7 @@
                   type="number" 
                   v-model="dbPort" 
                   :placeholder="`${currentDbPortRange}`" 
-                  :class="['macos-input h-9 py-1.5 text-sm pr-8', 
+                  :class="['macos-input h-9 py-1.5 text-sm pl-9 pr-6', 
                     { 
                       'border-red-500': dbPort && !isDbPortInRange,
                       'border-green-500': dbPort && isDbPortInRange && isPortAvailable(dbPort)
@@ -146,11 +146,12 @@
                 <button 
                   type="button" 
                   @click="generateDbPort" 
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
                   title="Generate random port"
                 >
+                  <!-- Dice icon for random generation -->
                   <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+                    <path d="M3 3a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V3zm2 1a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V5a1 1 0 00-1-1H5zm9 6a1 1 0 11-2 0 1 1 0 012 0zm-3 0a1 1 0 11-2 0 1 1 0 012 0zm-3 0a1 1 0 11-2 0 1 1 0 012 0z" />
                   </svg>
                 </button>
               </div>
@@ -192,7 +193,7 @@
                   type="number" 
                   v-model="webPort" 
                   :placeholder="`${currentWebPortRange}`" 
-                  :class="['macos-input h-9 py-1.5 text-sm pr-8', 
+                  :class="['macos-input h-9 py-1.5 text-sm pl-9 pr-6', 
                     { 
                       'border-red-500': webPort && !isWebPortInRange,
                       'border-green-500': webPort && isWebPortInRange && isPortAvailable(webPort)
@@ -202,11 +203,12 @@
                 <button 
                   type="button" 
                   @click="generateWebPort" 
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
                   title="Generate random port"
                 >
+                  <!-- Dice icon for random generation -->
                   <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+                    <path d="M3 3a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V3zm2 1a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V5a1 1 0 00-1-1H5zm9 6a1 1 0 11-2 0 1 1 0 012 0zm-3 0a1 1 0 11-2 0 1 1 0 012 0zm-3 0a1 1 0 11-2 0 1 1 0 012 0z" />
                   </svg>
                 </button>
               </div>
@@ -227,9 +229,9 @@
         </div>
         
         <!-- Site Directory -->
-        <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-          <label class="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2 flex items-center">
-            <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <div class="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+          <label class="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1 flex items-center">
+            <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
             </svg>
             Site Directory
@@ -239,13 +241,13 @@
               type="text" 
               v-model="siteDirectory" 
               :placeholder="useDefaultDirectory ? 'Using default directory' : ''" 
-              class="macos-input rounded-r-none" 
+              class="macos-input h-9 py-1.5 rounded-r-none" 
               readonly 
             />
             <button 
               type="button" 
               @click="selectCustomDirectory" 
-              class="px-4 border border-l-0 border-gray-300 bg-gray-50 rounded-r-md text-gray-700 hover:bg-gray-100"
+              class="px-3 border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 rounded-r-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500"
             >
               Browse...
             </button>
@@ -274,14 +276,14 @@
         </div>
         
         <!-- Redis Toggle -->
-        <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-6 flex items-center justify-between">
+        <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-3 flex items-center justify-between">
           <div class="flex items-start">
-            <svg class="w-5 h-5 text-gray-700 dark:text-gray-200 mt-0.5 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <svg class="w-4 h-4 text-gray-700 dark:text-gray-200 mt-0.5 mr-1.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path d="M13 7H7v6h6V7z" />
               <path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd" />
             </svg>
             <div>
-              <label for="useRedis" class="text-sm font-bold text-gray-700 dark:text-gray-200">Enable Redis for caching and sessions</label>
+              <label for="useRedis" class="text-xs font-bold text-gray-700 dark:text-gray-200">Enable Redis for caching and sessions</label>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Improves performance for larger Moodle sites</p>
             </div>
           </div>
@@ -642,9 +644,12 @@
       </div>
       
       <!-- Docker Status -->
-      <div class="flex items-center justify-between text-sm px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded-md mb-4">
+      <div class="flex items-center justify-between text-xs px-3 py-1.5 bg-gray-50 dark:bg-gray-700 rounded-md mb-3">
         <div class="text-gray-700 dark:text-gray-200">Docker is installed and running</div>
-        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+        <div class="flex items-center">
+          <div class="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
+          <span class="text-green-600 dark:text-green-400 text-xs font-medium">Active</span>
+        </div>
       </div>
       
       <!-- Form Errors -->
@@ -656,23 +661,23 @@
       </div>
       
       <!-- Action Buttons -->
-      <div class="flex justify-end space-x-4">
+      <div class="flex justify-end space-x-3 mt-4">
         <button 
           type="button" 
-          class="macos-button macos-button-secondary" 
+          class="px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors" 
           @click="$router.push('/')"
         >
           Cancel
         </button>
         <button 
           type="submit" 
-          class="macos-button macos-button-primary relative"
+          class="px-3 py-1.5 text-xs font-medium bg-blue-600 border border-blue-700 rounded-md text-white hover:bg-blue-700 transition-colors relative"
           :class="{ 'opacity-50 cursor-not-allowed': !formIsValid || formErrors.length > 0 || createSiteInProgress }"
           :disabled="!formIsValid || formErrors.length > 0 || createSiteInProgress"
         >
           <span v-if="!createSiteInProgress">Create Site</span>
           <span v-else class="flex items-center">
-            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin -ml-0.5 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
