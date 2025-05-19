@@ -5,7 +5,7 @@
 
 mod docker;
 
-use tauri::{generate_handler, State};
+use tauri::generate_handler;
 use std::collections::HashMap;
 use std::sync::Mutex;
 

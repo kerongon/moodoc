@@ -3,10 +3,10 @@
 use std::process::Command;
 use std::fs::{self, File, create_dir_all};
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
-use tauri::{command, AppHandle, Manager, State};
+use tauri::{command, AppHandle, Manager};
 use std::sync::Mutex;
 
 // Define data structures for site configuration
@@ -145,10 +145,11 @@ pub fn remove_docker_container(container_name: &str) -> Result<String, String> {
     }
 }
 
-pub fn get_docker_logs(container_name: &str) -> Result<String, String> {
+#[command]
+pub fn get_docker_logs(container_name: String) -> Result<String, String> {
     let output = Command::new("docker")
         .arg("logs")
-        .arg(container_name)
+        .arg(&container_name)
         .output();
 
     match output {
@@ -166,8 +167,8 @@ fn generate_docker_compose(
     db_port: Option<u16>,
     web_port: Option<u16>
 ) -> String {
-    let db_port_str = db_port.map_or_else(|| "".to_string(), |p| p.to_string());
-    let web_port_str = web_port.map_or_else(|| "".to_string(), |p| p.to_string());
+    let _db_port_str = db_port.map_or_else(|| "".to_string(), |p| p.to_string());
+    let _web_port_str = web_port.map_or_else(|| "".to_string(), |p| p.to_string());
     
     let db_image = match db_type.to_lowercase().as_str() {
         "mysql" => "mysql:5.7",
@@ -320,11 +321,10 @@ pub fn start_site(app_handle: AppHandle, name: String) -> Result<String, String>
     // Update site status
     let mut updated_site = site;
     updated_site.status = "running".to_string();
-    sites.insert(name.clone(), updated_site);
+    sites.insert(name.clone(), updated_site.clone());
     
     // Save the updated configuration
     drop(sites); // Release the lock before calling save_site_config
-    let updated_site = sites.get(&name).unwrap().clone();
     save_site_config(app_handle, updated_site)?;
     
     Ok(format!("Site '{}' started successfully", name))
@@ -357,11 +357,10 @@ pub fn stop_site(app_handle: AppHandle, name: String) -> Result<String, String> 
     // Update site status
     let mut updated_site = site;
     updated_site.status = "stopped".to_string();
-    sites.insert(name.clone(), updated_site);
+    sites.insert(name.clone(), updated_site.clone());
     
     // Save the updated configuration
     drop(sites); // Release the lock before calling save_site_config
-    let updated_site = sites.get(&name).unwrap().clone();
     save_site_config(app_handle, updated_site)?;
     
     Ok(format!("Site '{}' stopped successfully", name))
