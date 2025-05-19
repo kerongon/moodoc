@@ -53,19 +53,37 @@ pub fn create_site(
     db_type: String, 
     moodle_branch: String, 
     db_port: Option<u16>, 
-    web_port: Option<u16>
+    web_port: Option<u16>,
+    directory: Option<String>
 ) -> Result<String, String> {
-    // Create site directory structure
-    let app_dir = app_handle.path_resolver().app_data_dir()
-        .ok_or_else(|| "Failed to get app data directory".to_string())?;
+    // Determine the site directory path based on user preferences
+    let site_dir = if let Some(dir) = directory {
+        // Use custom directory if provided
+        let path = PathBuf::from(dir);
+        let site_path = path.join(&name);
+        
+        // Create the directory if it doesn't exist
+        if !path.exists() {
+            create_dir_all(&path)
+                .map_err(|e| format!("Failed to create directory '{}': {}", path.display(), e))?;
+        }
+        
+        site_path
+    } else {
+        // Use default directory in app data if no custom directory provided
+        let app_dir = app_handle.path_resolver().app_data_dir()
+            .ok_or_else(|| "Failed to get app data directory".to_string())?;
+        
+        let sites_dir = app_dir.join("sites");
+        if !sites_dir.exists() {
+            create_dir_all(&sites_dir)
+                .map_err(|e| format!("Failed to create sites directory: {}", e))?;
+        }
+        
+        sites_dir.join(&name)
+    };
     
-    let sites_dir = app_dir.join("sites");
-    if !sites_dir.exists() {
-        create_dir_all(&sites_dir)
-            .map_err(|e| format!("Failed to create sites directory: {}", e))?;
-    }
-    
-    let site_dir = sites_dir.join(&name);
+    // Create the site directory if it doesn't exist
     if !site_dir.exists() {
         create_dir_all(&site_dir)
             .map_err(|e| format!("Failed to create site directory: {}", e))?;
@@ -117,6 +135,38 @@ pub fn create_site(
     save_site_config(app_handle, site)?;
     
     Ok(format!("Successfully created site: {}", name))
+}
+
+// Load site configurations at application startup
+pub fn load_site_configs(app: &tauri::App) -> Result<(), String> {
+    let app_handle = app.handle();
+    let app_dir = app_handle.path_resolver().app_data_dir()
+        .ok_or_else(|| "Failed to get app data directory".to_string())?;
+    
+    let config_path = app_dir.join("sites_config.json");
+    
+    // Create sites state if it doesn't exist
+    let state = app.state::<SiteState>();
+    let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Skip if config file doesn't exist
+    if !config_path.exists() {
+        return Ok(());
+    }
+    
+    // Read and parse config file
+    let config_data = fs::read_to_string(&config_path)
+        .map_err(|e| format!("Failed to read sites config: {}", e))?;
+    
+    let sites_vec: Vec<Site> = serde_json::from_str(&config_data)
+        .map_err(|e| format!("Failed to parse sites config: {}", e))?;
+    
+    // Populate the sites state
+    for site in sites_vec {
+        sites.insert(site.name.clone(), site);
+    }
+    
+    Ok(())
 }
 
 pub fn stop_docker_container(container_name: &str) -> Result<String, String> {

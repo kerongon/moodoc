@@ -8,7 +8,7 @@
       <router-link to="/create" class="create-button">Create New Site</router-link>
     </div>
     <div class="site-list-container">
-      <SiteList />
+      <SiteList ref="siteList" />
     </div>
   </div>
 </template>

@@ -17,6 +17,7 @@
           <th>Site Name</th>
           <th>PHP Version</th>
           <th>Database Type</th>
+          <th>Directory</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
@@ -26,6 +27,9 @@
           <td>{{ site.name }}</td>
           <td>{{ site.php_version }}</td>
           <td>{{ site.db_type }}</td>
+          <td class="directory-path" :title="site.path">
+            {{ formatPath(site.path) }}
+          </td>
           <td>
             <span :class="{'status-running': site.status === 'running', 'status-stopped': site.status !== 'running'}">
               {{ site.status }}
@@ -50,7 +54,7 @@ import { useRouter } from 'vue-router';
 
 export default {
   name: 'SiteList',
-  setup() {
+  setup(props, { expose }) {
     const sites = ref([]);
     const loading = ref(true);
     const error = ref(null);
@@ -120,9 +124,26 @@ export default {
       router.push({ name: 'SiteLogs', params: { siteName: name } });
     };
 
+    // Format long paths for display
+    const formatPath = (path) => {
+      if (!path) return 'N/A';
+      
+      // If path is too long, truncate it
+      const maxLength = 30;
+      if (path.length <= maxLength) return path;
+      
+      // Extract directory name and show ellipsis
+      const parts = path.split('/');
+      const filename = parts.pop();
+      return `.../${parts.slice(-2).join('/')}/${filename}`;
+    };
+
     onMounted(() => {
       loadSites();
     });
+    
+    // Expose the loadSites method to parent components
+    expose({ loadSites });
 
     return {
       sites,
@@ -131,7 +152,8 @@ export default {
       startSite,
       stopSite,
       removeSite,
-      viewLogs
+      viewLogs,
+      formatPath
     };
   }
 };
@@ -235,5 +257,16 @@ th {
   color: white;
   text-decoration: none;
   border-radius: 4px;
+}
+
+.directory-path {
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  white-space: nowrap;
+  cursor: default;
 }
 </style>

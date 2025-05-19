@@ -2,24 +2,39 @@
   <div class="home-view">
     <h1>Moodle Docker Manager</h1>
     <DockerStatus />
-    <CreateSite />
-    <Dashboard />
+    <CreateSite @site-created="refreshSiteList" />
+    <SiteList ref="siteList" />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, ref } from 'vue';
 import DockerStatus from '../components/DockerStatus.vue';
 import CreateSite from '../components/CreateSite.vue';
-import Dashboard from '../components/Dashboard.vue';
+import SiteList from '../components/SiteList.vue';
 
 export default defineComponent({
   name: 'HomeView',
   components: {
     DockerStatus,
     CreateSite,
-    Dashboard,
+    SiteList,
   },
+  setup() {
+    const siteList = ref(null);
+    
+    const refreshSiteList = () => {
+      // Refresh the site list after creating a new site
+      if (siteList.value) {
+        siteList.value.loadSites();
+      }
+    };
+    
+    return {
+      siteList,
+      refreshSiteList
+    };
+  }
 });
 </script>
 
