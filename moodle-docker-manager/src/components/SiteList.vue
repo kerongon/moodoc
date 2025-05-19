@@ -1,11 +1,5 @@
 <template>
   <div class="macos-window max-w-2xl mx-auto my-8 p-6">
-    <!-- Window Controls -->
-    <div class="macos-traffic-lights">
-      <div class="traffic-light traffic-light-red"></div>
-      <div class="traffic-light traffic-light-yellow"></div>
-      <div class="traffic-light traffic-light-green"></div>
-    </div>
     <!-- Header -->
     <div class="flex items-center justify-center mb-6">
       <div class="bg-blue-600 rounded-lg p-2 mr-4">
