@@ -65,6 +65,18 @@
           </small>
         </div>
       </div>
+      <div>
+        <label for="useRedis">Use Redis:</label>
+        <div class="toggle-switch">
+          <input
+            type="checkbox"
+            id="useRedis"
+            v-model="useRedis"
+          />
+          <label for="useRedis" class="toggle-label"></label>
+        </div>
+        <small>Enable Redis for caching and sessions</small>
+      </div>
       <button type="submit">Create Site</button>
     </form>
     <div v-if="logs.length">
@@ -81,19 +93,19 @@ import { useSettingsStore } from '../stores/settings';
 import { computed } from 'vue';
 
 export default {
-  emits: ['site-created'],
-  data() {
+  emits: ['site-created'],      data() {
     return {
       siteName: '',
       phpVersion: '8.0',
-      dbType: 'MySQL',
+      dbType: 'MySQL', // Default kept as MySQL
       moodleBranch: 'MOODLE_40_STABLE',
       dbPort: '',
       webPort: '',
       siteDirectory: '',
       useDefaultDirectory: true,
-      phpVersions: ['7.4', '8.0', '8.1'],
-      dbTypes: ['MySQL', 'PostgreSQL'],
+      useRedis: true, // Default to true for Redis support
+      phpVersions: ['8.4', '8.3', '8.2', '8.1', '8.0', '7.4', '7.3', '7.2', '7.1', '7.0', '5.6'],
+      dbTypes: ['MySQL', 'MariaDB', 'PostgreSQL', 'Microsoft SQL Server', 'Oracle XE'],
       moodleBranches: ['MOODLE_39_STABLE', 'MOODLE_40_STABLE'],
       logs: [],
       dockerInstalled: false,
@@ -181,14 +193,31 @@ export default {
           this.logs.push(`Using directory: ${directory}`);
         }
         
+        // Map display names to the Docker environment names
+        const dbTypeMap = {
+          'MySQL': 'mysql',
+          'MariaDB': 'mariadb',
+          'PostgreSQL': 'pgsql',
+          'Microsoft SQL Server': 'mssql',
+          'Oracle XE': 'oracle'
+        };
+        
+        // Log Redis configuration
+        if (this.useRedis) {
+          this.logs.push('Redis support enabled for this site.');
+        } else {
+          this.logs.push('Redis support disabled for this site.');
+        }
+        
         const result = await invoke('create_site', {
           name: this.siteName,
           php_version: this.phpVersion,
-          db_type: this.dbType,
+          db_type: dbTypeMap[this.dbType] || this.dbType.toLowerCase(),
           moodle_branch: this.moodleBranch,
           db_port: this.dbPort ? parseInt(this.dbPort) : null,
           web_port: this.webPort ? parseInt(this.webPort) : null,
-          directory: directory || null
+          directory: directory || null,
+          use_redis: this.useRedis
         });
         
         this.logs.push(result);
@@ -201,6 +230,7 @@ export default {
         this.dbPort = '';
         this.webPort = '';
         this.resetToDefaultDirectory();
+        // Keep the Redis setting as is for next site
       } catch (error) {
         this.logs.push(`Error creating site: ${error}`);
       }
@@ -294,5 +324,50 @@ export default {
 .directory-path {
   font-family: monospace;
   word-break: break-all;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-label {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.toggle-label:before {
+  position: absolute;
+  content: "";
+  height: 12px;
+  width: 12px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-label {
+  background-color: #4CAF50;
+}
+
+input:checked + .toggle-label:before {
+  transform: translateX(14px);
 }
 </style>
