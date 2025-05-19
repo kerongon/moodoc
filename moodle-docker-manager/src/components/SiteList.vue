@@ -1,16 +1,16 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-4 p-4 dark:text-gray-100">
+  <div class="site-list-container bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto p-3 dark:text-gray-100 overflow-hidden flex flex-col">
     <!-- Header - macOS style (more compact) -->
-    <div class="flex items-center mb-5">
-      <div class="bg-blue-600 rounded-lg p-1.5 mr-3 shadow-sm">
-        <PhList class="text-white w-6 h-6" weight="fill" />
+    <div class="flex items-center mb-2">
+      <div class="bg-blue-600 rounded-lg p-1 mr-2 shadow-sm">
+        <PhList class="text-white w-5 h-5" weight="fill" />
       </div>
       <div>
-        <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Configured Sites</h2>
-        <p class="text-xs text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
+        <h2 class="text-sm font-medium text-gray-900 dark:text-gray-100">Configured Sites</h2>
+        <p class="text-[10px] text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
       </div>
     </div>
-    <div class="site-list">
+    <div class="site-list overflow-auto flex-1">
     <div v-if="loading" class="loading text-xs">
       Loading sites...
     </div>

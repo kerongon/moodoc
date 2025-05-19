@@ -1,33 +1,33 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-4 p-4 dark:text-gray-100">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto p-3 dark:text-gray-100">
     
     <!-- Header with App Icon - smaller and more compact like MAMP -->
-    <div class="flex items-center mb-5">
-      <div class="bg-blue-600 rounded-lg p-1.5 mr-3 shadow-sm">
-        <PhSquare class="text-white w-6 h-6" weight="fill" />
+    <div class="flex items-center mb-3">
+      <div class="bg-blue-600 rounded-lg p-1 mr-2 shadow-sm">
+        <PhSquare class="text-white w-5 h-5" weight="fill" />
       </div>
       <div>
-        <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Create a New Moodle Site</h2>
-        <p class="text-xs text-gray-500 dark:text-gray-400">Configure and set up a new Moodle development environment</p>
+        <h2 class="text-sm font-medium text-gray-900 dark:text-gray-100">Create a New Moodle Site</h2>
+        <p class="text-[10px] text-gray-500 dark:text-gray-400">Configure and set up a new Moodle development environment</p>
       </div>
     </div>
     
     <!-- Tab Navigation - more compact like MAMP -->
-    <div class="flex bg-gray-100 dark:bg-gray-700 rounded-md p-0.5 mb-4 border border-gray-200 dark:border-gray-600 macos-tab-container">
+    <div class="flex bg-gray-100 dark:bg-gray-700 rounded-md p-0.5 mb-2 border border-gray-200 dark:border-gray-600 macos-tab-container">
       <button 
-        class="flex-1 py-1 px-3 text-xs font-medium transition-all duration-150 relative overflow-hidden" 
+        class="flex-1 py-0.5 px-2 text-[10px] font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'standard'"
         :class="activeTab === 'standard' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Standard
       </button>
       <button 
-        class="flex-1 py-1 px-3 text-xs font-medium transition-all duration-150 relative overflow-hidden" 
+        class="flex-1 py-0.5 px-2 text-[10px] font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'custom'"
         :class="activeTab === 'custom' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Custom
       </button>
       <button 
-        class="flex-1 py-1 px-3 text-xs font-medium transition-all duration-150 relative overflow-hidden" 
+        class="flex-1 py-0.5 px-2 text-[10px] font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'advanced'"
         :class="activeTab === 'advanced' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Advanced
@@ -36,12 +36,12 @@
     
     <!-- Form Content -->
     <form @submit.prevent="createSite" class="space-y-4">
-      <!-- Standard Tab Content -->
-      <div v-if="activeTab === 'standard'">
-        <!-- Site Name -->
-        <div class="mb-2">
-          <label for="siteName" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center">
-            <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <!-- Standard Tab Content -->
+        <div v-if="activeTab === 'standard'">
+          <!-- Site Name -->
+          <div class="mb-1.5">
+            <label for="siteName" class="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-0.5 flex items-center">
+            <svg class="w-3 h-3 mr-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 10-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm-1 4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" clip-rule="evenodd" />
             </svg>
             Site Name
@@ -50,7 +50,7 @@
             type="text" 
             id="siteName" 
             v-model="siteName" 
-            :class="['macos-input h-7 py-1 text-sm', { 'border-red-500 focus:ring-red-500 focus:border-red-500': siteName && !siteNameIsValid }]" 
+            :class="['macos-input h-6 py-0.5 text-xs', { 'border-red-500 focus:ring-red-500 focus:border-red-500': siteName && !siteNameIsValid }]" 
             required 
             placeholder="moodle-site"
           />
@@ -59,8 +59,8 @@
           </p>
         </div>
         
-        <div class="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-3">
-          <div class="grid grid-cols-2 gap-2">
+        <div class="p-1.5 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-2">
+          <div class="grid grid-cols-2 gap-1.5">
             <!-- Moodle Version -->
             <div>
               <label for="moodleBranch" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center">
@@ -1378,7 +1378,16 @@ input:focus, select:focus, button:focus {
 /* Responsive tweaks for full-width layout */
 @media (min-width: 1024px) {
   .form-row {
-    @apply grid grid-cols-2 gap-4;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
   }
+}
+
+/* Fixed height for create site container to ensure app-like feel */
+.create-site-container {
+  /* No fixed height constraint, show all content */
+  width: 100%;
+  display: block;
 }
 </style>

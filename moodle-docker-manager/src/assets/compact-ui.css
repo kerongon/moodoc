@@ -171,6 +171,43 @@ body.dark select.macos-select.compact-select {
   margin-bottom: 0.75rem;
 }
 
+/* Ultra compact input and form styling */
+.ultra-compact-input {
+  height: 1.5rem !important;
+  font-size: 0.65rem !important;
+  padding: 0.125rem 0.25rem !important;
+  margin-bottom: 0.125rem !important;
+}
+
+.ultra-compact-label {
+  font-size: 0.65rem !important;
+  margin-bottom: 0.125rem !important;
+  display: inline-block;
+}
+
+/* Fixed height containers for app layout */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Ensure containers don't cause page scrolling */
+.create-site-container, 
+.site-list-container,
+.docker-status-container {
+  box-sizing: border-box;
+  margin-top: 0 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Additional optimized spacing */
+.compact-app-container > * {
+  margin-top: 0 !important;
+  margin-bottom: 0.5rem !important;
+}
+
 /* Compact spacing utils */
 .compact-my-2 {
   margin-top: 0.375rem;
@@ -275,4 +312,30 @@ body.dark select.macos-select.compact-select {
 .hide-scrollbar {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+}
+
+/* App layout specific styles */
+.app-style-layout {
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Ensure docker status is as compact as possible */
+.docker-status-container {
+  padding: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Additional compact rules for native app feel */
+.compact-app-container > * {
+  margin-bottom: 0.5rem !important;
+}
+
+/* Ensure SiteList takes available space and scrolls */
+.site-list-container {
+  flex: 1;
+  overflow: auto;
+  min-height: 0; /* Important for flex containers with overflow */
 }

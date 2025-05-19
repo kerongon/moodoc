@@ -33,9 +33,14 @@ export default defineComponent({
 /* The Tailwind classes will be applied from index.css */
 #app {
   @apply font-sans antialiased text-gray-800 bg-gray-50 dark:text-gray-100 dark:bg-gray-900;
-  min-height: 100vh;
+  height: 100vh; /* Fixed height instead of min-height */
   width: 100%;
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow-x: hidden; /* Prevent horizontal scrolling */
+  overflow: hidden; /* Prevent both horizontal and vertical scrolling */
+  display: flex;
+  flex-direction: column;
+  position: fixed; /* Ensure it stays fixed within the window */
+  top: 0;
+  left: 0;
 }
 </style>
