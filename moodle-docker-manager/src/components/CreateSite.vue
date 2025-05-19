@@ -1,33 +1,33 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-6 p-6 dark:text-gray-100">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-4 p-4 dark:text-gray-100">
     
-    <!-- Header with App Icon - macOS style -->
-    <div class="flex items-center mb-8">
-      <div class="bg-blue-600 rounded-lg p-2 mr-4 shadow-sm">
-        <PhSquare class="text-white w-8 h-8" weight="fill" />
+    <!-- Header with App Icon - smaller and more compact like MAMP -->
+    <div class="flex items-center mb-5">
+      <div class="bg-blue-600 rounded-lg p-1.5 mr-3 shadow-sm">
+        <PhSquare class="text-white w-6 h-6" weight="fill" />
       </div>
       <div>
-        <h2 class="text-xl font-medium text-gray-900 dark:text-gray-100">Create a New Moodle Site</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Configure and set up a new Moodle development environment</p>
+        <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Create a New Moodle Site</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400">Configure and set up a new Moodle development environment</p>
       </div>
     </div>
     
-    <!-- Tab Navigation - macOS style segmented control -->
-    <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mb-6 border border-gray-200 dark:border-gray-600 macos-tab-container">
+    <!-- Tab Navigation - more compact like MAMP -->
+    <div class="flex bg-gray-100 dark:bg-gray-700 rounded-md p-0.5 mb-4 border border-gray-200 dark:border-gray-600 macos-tab-container">
       <button 
-        class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150 relative overflow-hidden" 
+        class="flex-1 py-1 px-3 text-xs font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'standard'"
         :class="activeTab === 'standard' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Standard
       </button>
       <button 
-        class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150 relative overflow-hidden" 
+        class="flex-1 py-1 px-3 text-xs font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'custom'"
         :class="activeTab === 'custom' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Custom
       </button>
       <button 
-        class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150 relative overflow-hidden" 
+        class="flex-1 py-1 px-3 text-xs font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'advanced'"
         :class="activeTab === 'advanced' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Advanced
@@ -50,7 +50,7 @@
             type="text" 
             id="siteName" 
             v-model="siteName" 
-            :class="['macos-input h-9 py-1.5', { 'border-red-500 focus:ring-red-500 focus:border-red-500': siteName && !siteNameIsValid }]" 
+            :class="['macos-input h-7 py-1 text-sm', { 'border-red-500 focus:ring-red-500 focus:border-red-500': siteName && !siteNameIsValid }]" 
             required 
             placeholder="moodle-site"
           />
@@ -59,8 +59,8 @@
           </p>
         </div>
         
-        <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-4">
-          <div class="grid grid-cols-2 gap-3">
+        <div class="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-3">
+          <div class="grid grid-cols-2 gap-2">
             <!-- Moodle Version -->
             <div>
               <label for="moodleBranch" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center">
@@ -73,7 +73,7 @@
                 id="moodleBranch" 
                 v-model="moodleBranch" 
                 @change="updatePHPVersion" 
-                class="macos-select h-9 py-1 text-sm"
+                class="macos-select compact-select h-7 py-0.5"
               >
                 <option v-for="branch in moodleBranches" :key="branch" :value="branch">{{ branch }}</option>
               </select>
@@ -87,7 +87,7 @@
                 </svg>
                 PHP Version
               </label>
-              <select id="phpVersion" v-model="phpVersion" class="macos-select h-9 py-1 text-sm">
+              <select id="phpVersion" v-model="phpVersion" class="macos-select compact-select h-7 py-0.5">
                 <option v-for="version in phpVersions" :key="version" :value="version">{{ version }}</option>
               </select>
             </div>
@@ -103,8 +103,8 @@
         </div>
         
         <!-- Server Configuration Group -->
-        <div class="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-          <h3 class="text-xs font-bold text-gray-700 dark:text-gray-200 mb-2 flex items-center">
+        <div class="mb-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+          <h3 class="text-xs font-medium text-gray-700 dark:text-gray-200 mb-1 flex items-center">
             <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
             </svg>
@@ -129,7 +129,7 @@
                   id="dbType" 
                   v-model="dbType" 
                   @change="updateDbType" 
-                  class="macos-select h-9 py-1 text-sm"
+                  class="macos-select compact-select h-7 py-0.5"
                 >
                   <option v-for="type in dbTypes" :key="type" :value="type">{{ type }}</option>
                 </select>
@@ -139,7 +139,7 @@
                   type="number" 
                   v-model="dbPort" 
                   :placeholder="`${currentDbPortRange}`" 
-                  :class="['macos-input h-9 py-1.5 text-sm pr-10', 
+                  :class="['macos-input h-7 py-0.5 text-xs pr-8', 
                     { 
                       'border-red-500 focus:ring-red-500 focus:border-red-500': dbPort && !isDbPortInRange,
                       'border-green-500 focus:ring-green-500 focus:border-green-500': dbPort && isDbPortInRange && isPortAvailable(dbPort)
@@ -149,12 +149,12 @@
                 <button 
                   type="button" 
                   @click="generateDbPort" 
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-all duration-150 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
+                  class="absolute right-1.5 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-all duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
                   title="Generate random port"
                   aria-label="Generate random database port"
                 >
                   <!-- Refresh/recycle icon with improved styling -->
-                  <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                   </svg>
                 </button>
@@ -188,7 +188,7 @@
             </div>
             <div class="flex space-x-3">
               <div class="flex-1">
-                <select                  class="macos-select h-9 py-1 text-sm">
+                <select class="macos-select compact-select h-7 py-0.5">
                   <option>Apache</option>
                 </select>
               </div>
@@ -197,7 +197,7 @@
                   type="number" 
                   v-model="webPort" 
                   :placeholder="`${currentWebPortRange}`" 
-                  :class="['macos-input h-9 py-1.5 text-sm pr-10', 
+                  :class="['macos-input h-7 py-0.5 text-xs pr-8', 
                     { 
                       'border-red-500 focus:ring-red-500 focus:border-red-500': webPort && !isWebPortInRange,
                       'border-green-500 focus:ring-green-500 focus:border-green-500': webPort && isWebPortInRange && isPortAvailable(webPort)
@@ -207,12 +207,12 @@
                 <button 
                   type="button" 
                   @click="generateWebPort" 
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-all duration-150 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
+                  class="absolute right-1.5 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-all duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
                   title="Generate random port"
                   aria-label="Generate random web server port"
                 >
                   <!-- Refresh/recycle icon with improved styling -->
-                  <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                   </svg>
                 </button>
@@ -234,9 +234,9 @@
         </div>
         
         <!-- Site Directory - macOS Finder style -->
-        <div class="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-          <label class="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1 flex items-center">
-            <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <div class="mb-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1 flex items-center">
+            <svg class="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
             </svg>
             Site Directory
@@ -246,13 +246,13 @@
               type="text" 
               v-model="siteDirectory" 
               :placeholder="useDefaultDirectory ? 'Using default directory' : ''" 
-              class="macos-input h-9 py-1.5 rounded-r-none focus:z-10 font-mono text-sm" 
+              class="macos-input h-7 py-0.5 rounded-r-none focus:z-10 font-mono text-xs" 
               readonly 
             />
             <button 
               type="button" 
               @click="selectCustomDirectory" 
-              class="px-4 border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 rounded-r-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 transition-all duration-150 font-medium text-sm"
+              class="px-3 border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 rounded-r-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 transition-all duration-150 font-medium text-xs h-7"
             >
               Browse...
             </button>
@@ -283,28 +283,28 @@
         <!-- Redis Toggle -->
         <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-3 flex items-center justify-between">
           <div class="flex items-start">
-            <svg class="w-4 h-4 text-gray-700 dark:text-gray-200 mt-0.5 mr-1.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <svg class="w-3 h-3 text-gray-700 dark:text-gray-200 mt-0.5 mr-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path d="M13 7H7v6h6V7z" />
               <path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd" />
             </svg>
             <div>
-              <label for="useRedis" class="text-xs font-bold text-gray-700 dark:text-gray-200">Enable Redis for caching and sessions</label>
+              <label for="useRedis" class="text-xs font-medium text-gray-700 dark:text-gray-200">Enable Redis for caching and sessions</label>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Improves performance for larger Moodle sites</p>
             </div>
           </div>
-          <div class="relative inline-block w-12 align-middle select-none">
+          <div class="relative inline-block w-10 align-middle select-none">
             <button 
               type="button"
               role="switch"
               :aria-checked="useRedis.toString()"
               @click="useRedis = !useRedis"
-              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-green-500 focus:ring-offset-1"
               :class="useRedis ? 'bg-green-600' : 'bg-gray-200'"
             >
               <span class="sr-only">Use Redis</span>
               <span 
-                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
-                :class="useRedis ? 'translate-x-5' : 'translate-x-0'"
+                class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                :class="useRedis ? 'translate-x-4' : 'translate-x-0'"
               ></span>
             </button>
           </div>
@@ -529,7 +529,7 @@
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label for="phpVersion" class="block text-xs font-medium text-gray-600 mb-1">PHP Version</label>
-                <select id="phpVersion" v-model="phpVersion" class="macos-select">
+                <select id="phpVersion" v-model="phpVersion" class="macos-select compact-select">
                   <option value="7.4">PHP 7.4</option>
                   <option value="8.0">PHP 8.0</option>
                   <option value="8.1">PHP 8.1</option>
@@ -648,12 +648,12 @@
         </div>
       </div>
       
-      <!-- Docker Status -->
-      <div class="flex items-center justify-between text-xs px-3 py-1.5 bg-gray-50 dark:bg-gray-700 rounded-md mb-3">
-        <div class="text-gray-700 dark:text-gray-200">Docker is installed and running</div>
+      <!-- Docker Status - more compact -->
+      <div class="flex items-center justify-between text-xs px-2 py-1 bg-gray-50 dark:bg-gray-700 rounded-md mb-2">
+        <div class="text-gray-700 dark:text-gray-200 text-xs">Docker is installed and running</div>
         <div class="flex items-center">
-          <div class="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
-          <span class="text-green-600 dark:text-green-400 text-xs font-medium">Active</span>
+          <div class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1"></div>
+          <span class="text-green-600 dark:text-green-400 text-xs">Active</span>
         </div>
       </div>
       
@@ -666,23 +666,23 @@
       </div>
       
       <!-- Action Buttons - macOS style -->
-      <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex justify-end space-x-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
         <button 
           type="button" 
-          class="px-4 py-1.5 text-sm font-medium bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200 shadow-sm" 
+          class="px-3 py-1 text-xs font-medium bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200 shadow-sm" 
           @click="$router.push('/')"
         >
           Cancel
         </button>
         <button 
           type="submit" 
-          class="px-4 py-1.5 text-sm font-medium bg-blue-600 border border-blue-700 rounded-md text-white hover:bg-blue-700 transition-all duration-200 shadow-sm relative"
+          class="px-3 py-1 text-xs font-medium bg-blue-600 border border-blue-700 rounded-md text-white hover:bg-blue-700 transition-all duration-200 shadow-sm relative"
           :class="{ 'opacity-50 cursor-not-allowed hover:bg-blue-600': !formIsValid || formErrors.length > 0 || createSiteInProgress }"
           :disabled="!formIsValid || formErrors.length > 0 || createSiteInProgress"
         >
           <span v-if="!createSiteInProgress">Create Site</span>
           <span v-else class="flex items-center">
-            <svg class="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin -ml-0.5 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>

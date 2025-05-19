@@ -1,8 +1,8 @@
 <template>
   <div class="home-view bg-gray-50 dark:bg-gray-900 min-h-screen w-full">
-    <div class="w-full px-6 py-6">
-      <h1 class="text-3xl font-bold text-center text-gray-800 dark:text-gray-100 mb-6">Moodle Docker Manager</h1>
-      <div class="space-y-6">
+    <div class="w-full px-4 py-4">
+      <h1 class="text-lg font-bold text-center text-gray-800 dark:text-gray-100 mb-3">Moodle Docker Manager</h1>
+      <div class="space-y-4">
         <DockerStatus />
         <CreateSite @site-created="refreshSiteList" />
         <SiteList ref="siteList" />
@@ -44,6 +44,6 @@ export default defineComponent({
 
 <style scoped>
 .home-view {
-  padding: 20px;
+  padding: 15px;
 }
 </style>

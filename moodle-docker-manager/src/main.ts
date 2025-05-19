@@ -6,6 +6,8 @@ import { useSettingsStore } from './stores/settings';
 
 // Import CSS directly - this helps ensure proper CSS processing
 import './index.css';
+// Import compact UI styles
+import './assets/compact-ui.css';
 
 // Import icons
 import * as PhosphorIcons from '@phosphor-icons/vue';

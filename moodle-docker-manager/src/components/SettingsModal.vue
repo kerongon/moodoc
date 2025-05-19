@@ -2,14 +2,14 @@
   <div v-if="isVisible" class="settings-modal" @click.self="closeModal">
     <div class="settings-modal-content mac-style">
       <div class="modal-header">
-        <h2>Preferences</h2>
+        <h2 class="text-base font-medium">Preferences</h2>
         <button @click="closeModal" class="close-button">×</button>
       </div>
       
       <div class="settings-body">
-        <div class="setting-group">
-          <h3>Default Sites Directory</h3>
-          <p class="setting-description">
+        <div class="setting-group mb-3">
+          <h3 class="text-sm font-medium mb-1">Default Sites Directory</h3>
+          <p class="setting-description text-xs mb-2">
             Choose where Moodle sites will be created by default
           </p>
           
@@ -18,56 +18,57 @@
               type="text" 
               v-model="sitesDirectory" 
               placeholder="Select a directory" 
+              class="h-7 text-xs"
               readonly
             />
-            <button @click="selectDirectory" class="browse-button">Choose...</button>
+            <button @click="selectDirectory" class="browse-button text-xs h-7 py-0.5 px-2">Choose...</button>
           </div>
           
-          <div class="current-directory">
+          <div class="current-directory text-xs mt-1 text-gray-500 dark:text-gray-400">
             <span v-if="currentDirectory">Current directory: {{ currentDirectory }}</span>
             <span v-else>No directory selected (will use current working directory)</span>
           </div>
         </div>
         
         <div class="setting-group">
-          <h3>Appearance</h3>
-          <p class="setting-description">
+          <h3 class="text-sm font-medium mb-1">Appearance</h3>
+          <p class="setting-description text-xs mb-2">
             Choose your preferred theme mode
           </p>
           
           <div class="theme-selector">
             <label class="theme-option" :class="{ active: darkMode === 'light' }">
               <input type="radio" name="theme" value="light" v-model="darkMode" />
-              <svg class="theme-icon light-icon" viewBox="0 0 20 20" fill="currentColor">
+              <svg class="theme-icon light-icon w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
               </svg>
-              <span>Light</span>
+              <span class="text-xs">Light</span>
             </label>
             
             <label class="theme-option" :class="{ active: darkMode === 'dark' }">
               <input type="radio" name="theme" value="dark" v-model="darkMode" />
-              <svg class="theme-icon dark-icon" viewBox="0 0 20 20" fill="currentColor">
+              <svg class="theme-icon dark-icon w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
               </svg>
-              <span>Dark</span>
+              <span class="text-xs">Dark</span>
             </label>
             
             <label class="theme-option" :class="{ active: darkMode === 'system' }">
               <input type="radio" name="theme" value="system" v-model="darkMode" />
-              <svg class="theme-icon system-icon" viewBox="0 0 20 20" fill="currentColor">
+              <svg class="theme-icon system-icon w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd" />
               </svg>
-              <span>System</span>
+              <span class="text-xs">System</span>
             </label>
           </div>
         </div>
       </div>
       
       <div class="modal-footer">
-        <button @click="closeModal" class="cancel-button">Cancel</button>
+        <button @click="closeModal" class="cancel-button text-xs py-1 px-3">Cancel</button>
         <button 
           @click="saveSettings" 
-          class="save-button"
+          class="save-button text-xs py-1 px-3"
           :disabled="settingsStore.isLoading"
         >
           Save
@@ -199,16 +200,17 @@ export default {
 
 .modal-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
 }
 
 .close-button {
   background: none;
   border: none;
-  font-size: 22px;
+  font-size: 18px;
   cursor: pointer;
   color: #999;
+  line-height: 1;
 }
 
 .dark .close-button {
@@ -216,26 +218,26 @@ export default {
 }
 
 .settings-body {
-  padding: 20px;
+  padding: 15px;
   max-height: 60vh;
   overflow-y: auto;
 }
 
 .setting-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .setting-group h3 {
-  font-size: 16px;
+  font-size: 14px;
   margin-top: 0;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   font-weight: 500;
 }
 
 .setting-description {
   color: #666;
-  margin-bottom: 15px;
-  font-size: 14px;
+  margin-bottom: 10px;
+  font-size: 12px;
 }
 
 .dark .setting-description {
@@ -244,17 +246,17 @@ export default {
 
 .directory-selector {
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .directory-selector input {
   flex: 1;
-  padding: 8px 12px;
+  padding: 6px 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #f5f5f5;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .dark .directory-selector input {
@@ -264,11 +266,11 @@ export default {
 }
 
 .browse-button {
-  padding: 8px 15px;
+  padding: 5px 10px;
   background-color: #f5f5f5;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -287,24 +289,24 @@ export default {
 }
 
 .current-directory {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
-  margin-top: 5px;
+  margin-top: 4px;
 }
 
 .theme-selector {
   display: flex;
-  gap: 15px;
-  margin-top: 15px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .theme-option {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px;
+  padding: 8px;
   border: 1px solid #eaeaea;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   flex: 1;
@@ -341,9 +343,9 @@ export default {
 }
 
 .theme-icon {
-  width: 24px;
-  height: 24px;
-  margin-bottom: 8px;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 6px;
 }
 
 .light-icon {
@@ -359,15 +361,15 @@ export default {
 }
 
 .theme-option span {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .modal-footer {
-  padding: 15px 20px;
+  padding: 10px 15px;
   border-top: 1px solid #eaeaea;
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 8px;
 }
 
 .dark .modal-footer {
@@ -375,11 +377,11 @@ export default {
 }
 
 .cancel-button {
-  padding: 8px 15px;
+  padding: 5px 10px;
   background-color: #f5f5f5;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -390,12 +392,12 @@ export default {
 }
 
 .save-button {
-  padding: 8px 15px;
+  padding: 5px 10px;
   background-color: #0070f3;
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
 }
 

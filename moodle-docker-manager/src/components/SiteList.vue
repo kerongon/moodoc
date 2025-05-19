@@ -1,27 +1,27 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-6 p-6 dark:text-gray-100">
-    <!-- Header - macOS style -->
-    <div class="flex items-center mb-8">
-      <div class="bg-blue-600 rounded-lg p-2 mr-4 shadow-sm">
-        <PhList class="text-white w-8 h-8" weight="fill" />
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-4 p-4 dark:text-gray-100">
+    <!-- Header - macOS style (more compact) -->
+    <div class="flex items-center mb-5">
+      <div class="bg-blue-600 rounded-lg p-1.5 mr-3 shadow-sm">
+        <PhList class="text-white w-6 h-6" weight="fill" />
       </div>
       <div>
-        <h2 class="text-xl font-medium text-gray-900 dark:text-gray-100">Configured Sites</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
+        <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Configured Sites</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
       </div>
     </div>
     <div class="site-list">
-    <div v-if="loading" class="loading">
+    <div v-if="loading" class="loading text-xs">
       Loading sites...
     </div>
-    <div v-else-if="error" class="error">
+    <div v-else-if="error" class="error text-xs">
       {{ error }}
     </div>
-    <div v-else-if="sites.length === 0" class="no-sites">
+    <div v-else-if="sites.length === 0" class="no-sites text-xs">
       <p>No sites have been created yet.</p>
-      <router-link to="/create" class="create-button">Create a Site</router-link>
+      <router-link to="/create" class="compact-button bg-blue-600 text-white hover:bg-blue-700">Create a Site</router-link>
     </div>
-    <table v-else>
+    <table v-else class="compact-table">
       <thead>
         <tr>
           <th>Site Name</th>
@@ -41,15 +41,16 @@
             {{ formatPath(site.path) }}
           </td>
           <td>
-            <span :class="{'status-running': site.status === 'running', 'status-stopped': site.status !== 'running'}">
+            <span class="compact-status-badge" :class="{'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': site.status === 'running', 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': site.status !== 'running'}">
+              <span class="inline-block w-1.5 h-1.5 rounded-full mr-1" :class="{'bg-green-500': site.status === 'running', 'bg-gray-400': site.status !== 'running'}"></span>
               {{ site.status }}
             </span>
           </td>
           <td class="actions">
-            <button v-if="site.status !== 'running'" @click="startSite(site.name)" class="action-button start">Start</button>
-            <button v-else @click="stopSite(site.name)" class="action-button stop">Stop</button>
-            <button @click="viewLogs(site.name)" class="action-button logs">Logs</button>
-            <button @click="removeSite(site.name)" class="action-button remove">Remove</button>
+            <button v-if="site.status !== 'running'" @click="startSite(site.name)" class="compact-action-button bg-green-500 text-white hover:bg-green-600">Start</button>
+            <button v-else @click="stopSite(site.name)" class="compact-action-button bg-red-500 text-white hover:bg-red-600">Stop</button>
+            <button @click="viewLogs(site.name)" class="compact-action-button bg-blue-500 text-white hover:bg-blue-600">Logs</button>
+            <button @click="removeSite(site.name)" class="compact-action-button bg-amber-500 text-white hover:bg-amber-600">Remove</button>
           </td>
         </tr>
       </tbody>
@@ -189,17 +190,45 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
+  font-size: 0.75rem; /* Smaller text */
+}
+
+thead {
+  background-color: #f9fafb;
+}
+
+.dark thead {
+  background-color: #374151;
 }
 
 th, td {
-  padding: 12px 15px;
+  padding: 8px 10px;
   text-align: left;
   border-bottom: 1px solid #ddd;
 }
 
 th {
-  background-color: #f2f2f2;
-  font-weight: bold;
+  text-align: left;
+  padding: 6px 8px;
+  font-weight: 500;
+  color: #4b5563;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.dark th {
+  color: #d1d5db;
+  border-bottom: 1px solid #4b5563;
+  background-color: #374151;
+}
+
+td {
+  padding: 5px 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dark td {
+  border-bottom: 1px solid #374151;
 }
 
 .actions {
@@ -208,13 +237,13 @@ th {
 }
 
 .action-button {
-  padding: 6px 12px;
+  padding: 4px 8px;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .action-button.start {
@@ -253,33 +282,69 @@ th {
   background-color: #D97706;
 }
 
+/* Status badges */
+.status-running, .status-stopped {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0 0.375rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
 .status-running {
-  color: #4CAF50;
-  font-weight: bold;
+  background-color: #ecfdf5;
+  color: #065f46;
+  font-weight: 500;
+}
+
+.dark .status-running {
+  background-color: rgba(6, 95, 70, 0.3);
+  color: #34d399;
 }
 
 .status-stopped {
-  color: #f44336;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.dark .status-stopped {
+  background-color: #374151;
+  color: #d1d5db;
 }
 
 .loading, .error, .no-sites {
-  padding: 20px;
+  padding: 15px;
   text-align: center;
   border-radius: 4px;
-  margin-top: 20px;
+  margin-top: 15px;
 }
 
 .loading {
   background-color: #e3f2fd;
 }
 
+.dark .loading {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
 .error {
-  background-color: #ffebee;
-  color: #f44336;
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.dark .error {
+  background-color: rgba(185, 28, 28, 0.2);
+  color: #fca5a5;
 }
 
 .no-sites {
   background-color: #f5f5f5;
+}
+
+.dark .no-sites {
+  background-color: #374151;
 }
 
 .create-button {

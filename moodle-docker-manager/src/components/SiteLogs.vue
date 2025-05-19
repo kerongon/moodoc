@@ -1,30 +1,44 @@
 <template>
-  <div class="site-logs">
-    <h2>Site Logs: {{ siteName }}</h2>
-    <div v-if="loading">
+  <div class="site-logs bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-4 p-4">
+    <!-- Header - macOS style (more compact) -->
+    <div class="flex items-center mb-5">
+      <div class="bg-blue-600 rounded-lg p-1.5 mr-3 shadow-sm">
+        <PhTerminal class="text-white w-6 h-6" weight="fill" />
+      </div>
+      <div>
+        <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Site Logs: {{ siteName }}</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400">View and monitor the container logs for this site</p>
+      </div>
+    </div>
+
+    <div v-if="loading" class="loading text-xs">
       <p>Loading logs...</p>
     </div>
     <div v-else-if="error">
-      <p class="error">{{ error }}</p>
+      <p class="error text-xs">{{ error }}</p>
     </div>
     <div v-else-if="!logs">
-      <p>No logs available for this site.</p>
+      <p class="text-xs">No logs available for this site.</p>
     </div>
     <div v-else>
-      <pre class="logs-container">{{ logs }}</pre>
+      <pre class="logs-container text-xs">{{ logs }}</pre>
     </div>
-    <div class="actions">
-      <button @click="fetchLogs">Refresh Logs</button>
-      <button @click="$router.push('/dashboard')">Back to Dashboard</button>
+    <div class="actions mt-3 flex gap-2">
+      <button @click="fetchLogs" class="compact-action-button bg-blue-500 text-white hover:bg-blue-600">Refresh Logs</button>
+      <button @click="$router.push('/dashboard')" class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">Back to Dashboard</button>
     </div>
   </div>
 </template>
 
 <script>
 import { invoke } from '@tauri-apps/api/tauri';
+import { PhTerminal } from '@phosphor-icons/vue';
 
 export default {
   name: 'SiteLogs',
+  components: {
+    PhTerminal
+  },
   props: {
     siteName: {
       type: String,
@@ -65,36 +79,55 @@ export default {
 
 <style scoped>
 .site-logs {
-  padding: 20px;
   max-width: 800px;
   margin: 0 auto;
 }
 
-.site-logs h2 {
-  margin-bottom: 20px;
-  color: #2c3e50;
-}
-
 .logs-container {
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 4px;
-  padding: 15px;
-  max-height: 500px;
+  padding: 10px;
+  max-height: 450px;
   overflow-y: auto;
   white-space: pre-wrap;
-  font-family: monospace;
-  margin-bottom: 20px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  margin-bottom: 15px;
+  font-size: 0.7rem;
+  line-height: 1.3;
+}
+
+.dark .logs-container {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.loading {
+  background-color: #e3f2fd;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.dark .loading {
+  background-color: rgba(59, 130, 246, 0.1);
 }
 
 .error {
   color: #dc3545;
-  font-weight: bold;
+  font-weight: 500;
+  background-color: #fee2e2;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.dark .error {
+  background-color: rgba(185, 28, 28, 0.2);
+  color: #fca5a5;
 }
 
 .actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 button {
