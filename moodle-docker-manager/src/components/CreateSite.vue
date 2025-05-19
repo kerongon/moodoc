@@ -98,15 +98,15 @@ export default {
       siteName: '',
       phpVersion: '8.0',
       dbType: 'MySQL', // Default kept as MySQL
-      moodleBranch: 'MOODLE_40_STABLE',
+      moodleBranch: 'MOODLE_500_STABLE',
       dbPort: '',
       webPort: '',
       siteDirectory: '',
       useDefaultDirectory: true,
-      useRedis: true, // Default to true for Redis support
+      useRedis: false, // Default to false for Redis support
       phpVersions: ['8.4', '8.3', '8.2', '8.1', '8.0', '7.4', '7.3', '7.2', '7.1', '7.0', '5.6'],
       dbTypes: ['MySQL', 'MariaDB', 'PostgreSQL', 'Microsoft SQL Server', 'Oracle XE'],
-      moodleBranches: ['MOODLE_39_STABLE', 'MOODLE_40_STABLE'],
+      moodleBranches: ['MOODLE_500_STABLE', 'MOODLE_405_STABLE', 'MOODLE_404_STABLE', 'MOODLE_403_STABLE', 'MOODLE_402_STABLE', 'MOODLE_401_STABLE'],
       logs: [],
       dockerInstalled: false,
       settingsStore: useSettingsStore()
