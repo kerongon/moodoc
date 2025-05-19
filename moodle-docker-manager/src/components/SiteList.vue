@@ -1,6 +1,19 @@
 <template>
-  <div class="site-list">
-    <h2>Configured Sites</h2>
+  <div class="macos-window max-w-2xl mx-auto my-8 p-6">
+    <!-- Window Controls -->
+    <div class="macos-traffic-lights">
+      <div class="traffic-light traffic-light-red"></div>
+      <div class="traffic-light traffic-light-yellow"></div>
+      <div class="traffic-light traffic-light-green"></div>
+    </div>
+    <!-- Header -->
+    <div class="flex items-center justify-center mb-6">
+      <div class="bg-blue-600 rounded-lg p-2 mr-4">
+        <PhList class="text-white w-8 h-8" weight="fill" />
+      </div>
+      <h2 class="text-xl font-semibold text-gray-900">Configured Sites</h2>
+    </div>
+    <div class="site-list">
     <div v-if="loading" class="loading">
       Loading sites...
     </div>
@@ -44,7 +57,8 @@
         </tr>
       </tbody>
     </table>
-  </div>
+    </div> <!-- closes site-list -->
+  </div> <!-- closes macos-window -->
 </template>
 
 <script>
