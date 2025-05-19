@@ -32,7 +32,8 @@ export default defineComponent({
 <style>
 /* The Tailwind classes will be applied from index.css */
 #app {
-  @apply font-sans antialiased text-gray-800 bg-gray-50;
+  @apply font-sans antialiased text-gray-800 bg-gray-50 dark:text-gray-100 dark:bg-gray-900;
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 </style>

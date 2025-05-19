@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-lg shadow-md border border-gray-200 max-w-2xl mx-auto my-8 p-6">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 max-w-2xl mx-auto my-8 p-6 dark:text-gray-100">
     
     <!-- Header with App Icon -->
     <div class="flex items-center justify-center mb-6">
@@ -36,8 +36,13 @@
       <!-- Standard Tab Content -->
       <div v-if="activeTab === 'standard'">
         <!-- Site Name -->
-        <div class="mb-4">
-          <label for="siteName" class="block text-sm font-bold text-gray-700 mb-1">Site Name</label>
+        <div class="mb-5">
+          <label for="siteName" class="block text-sm font-bold text-gray-700 mb-2 flex items-center">
+            <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 10-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm-1 4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" clip-rule="evenodd" />
+            </svg>
+            Site Name
+          </label>
           <input 
             type="text" 
             id="siteName" 
@@ -51,105 +56,132 @@
           </p>
         </div>
         
-        <!-- Moodle Version -->
-        <div class="mb-4">
-          <label for="moodleBranch" class="block text-sm font-bold text-gray-700 mb-1">Moodle Version</label>
-          <select 
-            id="moodleBranch" 
-            v-model="moodleBranch" 
-            @change="updatePHPVersion" 
-            class="macos-select"
-          >
-            <option v-for="branch in moodleBranches" :key="branch" :value="branch">{{ branch }}</option>
-          </select>
-          <p v-if="recommendedPhpVersion" class="mt-1 text-sm text-gray-500">
-            Recommended PHP version: <span class="font-medium">{{ recommendedPhpVersion }}</span>
-          </p>
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-6">
+          <!-- Moodle Version -->
+          <div class="mb-5">
+            <label for="moodleBranch" class="block text-sm font-bold text-gray-700 mb-2 flex items-center">
+              <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+              </svg>
+              Moodle Version
+            </label>
+            <select 
+              id="moodleBranch" 
+              v-model="moodleBranch" 
+              @change="updatePHPVersion" 
+              class="macos-select"
+            >
+              <option v-for="branch in moodleBranches" :key="branch" :value="branch">{{ branch }}</option>
+            </select>
+            <p v-if="recommendedPhpVersion" class="mt-2 text-sm text-gray-500">
+              Recommended PHP version: <span class="font-medium">{{ recommendedPhpVersion }}</span>
+            </p>
+          </div>
+          
+          <!-- PHP Version -->
+          <div>
+            <label for="phpVersion" class="block text-sm font-bold text-gray-700 mb-2 flex items-center">
+              <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              PHP Version
+            </label>
+            <select id="phpVersion" v-model="phpVersion" class="macos-select">
+              <option v-for="version in phpVersions" :key="version" :value="version">{{ version }}</option>
+            </select>
+            <p v-if="isPhpVersionCompatible === false" class="mt-2 text-sm text-red-600">
+              Warning: This PHP version may not be compatible with the selected Moodle branch
+            </p>
+          </div>
         </div>
         
-        <!-- PHP Version -->
-        <div class="mb-4">
-          <label for="phpVersion" class="block text-sm font-bold text-gray-700 mb-1">PHP Version</label>
-          <select id="phpVersion" v-model="phpVersion" class="macos-select">
-            <option v-for="version in phpVersions" :key="version" :value="version">{{ version }}</option>
-          </select>
-          <p v-if="isPhpVersionCompatible === false" class="mt-1 text-sm text-red-600">
-            Warning: This PHP version may not be compatible with the selected Moodle branch
-          </p>
-        </div>
-        
-        <!-- Database Configuration -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Database Configuration</label>
-          <div class="flex space-x-4">
-            <div class="flex-1">
-              <select 
-                id="dbType" 
-                v-model="dbType" 
-                @change="updateDbType" 
-                class="macos-select"
+        <!-- Server Configuration Group -->
+        <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+            <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+            </svg>
+            Server Configuration
+          </h3>
+
+          <!-- Database Configuration -->
+          <div class="mb-5">
+            <label class="block text-sm font-bold text-gray-700 mb-2">Database Configuration</label>
+            <div class="flex space-x-4">
+              <div class="flex-1">
+                <select 
+                  id="dbType" 
+                  v-model="dbType" 
+                  @change="updateDbType" 
+                  class="macos-select"
+                >
+                  <option v-for="type in dbTypes" :key="type" :value="type">{{ type }}</option>
+                </select>
+              </div>
+              <div class="w-1/3">
+                <input 
+                  type="number" 
+                  v-model="dbPort" 
+                  :placeholder="`Port: ${currentDbPortRange}`" 
+                  :class="['macos-input', { 'border-red-500': dbPort && !isDbPortInRange }]"
+                />
+              </div>
+            </div>
+            <div class="flex justify-end mt-1">
+              <button 
+                type="button" 
+                @click="generateDbPort" 
+                class="text-xs text-blue-600 hover:text-blue-800"
               >
-                <option v-for="type in dbTypes" :key="type" :value="type">{{ type }}</option>
-              </select>
+                Generate random port
+              </button>
             </div>
-            <div class="w-1/3">
-              <input 
-                type="number" 
-                v-model="dbPort" 
-                :placeholder="`Port: ${currentDbPortRange}`" 
-                :class="['macos-input', { 'border-red-500': dbPort && !isDbPortInRange }]"
-              />
+            <p v-if="dbPort && !isDbPortInRange" class="mt-1 text-sm text-red-600">
+              Port is outside the recommended range ({{ currentDbPortRange }}) for {{ dbType }}
+            </p>
+          </div>
+          
+          <!-- Web Server -->
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">Web Server</label>
+            <div class="flex space-x-4">
+              <div class="flex-1">
+                <select class="macos-select">
+                  <option>Apache</option>
+                </select>
+              </div>
+              <div class="w-1/3">
+                <input 
+                  type="number" 
+                  v-model="webPort" 
+                  :placeholder="`Port: ${currentWebPortRange}`" 
+                  :class="['macos-input', { 'border-red-500': webPort && !isWebPortInRange }]"
+                />
+              </div>
             </div>
-          </div>
-          <div class="flex justify-end mt-1">
-            <button 
-              type="button" 
-              @click="generateDbPort" 
-              class="text-xs text-blue-600 hover:text-blue-800"
-            >
-              Generate random port
-            </button>
-          </div>
-          <p v-if="dbPort && !isDbPortInRange" class="mt-1 text-sm text-red-600">
-            Port is outside the recommended range ({{ currentDbPortRange }}) for {{ dbType }}
-          </p>
-        </div>
-        
-        <!-- Web Server -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Web Server</label>
-          <div class="flex space-x-4">
-            <div class="flex-1">
-              <select class="macos-select">
-                <option>Apache</option>
-              </select>
+            <div class="flex justify-end mt-1">
+              <button 
+                type="button" 
+                @click="generateWebPort" 
+                class="text-xs text-blue-600 hover:text-blue-800"
+              >
+                Generate random port
+              </button>
             </div>
-            <div class="w-1/3">
-              <input 
-                type="number" 
-                v-model="webPort" 
-                :placeholder="`Port: ${currentWebPortRange}`" 
-                :class="['macos-input', { 'border-red-500': webPort && !isWebPortInRange }]"
-              />
-            </div>
+            <p v-if="webPort && !isWebPortInRange" class="mt-1 text-sm text-red-600">
+              Port is outside the recommended range ({{ currentWebPortRange }})
+            </p>
           </div>
-          <div class="flex justify-end mt-1">
-            <button 
-              type="button" 
-              @click="generateWebPort" 
-              class="text-xs text-blue-600 hover:text-blue-800"
-            >
-              Generate random port
-            </button>
-          </div>
-          <p v-if="webPort && !isWebPortInRange" class="mt-1 text-sm text-red-600">
-            Port is outside the recommended range ({{ currentWebPortRange }})
-          </p>
         </div>
         
         <!-- Site Directory -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Site Directory</label>
+        <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center">
+            <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+            </svg>
+            Site Directory
+          </label>
           <div class="flex">
             <input 
               type="text" 
@@ -166,7 +198,7 @@
               Browse...
             </button>
           </div>
-          <div class="mt-1 flex justify-between items-center">
+          <div class="mt-3 flex justify-between items-center">
             <p class="text-xs text-gray-500">
               <span v-if="useDefaultDirectory">
                 Using default directory: <span class="font-mono">{{ defaultDirectory || '[App Data Directory]/sites' }}</span>
@@ -184,16 +216,22 @@
               Reset to default
             </button>
           </div>
-          <p v-if="siteName" class="mt-1 text-xs text-gray-500">
+          <p v-if="siteName" class="mt-2 text-xs text-gray-500">
             Site will be created at: <span class="font-mono">{{ getFullSitePath() }}</span>
           </p>
         </div>
         
         <!-- Redis Toggle -->
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <label for="useRedis" class="text-sm font-bold text-gray-700">Enable Redis for caching and sessions</label>
-            <p class="text-xs text-gray-500">Improves performance for larger Moodle sites</p>
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-6 flex items-center justify-between">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-gray-700 mt-0.5 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M13 7H7v6h6V7z" />
+              <path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <label for="useRedis" class="text-sm font-bold text-gray-700">Enable Redis for caching and sessions</label>
+              <p class="text-xs text-gray-500 mt-0.5">Improves performance for larger Moodle sites</p>
+            </div>
           </div>
           <div class="relative inline-block w-12 align-middle select-none">
             <button 
@@ -567,7 +605,13 @@
       
       <!-- Action Buttons -->
       <div class="flex justify-end space-x-4">
-        <button type="button" class="macos-button macos-button-secondary" @click="$router.push('/')">Cancel</button>
+        <button 
+          type="button" 
+          class="macos-button macos-button-secondary" 
+          @click="$router.push('/')"
+        >
+          Cancel
+        </button>
         <button 
           type="submit" 
           class="macos-button macos-button-primary relative"
@@ -1141,6 +1185,7 @@ export default {
 /* Make form field labels bold */
 .space-y-6 label,
 .mb-4 > label,
+.mb-5 > label,
 .mb-3,
 h3.text-sm {
   font-weight: 700 !important;
@@ -1149,6 +1194,50 @@ h3.text-sm {
 /* Make subheadings and section titles bold too */
 .text-sm.font-medium.text-gray-700 {
   font-weight: 700 !important;
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .macos-input,
+  .macos-select {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: white !important;
+  }
+  
+  .macos-button-secondary {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #e5e7eb !important;
+  }
+  
+  .macos-button-primary {
+    background-color: #2563eb !important;
+  }
+  
+  .bg-gray-50 {
+    background-color: #1f2937 !important;
+  }
+  
+  .bg-gray-100 {
+    background-color: #1f2937 !important;
+  }
+  
+  .border-gray-200 {
+    border-color: #374151 !important;
+  }
+  
+  .text-gray-700 {
+    color: #e5e7eb !important;
+  }
+  
+  .text-gray-600 {
+    color: #d1d5db !important;
+  }
+  
+  .text-gray-500 {
+    color: #9ca3af !important;
+  }
 }
 
 /* Transition styles for collapsible logs */

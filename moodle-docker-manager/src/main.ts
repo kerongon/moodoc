@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 import { createPinia } from 'pinia';
+import { useSettingsStore } from './stores/settings';
 
 // Import CSS directly - this helps ensure proper CSS processing
 import './index.css';
@@ -25,3 +26,9 @@ Object.entries(PhosphorIcons).forEach(([name, component]) => {
 
 // Mount the app
 app.mount('#app');
+
+// Initialize settings and apply dark mode
+const settingsStore = useSettingsStore();
+settingsStore.loadSettings().then(() => {
+  settingsStore.applyDarkMode();
+});

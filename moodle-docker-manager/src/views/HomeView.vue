@@ -1,7 +1,7 @@
 <template>
-  <div class="home-view bg-gray-50 min-h-screen">
+  <div class="home-view bg-gray-50 dark:bg-gray-900 min-h-screen">
     <div class="container mx-auto px-4 py-6">
-      <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Moodle Docker Manager</h1>
+      <h1 class="text-3xl font-bold text-center text-gray-800 dark:text-gray-100 mb-6">Moodle Docker Manager</h1>
       <div class="space-y-6">
         <DockerStatus />
         <CreateSite @site-created="refreshSiteList" />

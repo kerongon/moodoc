@@ -11,6 +11,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
   color: #374151;
   background-color: #f9fafb;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode styles */
+.dark body {
+  color: #f3f4f6;
+  background-color: #111827;
 }
 
 /* Custom styles for macOS UI */
@@ -21,6 +28,13 @@ body {
   box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   border: 1px solid #e5e7eb;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dark .macos-window {
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  border-color: #374151;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .macos-input {
@@ -29,6 +43,15 @@ body {
   padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
+  background-color: white;
+  color: #374151;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dark .macos-input {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
 }
 
 .macos-input:focus {
@@ -45,11 +68,20 @@ body {
   border-radius: 0.375rem;
   appearance: none;
   background-color: white;
+  color: #374151;
   padding-right: 2rem;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.5rem center;
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dark .macos-select {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23e5e7eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
 }
 
 .macos-select:focus {
@@ -64,9 +96,7 @@ body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   font-size: 0.875rem;
   font-weight: 500;
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .macos-button-primary {
@@ -74,13 +104,25 @@ body {
   color: white;
 }
 
+.dark .macos-button-primary {
+  background-color: #3b82f6;
+}
+
 .macos-button-primary:hover {
   background-color: #1d4ed8;
+}
+
+.dark .macos-button-primary:hover {
+  background-color: #2563eb;
 }
 
 .macos-button-primary:focus {
   outline: none;
   box-shadow: 0 0 0 2px white, 0 0 0 4px #2563eb;
+}
+
+.dark .macos-button-primary:focus {
+  box-shadow: 0 0 0 2px #1f2937, 0 0 0 4px #3b82f6;
 }
 
 .macos-button-secondary {
@@ -89,13 +131,27 @@ body {
   color: #374151;
 }
 
+.dark .macos-button-secondary {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
 .macos-button-secondary:hover {
   background-color: #f9fafb;
+}
+
+.dark .macos-button-secondary:hover {
+  background-color: #4b5563;
 }
 
 .macos-button-secondary:focus {
   outline: none;
   box-shadow: 0 0 0 2px white, 0 0 0 4px #2563eb;
+}
+
+.dark .macos-button-secondary:focus {
+  box-shadow: 0 0 0 2px #1f2937, 0 0 0 4px #3b82f6;
 }
 
 .macos-button-danger {
@@ -107,9 +163,21 @@ body {
   background-color: #b91c1c;
 }
 
+.dark .macos-button-danger {
+  background-color: #ef4444;
+}
+
+.dark .macos-button-danger:hover {
+  background-color: #dc2626;
+}
+
 .macos-button-danger:focus {
   outline: none;
   box-shadow: 0 0 0 2px white, 0 0 0 4px #dc2626;
+}
+
+.dark .macos-button-danger:focus {
+  box-shadow: 0 0 0 2px #1f2937, 0 0 0 4px #ef4444;
 }
 
 /* Toggle Switch Styles */
