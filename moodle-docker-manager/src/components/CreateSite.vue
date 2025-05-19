@@ -14,19 +14,19 @@
       <button 
         class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150" 
         @click="activeTab = 'standard'"
-        :class="activeTab === 'standard' ? 'bg-white rounded-md shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'">
+        :class="activeTab === 'standard' ? 'bg-blue-600 rounded-md shadow text-white' : 'text-gray-500 hover:text-gray-700'">
         Standard
       </button>
       <button 
         class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150" 
         @click="activeTab = 'custom'"
-        :class="activeTab === 'custom' ? 'bg-white rounded-md shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'">
+        :class="activeTab === 'custom' ? 'bg-blue-600 rounded-md shadow text-white' : 'text-gray-500 hover:text-gray-700'">
         Custom
       </button>
       <button 
         class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150" 
         @click="activeTab = 'advanced'"
-        :class="activeTab === 'advanced' ? 'bg-white rounded-md shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'">
+        :class="activeTab === 'advanced' ? 'bg-blue-600 rounded-md shadow text-white' : 'text-gray-500 hover:text-gray-700'">
         Advanced
       </button>
     </div>
@@ -37,7 +37,7 @@
       <div v-if="activeTab === 'standard'">
         <!-- Site Name -->
         <div class="mb-4">
-          <label for="siteName" class="block text-sm font-medium text-gray-700 mb-1">Site Name</label>
+          <label for="siteName" class="block text-sm font-bold text-gray-700 mb-1">Site Name</label>
           <input 
             type="text" 
             id="siteName" 
@@ -53,7 +53,7 @@
         
         <!-- Moodle Version -->
         <div class="mb-4">
-          <label for="moodleBranch" class="block text-sm font-medium text-gray-700 mb-1">Moodle Version</label>
+          <label for="moodleBranch" class="block text-sm font-bold text-gray-700 mb-1">Moodle Version</label>
           <select 
             id="moodleBranch" 
             v-model="moodleBranch" 
@@ -69,7 +69,7 @@
         
         <!-- PHP Version -->
         <div class="mb-4">
-          <label for="phpVersion" class="block text-sm font-medium text-gray-700 mb-1">PHP Version</label>
+          <label for="phpVersion" class="block text-sm font-bold text-gray-700 mb-1">PHP Version</label>
           <select id="phpVersion" v-model="phpVersion" class="macos-select">
             <option v-for="version in phpVersions" :key="version" :value="version">{{ version }}</option>
           </select>
@@ -192,7 +192,7 @@
         <!-- Redis Toggle -->
         <div class="flex items-center justify-between mb-4">
           <div>
-            <label for="useRedis" class="text-sm font-medium text-gray-700">Enable Redis for caching and sessions</label>
+            <label for="useRedis" class="text-sm font-bold text-gray-700">Enable Redis for caching and sessions</label>
             <p class="text-xs text-gray-500">Improves performance for larger Moodle sites</p>
           </div>
           <div class="relative inline-block w-12 align-middle select-none">
@@ -1136,6 +1136,19 @@ export default {
   .macos-traffic-lights {
     display: none;
   }
+}
+
+/* Make form field labels bold */
+.space-y-6 label,
+.mb-4 > label,
+.mb-3,
+h3.text-sm {
+  font-weight: 700 !important;
+}
+
+/* Make subheadings and section titles bold too */
+.text-sm.font-medium.text-gray-700 {
+  font-weight: 700 !important;
 }
 
 /* Transition styles for collapsible logs */
