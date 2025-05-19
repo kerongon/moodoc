@@ -567,7 +567,7 @@
       
       <!-- Action Buttons -->
       <div class="flex justify-end space-x-4">
-        <button type="button" class="macos-button macos-button-secondary">Cancel</button>
+        <button type="button" class="macos-button macos-button-secondary" @click="$router.push('/')">Cancel</button>
         <button 
           type="submit" 
           class="macos-button macos-button-primary relative"
