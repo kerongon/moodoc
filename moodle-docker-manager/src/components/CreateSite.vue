@@ -1,32 +1,35 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 max-w-2xl mx-auto my-8 p-6 dark:text-gray-100">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-6 p-6 dark:text-gray-100">
     
-    <!-- Header with App Icon -->
-    <div class="flex items-center justify-center mb-6">
-      <div class="bg-blue-600 rounded-lg p-2 mr-4">
+    <!-- Header with App Icon - macOS style -->
+    <div class="flex items-center mb-8">
+      <div class="bg-blue-600 rounded-lg p-2 mr-4 shadow-sm">
         <PhSquare class="text-white w-8 h-8" weight="fill" />
       </div>
-      <h2 class="text-xl font-semibold">Create a New Moodle Site</h2>
+      <div>
+        <h2 class="text-xl font-medium text-gray-900 dark:text-gray-100">Create a New Moodle Site</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Configure and set up a new Moodle development environment</p>
+      </div>
     </div>
     
-    <!-- Tab Navigation -->
-    <div class="flex bg-gray-100 rounded-lg p-1 mb-6">
+    <!-- Tab Navigation - macOS style segmented control -->
+    <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 mb-6 border border-gray-200 dark:border-gray-600 macos-tab-container">
       <button 
-        class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150" 
+        class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'standard'"
-        :class="activeTab === 'standard' ? 'bg-blue-600 rounded-md shadow text-white' : 'text-gray-500 hover:text-gray-700'">
+        :class="activeTab === 'standard' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Standard
       </button>
       <button 
-        class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150" 
+        class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'custom'"
-        :class="activeTab === 'custom' ? 'bg-blue-600 rounded-md shadow text-white' : 'text-gray-500 hover:text-gray-700'">
+        :class="activeTab === 'custom' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Custom
       </button>
       <button 
-        class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150" 
+        class="flex-1 py-2 px-4 text-sm font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'advanced'"
-        :class="activeTab === 'advanced' ? 'bg-blue-600 rounded-md shadow text-white' : 'text-gray-500 hover:text-gray-700'">
+        :class="activeTab === 'advanced' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Advanced
       </button>
     </div>
@@ -136,21 +139,21 @@
                   type="number" 
                   v-model="dbPort" 
                   :placeholder="`${currentDbPortRange}`" 
-                  :class="['macos-input h-9 py-1.5 text-sm pr-7', 
+                  :class="['macos-input h-9 py-1.5 text-sm pr-10', 
                     { 
-                      'border-red-500': dbPort && !isDbPortInRange,
-                      'border-green-500': dbPort && isDbPortInRange && isPortAvailable(dbPort)
+                      'border-red-500 focus:ring-red-500 focus:border-red-500': dbPort && !isDbPortInRange,
+                      'border-green-500 focus:ring-green-500 focus:border-green-500': dbPort && isDbPortInRange && isPortAvailable(dbPort)
                     }
                   ]"
                 />
                 <button 
                   type="button" 
                   @click="generateDbPort" 
-                  class="absolute right-8 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-colors duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-all duration-150 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
                   title="Generate random port"
                   aria-label="Generate random database port"
                 >
-                  <!-- Refresh/recycle icon for generating a new port -->
+                  <!-- Refresh/recycle icon with improved styling -->
                   <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                   </svg>
@@ -194,21 +197,21 @@
                   type="number" 
                   v-model="webPort" 
                   :placeholder="`${currentWebPortRange}`" 
-                  :class="['macos-input h-9 py-1.5 text-sm pr-7', 
+                  :class="['macos-input h-9 py-1.5 text-sm pr-10', 
                     { 
-                      'border-red-500': webPort && !isWebPortInRange,
-                      'border-green-500': webPort && isWebPortInRange && isPortAvailable(webPort)
+                      'border-red-500 focus:ring-red-500 focus:border-red-500': webPort && !isWebPortInRange,
+                      'border-green-500 focus:ring-green-500 focus:border-green-500': webPort && isWebPortInRange && isPortAvailable(webPort)
                     }
                   ]"
                 />
                 <button 
                   type="button" 
                   @click="generateWebPort" 
-                  class="absolute right-8 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-colors duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-all duration-150 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
                   title="Generate random port"
                   aria-label="Generate random web server port"
                 >
-                  <!-- Refresh/recycle icon for generating a new port -->
+                  <!-- Refresh/recycle icon with improved styling -->
                   <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                   </svg>
@@ -230,7 +233,7 @@
           </div>
         </div>
         
-        <!-- Site Directory -->
+        <!-- Site Directory - macOS Finder style -->
         <div class="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
           <label class="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1 flex items-center">
             <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -238,18 +241,18 @@
             </svg>
             Site Directory
           </label>
-          <div class="flex">
+          <div class="flex shadow-sm">
             <input 
               type="text" 
               v-model="siteDirectory" 
               :placeholder="useDefaultDirectory ? 'Using default directory' : ''" 
-              class="macos-input h-9 py-1.5 rounded-r-none" 
+              class="macos-input h-9 py-1.5 rounded-r-none focus:z-10 font-mono text-sm" 
               readonly 
             />
             <button 
               type="button" 
               @click="selectCustomDirectory" 
-              class="px-3 border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 rounded-r-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500"
+              class="px-4 border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 rounded-r-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 transition-all duration-150 font-medium text-sm"
             >
               Browse...
             </button>
@@ -662,24 +665,24 @@
         </ul>
       </div>
       
-      <!-- Action Buttons -->
-      <div class="flex justify-end space-x-3 mt-4">
+      <!-- Action Buttons - macOS style -->
+      <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
         <button 
           type="button" 
-          class="px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors" 
+          class="px-4 py-1.5 text-sm font-medium bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200 shadow-sm" 
           @click="$router.push('/')"
         >
           Cancel
         </button>
         <button 
           type="submit" 
-          class="px-3 py-1.5 text-xs font-medium bg-blue-600 border border-blue-700 rounded-md text-white hover:bg-blue-700 transition-colors relative"
-          :class="{ 'opacity-50 cursor-not-allowed': !formIsValid || formErrors.length > 0 || createSiteInProgress }"
+          class="px-4 py-1.5 text-sm font-medium bg-blue-600 border border-blue-700 rounded-md text-white hover:bg-blue-700 transition-all duration-200 shadow-sm relative"
+          :class="{ 'opacity-50 cursor-not-allowed hover:bg-blue-600': !formIsValid || formErrors.length > 0 || createSiteInProgress }"
           :disabled="!formIsValid || formErrors.length > 0 || createSiteInProgress"
         >
           <span v-if="!createSiteInProgress">Create Site</span>
           <span v-else class="flex items-center">
-            <svg class="animate-spin -ml-0.5 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -1326,5 +1329,56 @@ h3.text-sm {
   margin-top: 0;
   padding: 0;
   overflow: hidden;
+}
+
+/* Hide scrollbar when not needed */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Hide scrollbar when not scrolling */
+::-webkit-scrollbar-thumb {
+  transition: background 0.3s;
+}
+
+/* macOS style animations */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.pulse-animation {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Add macOS-style smooth focus transitions */
+input:focus, select:focus, button:focus {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Responsive tweaks for full-width layout */
+@media (min-width: 1024px) {
+  .form-row {
+    @apply grid grid-cols-2 gap-4;
+  }
 }
 </style>

@@ -1,11 +1,14 @@
 <template>
-  <div class="bg-white rounded-lg shadow-md border border-gray-200 max-w-4xl mx-auto my-8 p-6">
-    <!-- Header -->
-    <div class="flex items-center justify-center mb-6">
-      <div class="bg-blue-600 rounded-lg p-2 mr-4">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-6 p-6 dark:text-gray-100">
+    <!-- Header - macOS style -->
+    <div class="flex items-center mb-8">
+      <div class="bg-blue-600 rounded-lg p-2 mr-4 shadow-sm">
         <PhList class="text-white w-8 h-8" weight="fill" />
       </div>
-      <h2 class="text-xl font-semibold text-gray-900">Configured Sites</h2>
+      <div>
+        <h2 class="text-xl font-medium text-gray-900 dark:text-gray-100">Configured Sites</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
+      </div>
     </div>
     <div class="site-list">
     <div v-if="loading" class="loading">
