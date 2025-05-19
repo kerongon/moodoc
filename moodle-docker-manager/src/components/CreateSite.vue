@@ -131,12 +131,12 @@
                   <option v-for="type in dbTypes" :key="type" :value="type">{{ type }}</option>
                 </select>
               </div>
-              <div class="w-1/3 relative">
+              <div class="w-1/3 relative flex items-center">
                 <input 
                   type="number" 
                   v-model="dbPort" 
                   :placeholder="`${currentDbPortRange}`" 
-                  :class="['macos-input h-9 py-1.5 text-sm pl-9 pr-6', 
+                  :class="['macos-input h-9 py-1.5 text-sm pr-7', 
                     { 
                       'border-red-500': dbPort && !isDbPortInRange,
                       'border-green-500': dbPort && isDbPortInRange && isPortAvailable(dbPort)
@@ -146,7 +146,7 @@
                 <button 
                   type="button" 
                   @click="generateDbPort" 
-                  class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
+                  class="absolute right-8 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-colors duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
                   title="Generate random port"
                 >
                   <!-- Dice icon for random generation -->
@@ -188,12 +188,12 @@
                   <option>Apache</option>
                 </select>
               </div>
-              <div class="w-1/3 relative">
+              <div class="w-1/3 relative flex items-center">
                 <input 
                   type="number" 
                   v-model="webPort" 
                   :placeholder="`${currentWebPortRange}`" 
-                  :class="['macos-input h-9 py-1.5 text-sm pl-9 pr-6', 
+                  :class="['macos-input h-9 py-1.5 text-sm pr-7', 
                     { 
                       'border-red-500': webPort && !isWebPortInRange,
                       'border-green-500': webPort && isWebPortInRange && isPortAvailable(webPort)
@@ -203,7 +203,7 @@
                 <button 
                   type="button" 
                   @click="generateWebPort" 
-                  class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
+                  class="absolute right-8 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-colors duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
                   title="Generate random port"
                 >
                   <!-- Dice icon for random generation -->
