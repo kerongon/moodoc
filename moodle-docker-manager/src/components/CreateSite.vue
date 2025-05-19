@@ -7,21 +7,27 @@
         <input type="text" v-model="siteName" required />
       </div>
       <div>
+        <label for="moodleBranch">Moodle Branch Version:</label>
+        <select v-model="moodleBranch" @change="updatePHPVersion">
+          <option v-for="branch in moodleBranches" :key="branch" :value="branch">{{ branch }}</option>
+        </select>
+        <small v-if="recommendedPhpVersion" class="version-hint">
+          Recommended PHP version: {{ recommendedPhpVersion }}
+        </small>
+      </div>
+      <div>
         <label for="phpVersion">PHP Version:</label>
         <select v-model="phpVersion">
           <option v-for="version in phpVersions" :key="version" :value="version">{{ version }}</option>
         </select>
+        <small v-if="isPhpVersionCompatible === false" class="version-warning">
+          Warning: This PHP version may not be compatible with the selected Moodle branch
+        </small>
       </div>
       <div>
         <label for="dbType">Database Type:</label>
         <select v-model="dbType">
           <option v-for="type in dbTypes" :key="type" :value="type">{{ type }}</option>
-        </select>
-      </div>
-      <div>
-        <label for="moodleBranch">Moodle Branch Version:</label>
-        <select v-model="moodleBranch">
-          <option v-for="branch in moodleBranches" :key="branch" :value="branch">{{ branch }}</option>
         </select>
       </div>
       <div>
@@ -96,20 +102,31 @@ export default {
   emits: ['site-created'],      data() {
     return {
       siteName: '',
-      phpVersion: '8.0',
+      phpVersion: '8.2',
       dbType: 'MySQL', // Default kept as MySQL
       moodleBranch: 'MOODLE_500_STABLE',
       dbPort: '',
       webPort: '',
       siteDirectory: '',
       useDefaultDirectory: true,
-      useRedis: false, // Default to false for Redis support
+      useRedis: true, // Default to true for Redis support
       phpVersions: ['8.4', '8.3', '8.2', '8.1', '8.0', '7.4', '7.3', '7.2', '7.1', '7.0', '5.6'],
       dbTypes: ['MySQL', 'MariaDB', 'PostgreSQL', 'Microsoft SQL Server', 'Oracle XE'],
       moodleBranches: ['MOODLE_500_STABLE', 'MOODLE_405_STABLE', 'MOODLE_404_STABLE', 'MOODLE_403_STABLE', 'MOODLE_402_STABLE', 'MOODLE_401_STABLE'],
       logs: [],
       dockerInstalled: false,
-      settingsStore: useSettingsStore()
+      settingsStore: useSettingsStore(),
+      recommendedPhpVersion: '8.2',
+      isPhpVersionCompatible: true,
+      // Mapping of Moodle branches to PHP versions
+      moodlePhpVersionMap: {
+        'MOODLE_500_STABLE': { recommended: '8.2', compatible: ['8.2', '8.3', '8.4'] },
+        'MOODLE_405_STABLE': { recommended: '8.3', compatible: ['8.1', '8.2', '8.3'] },
+        'MOODLE_404_STABLE': { recommended: '8.3', compatible: ['8.1', '8.2', '8.3'] },
+        'MOODLE_403_STABLE': { recommended: '8.2', compatible: ['8.0', '8.1', '8.2'] },
+        'MOODLE_402_STABLE': { recommended: '8.2', compatible: ['8.0', '8.1', '8.2'] },
+        'MOODLE_401_STABLE': { recommended: '8.1', compatible: ['7.4', '8.0', '8.1'] }
+      }
     };
   },
   computed: {
@@ -119,8 +136,28 @@ export default {
   },
   mounted() {
     this.checkDockerStatus();
+    this.updatePHPVersion(); // Set initial PHP version based on default Moodle branch
   },
   methods: {
+    updatePHPVersion() {
+      const branchMap = this.moodlePhpVersionMap[this.moodleBranch];
+      
+      if (branchMap) {
+        // Set the recommended PHP version
+        this.recommendedPhpVersion = branchMap.recommended;
+        
+        // Check if current PHP version is compatible
+        this.isPhpVersionCompatible = branchMap.compatible.includes(this.phpVersion);
+        
+        // Auto-select the recommended PHP version
+        this.phpVersion = branchMap.recommended;
+      } else {
+        // If no mapping exists, set a default and mark as potentially incompatible
+        this.recommendedPhpVersion = '8.0';
+        this.isPhpVersionCompatible = false;
+      }
+    },
+    
     async checkDockerStatus() {
       try {
         const dockerInstalled = await invoke('check_docker_installed');
@@ -369,5 +406,20 @@ input:checked + .toggle-label {
 
 input:checked + .toggle-label:before {
   transform: translateX(14px);
+}
+
+.version-hint {
+  display: block;
+  color: #4a5568;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.version-warning {
+  display: block;
+  color: #e53e3e;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
 }
 </style>
