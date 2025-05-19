@@ -1,4 +1,4 @@
-import { reactive } from 'vue';
+import { defineStore } from 'pinia';
 
 interface Site {
   id: string;
@@ -11,44 +11,41 @@ interface Site {
   status: 'running' | 'stopped';
 }
 
-const state = reactive({
-  sites: [] as Site[],
+export const useSitesStore = defineStore('sites', {
+  state: () => ({
+    sites: [] as Site[]
+  }),
+  
+  actions: {
+    addSite(site: Site) {
+      this.sites.push(site);
+    },
+    
+    removeSite(siteId: string) {
+      this.sites = this.sites.filter(site => site.id !== siteId);
+    },
+    
+    updateSite(updatedSite: Site) {
+      const index = this.sites.findIndex(site => site.id === updatedSite.id);
+      if (index !== -1) {
+        this.sites[index] = updatedSite;
+      }
+    },
+    
+    startSite(siteId: string) {
+      const site = this.sites.find(site => site.id === siteId);
+      if (site) {
+        site.status = 'running';
+      }
+    },
+    
+    stopSite(siteId: string) {
+      const site = this.sites.find(site => site.id === siteId);
+      if (site) {
+        site.status = 'stopped';
+      }
+    }
+  }
 });
 
-const addSite = (site: Site) => {
-  state.sites.push(site);
-};
-
-const removeSite = (siteId: string) => {
-  state.sites = state.sites.filter(site => site.id !== siteId);
-};
-
-const updateSite = (updatedSite: Site) => {
-  const index = state.sites.findIndex(site => site.id === updatedSite.id);
-  if (index !== -1) {
-    state.sites[index] = updatedSite;
-  }
-};
-
-const startSite = (siteId: string) => {
-  const site = state.sites.find(site => site.id === siteId);
-  if (site) {
-    site.status = 'running';
-  }
-};
-
-const stopSite = (siteId: string) => {
-  const site = state.sites.find(site => site.id === siteId);
-  if (site) {
-    site.status = 'stopped';
-  }
-};
-
-export default {
-  state,
-  addSite,
-  removeSite,
-  updateSite,
-  startSite,
-  stopSite,
-};
+export default useSitesStore;

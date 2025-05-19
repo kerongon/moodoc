@@ -46,6 +46,7 @@
 <script>
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'SiteList',
@@ -53,6 +54,7 @@ export default {
     const sites = ref([]);
     const loading = ref(true);
     const error = ref(null);
+    const router = useRouter();
 
     // Load sites from Rust backend
     const loadSites = async () => {
@@ -82,51 +84,156 @@ export default {
         loading.value = false;
       }
     };
+
+    // Stop a site
+    const stopSite = async (name) => {
+      try {
+        loading.value = true;
+        await invoke('stop_site', { name });
+        await loadSites(); // Refresh site list
+      } catch (err) {
+        console.error(`Failed to stop site ${name}:`, err);
+        alert(`Failed to stop site: ${err}`);
+      } finally {
+        loading.value = false;
+      }
     };
 
-    const removeSite = (id: number) => {
-      store.removeSite(id);
+    // Remove a site
+    const removeSite = async (name) => {
+      if (confirm(`Are you sure you want to remove the site '${name}'? This will delete all containers and data.`)) {
+        try {
+          loading.value = true;
+          await invoke('remove_site', { name });
+          await loadSites(); // Refresh site list
+        } catch (err) {
+          console.error(`Failed to remove site ${name}:`, err);
+          alert(`Failed to remove site: ${err}`);
+        } finally {
+          loading.value = false;
+        }
+      }
     };
 
-    const editSite = (id: number) => {
-      store.editSite(id);
+    // View logs for a site
+    const viewLogs = (name) => {
+      router.push({ name: 'SiteLogs', params: { siteName: name } });
     };
+
+    onMounted(() => {
+      loadSites();
+    });
 
     return {
       sites,
+      loading,
+      error,
       startSite,
       stopSite,
       removeSite,
-      editSite,
+      viewLogs
     };
-  },
-});
+  }
+};
 </script>
 
 <style scoped>
 .site-list {
-  margin: 20px;
+  width: 100%;
+  max-width: 800px;
+  margin: auto;
+}
+
+.site-list h2 {
+  margin-bottom: 20px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 20px;
 }
 
 th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
 }
 
 th {
   background-color: #f2f2f2;
+  font-weight: bold;
 }
 
-.running {
-  color: green;
+.actions {
+  display: flex;
+  gap: 8px;
 }
 
-.stopped {
-  color: red;
+.action-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.action-button.start {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.action-button.stop {
+  background-color: #f44336;
+  color: white;
+}
+
+.action-button.logs {
+  background-color: #2196F3;
+  color: white;
+}
+
+.action-button.remove {
+  background-color: #ff9800;
+  color: white;
+}
+
+.status-running {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.status-stopped {
+  color: #f44336;
+}
+
+.loading, .error, .no-sites {
+  padding: 20px;
+  text-align: center;
+  border-radius: 4px;
+  margin-top: 20px;
+}
+
+.loading {
+  background-color: #e3f2fd;
+}
+
+.error {
+  background-color: #ffebee;
+  color: #f44336;
+}
+
+.no-sites {
+  background-color: #f5f5f5;
+}
+
+.create-button {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
 }
 </style>
