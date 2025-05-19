@@ -588,10 +588,45 @@
     
     <!-- Logs -->
     <div v-if="logs.length" class="mt-6 border-t border-gray-200 pt-4">
-      <h3 class="text-sm font-medium text-gray-700 mb-2">Logs:</h3>
-      <div class="bg-gray-100 rounded-md p-3 font-mono text-xs overflow-auto max-h-40">
-        <div v-for="(log, i) in logs" :key="i" class="pb-1">{{ log }}</div>
-      </div>
+      <button 
+        type="button"
+        @click="logsExpanded = !logsExpanded"
+        class="w-full flex items-center justify-between py-2 px-3 rounded bg-gray-50 hover:bg-gray-100 transition-colors duration-150"
+      >
+        <div class="flex items-center">
+          <h3 class="text-sm font-medium text-gray-700">Logs</h3>
+          <span class="ml-2 text-xs text-gray-500">({{ logs.length }} entries)</span>
+          <!-- Show a badge for latest logs -->
+          <span v-if="logs.length > 0 && !logsExpanded" class="ml-2 inline-block bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+            {{ logs[logs.length-1].substring(0, 30) }}{{ logs[logs.length-1].length > 30 ? '...' : '' }}
+          </span>
+        </div>
+        <div class="flex items-center text-gray-500 text-xs">
+          {{ logsExpanded ? 'Hide details' : 'Show details' }}
+          <svg 
+            class="ml-1 w-4 h-4 transform transition-transform duration-200" 
+            :class="logsExpanded ? 'rotate-180' : ''"
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 20 20" 
+            fill="currentColor"
+          >
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </div>
+      </button>
+      <transition
+        name="collapse"
+        @enter="el => el.style.height = el.scrollHeight + 'px'"
+        @leave="el => el.style.height = '0'"
+      >
+        <div 
+          v-if="logsExpanded"
+          class="bg-gray-100 rounded-md p-3 font-mono text-xs transition-all duration-300 overflow-auto"
+          style="max-height: 200px;"
+        >
+          <div v-for="(log, i) in logs" :key="i" class="pb-1 whitespace-pre-wrap break-words">{{ log }}</div>
+        </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -623,6 +658,7 @@ export default {
       phpVersions: ['8.4', '8.3', '8.2', '8.1', '8.0', '7.4', '7.3', '7.2', '7.1', '7.0', '5.6'],
       dbTypes: ['MySQL', 'MariaDB', 'PostgreSQL', 'Microsoft SQL Server', 'Oracle XE'],
       moodleBranches: ['MOODLE_500_STABLE', 'MOODLE_405_STABLE', 'MOODLE_404_STABLE', 'MOODLE_403_STABLE', 'MOODLE_402_STABLE', 'MOODLE_401_STABLE'],
+      logsExpanded: false, // Controls the visibility of the logs section
       logs: [],
       dockerInstalled: false,
       settingsStore: useSettingsStore(),
@@ -825,6 +861,12 @@ export default {
       }
     },
     
+    // Helper method to add log messages without auto-expanding logs
+    addLogMessage(message) {
+      this.logs.push(message);
+      // Logs will remain collapsed by default
+    },
+    
     async checkDockerStatus() {
       try {
         const dockerInstalled = await invoke('check_docker_installed');
@@ -833,12 +875,12 @@ export default {
         this.dockerInstalled = dockerInstalled && dockerRunning;
         
         if (!this.dockerInstalled) {
-          this.logs.push('Docker is not installed or not running. Please install Docker and try again.');
+          this.addLogMessage('Docker is not installed or not running. Please install Docker and try again.');
         } else {
-          this.logs.push('Docker is installed and running.');
+          this.addLogMessage('Docker is installed and running.');
         }
       } catch (error) {
-        this.logs.push(`Error checking Docker status: ${error}`);
+        this.addLogMessage(`Error checking Docker status: ${error}`);
       }
     },
     async selectCustomDirectory() {
@@ -854,7 +896,7 @@ export default {
           this.useDefaultDirectory = false;
         }
       } catch (error) {
-        this.logs.push(`Error selecting directory: ${error}`);
+        this.addLogMessage(`Error selecting directory: ${error}`);
       }
     },
     
@@ -879,39 +921,39 @@ export default {
     
     async createSite() {
       if (!this.dockerInstalled) {
-        this.logs.push('Cannot create site: Docker is not installed or not running.');
+        this.addLogMessage('Cannot create site: Docker is not installed or not running.');
         return;
       }
 
       if (!this.name) {
-        this.logs.push('Please enter a site name')
-        return
+        this.addLogMessage('Please enter a site name');
+        return;
       }
 
       if (!this.moodleFolder) {
-        this.logs.push('Please select a folder for Moodle')
-        return
+        this.addLogMessage('Please select a folder for Moodle');
+        return;
       }
 
       if (!this.version && this.activeTab === 'standard') {
-        this.logs.push('Please select a Moodle version')
-        return
+        this.addLogMessage('Please select a Moodle version');
+        return;
       }
 
       // Validate ports if specified
       if (this.webPort && !this.isWebPortInRange) {
-        this.logs.push(`Web port ${this.webPort} is outside the recommended range (${this.currentWebPortRange})`)
-        return
+        this.addLogMessage(`Web port ${this.webPort} is outside the recommended range (${this.currentWebPortRange})`);
+        return;
       }
       
       if (this.dbPort && !this.isDbPortInRange) {
-        this.logs.push(`DB port ${this.dbPort} is outside the recommended range for ${this.dbType} (${this.currentDbPortRange})`)
-        return
+        this.addLogMessage(`DB port ${this.dbPort} is outside the recommended range for ${this.dbType} (${this.currentDbPortRange})`);
+        return;
       }
 
       // Start the creation process
-      this.createSiteInProgress = true
-      this.logs.push(`Creating site ${this.name}...`)
+      this.createSiteInProgress = true;
+      this.addLogMessage(`Creating site ${this.name}...`);
 
       try {
         // Compile the settings from all tabs
@@ -938,28 +980,28 @@ export default {
 
         // If using standard tab, use the selected version
         if (this.activeTab === 'standard') {
-          siteConfig.version = this.version
+          siteConfig.version = this.version;
           // Reset custom branch
-          siteConfig.customBranch = null
+          siteConfig.customBranch = null;
         }
 
         // Call your createSite function with this configuration
         // This is where you would integrate with your existing functionality
-        this.logs.push('Site configuration prepared, starting Docker containers...')
+        this.addLogMessage('Site configuration prepared, starting Docker containers...');
         
         // Example of how you might call the backend
         // const result = await window.__TAURI__.invoke('create_site', { config: siteConfig })
         
-        this.logs.push('Site created successfully!')
+        this.addLogMessage('Site created successfully!');
         // Add additional logging about the site being created
-        this.logs.push(`Site URL: http://localhost:${siteConfig.webPort}`)
+        this.addLogMessage(`Site URL: http://localhost:${siteConfig.webPort}`);
         
         // Reset the form
         // this.resetForm()
       } catch (error) {
-        this.logs.push(`Error creating site: ${error}`)
+        this.addLogMessage(`Error creating site: ${error}`);
       } finally {
-        this.createSiteInProgress = false
+        this.createSiteInProgress = false;
       }
     },
     
@@ -1037,7 +1079,7 @@ export default {
       // In a real implementation, this would detect the docker-compose path
       // For now, just set a default value
       this.dockerConfig.composePath = '/usr/local/bin/docker-compose';
-      this.logs.push('Docker Compose path detected: /usr/local/bin/docker-compose');
+      this.addLogMessage('Docker Compose path detected: /usr/local/bin/docker-compose');
     },
     
     // Validate a Git URL
@@ -1094,5 +1136,22 @@ export default {
   .macos-traffic-lights {
     display: none;
   }
+}
+
+/* Transition styles for collapsible logs */
+.collapse-enter-active,
+.collapse-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+  max-height: 500px; /* Increased maximum height to ensure all content is visible */
+}
+
+.collapse-enter-from,
+.collapse-leave-to {
+  height: 0 !important;
+  opacity: 0;
+  margin-top: 0;
+  padding: 0;
+  overflow: hidden;
 }
 </style>
