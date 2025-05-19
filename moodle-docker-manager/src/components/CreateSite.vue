@@ -26,17 +26,39 @@
       </div>
       <div>
         <label for="dbType">Database Type:</label>
-        <select v-model="dbType">
+        <select v-model="dbType" @change="updateDbType">
           <option v-for="type in dbTypes" :key="type" :value="type">{{ type }}</option>
         </select>
       </div>
       <div>
         <label for="dbPort">DB Port:</label>
-        <input type="number" v-model="dbPort" placeholder="Auto-generated if left blank" />
+        <div class="port-input-group">
+          <input 
+            type="number" 
+            v-model="dbPort" 
+            :placeholder="`Auto-generated in range ${currentDbPortRange}`" 
+            :class="{ 'port-out-of-range': dbPort && !isDbPortInRange }"
+          />
+          <button type="button" @click="generateDbPort" class="generate-button">Generate</button>
+        </div>
+        <small v-if="dbPort && !isDbPortInRange" class="port-warning">
+          Port is outside the recommended range ({{ currentDbPortRange }}) for {{ dbType }}
+        </small>
       </div>
       <div>
         <label for="webPort">Web Port:</label>
-        <input type="number" v-model="webPort" placeholder="Auto-generated if left blank" />
+        <div class="port-input-group">
+          <input 
+            type="number" 
+            v-model="webPort" 
+            :placeholder="`Auto-generated in range ${currentWebPortRange}`" 
+            :class="{ 'port-out-of-range': webPort && !isWebPortInRange }"
+          />
+          <button type="button" @click="generateWebPort" class="generate-button">Generate</button>
+        </div>
+        <small v-if="webPort && !isWebPortInRange" class="port-warning">
+          Port is outside the recommended range ({{ currentWebPortRange }})
+        </small>
       </div>
       <div>
         <label for="siteDirectory">Site Directory:</label>
@@ -118,6 +140,17 @@ export default {
       settingsStore: useSettingsStore(),
       recommendedPhpVersion: '8.2',
       isPhpVersionCompatible: true,
+      // Port ranges for different services
+      portRanges: {
+        web: { min: 8000, max: 8999 },
+        db: {
+          'MySQL': { min: 3306, max: 3399 },
+          'MariaDB': { min: 3400, max: 3499 },
+          'PostgreSQL': { min: 5432, max: 5499 },
+          'Microsoft SQL Server': { min: 1433, max: 1499 },
+          'Oracle XE': { min: 1521, max: 1599 }
+        }
+      },
       // Mapping of Moodle branches to PHP versions
       moodlePhpVersionMap: {
         'MOODLE_500_STABLE': { recommended: '8.2', compatible: ['8.2', '8.3', '8.4'] },
@@ -132,6 +165,28 @@ export default {
   computed: {
     defaultDirectory() {
       return this.settingsStore.sitesRootDirectory;
+    },
+    
+    currentWebPortRange() {
+      return `${this.portRanges.web.min}-${this.portRanges.web.max}`;
+    },
+    
+    currentDbPortRange() {
+      const dbRange = this.portRanges.db[this.dbType] || { min: 0, max: 0 };
+      return `${dbRange.min}-${dbRange.max}`;
+    },
+    
+    isWebPortInRange() {
+      if (!this.webPort) return true; // Empty is valid (will auto-generate)
+      const port = parseInt(this.webPort);
+      return port >= this.portRanges.web.min && port <= this.portRanges.web.max;
+    },
+    
+    isDbPortInRange() {
+      if (!this.dbPort) return true; // Empty is valid (will auto-generate)
+      const port = parseInt(this.dbPort);
+      const dbRange = this.portRanges.db[this.dbType] || { min: 0, max: 0 };
+      return port >= dbRange.min && port <= dbRange.max;
     }
   },
   mounted() {
@@ -155,6 +210,33 @@ export default {
         // If no mapping exists, set a default and mark as potentially incompatible
         this.recommendedPhpVersion = '8.0';
         this.isPhpVersionCompatible = false;
+      }
+    },
+    
+    generateWebPort() {
+      // Generate a random port within the web port range
+      const min = this.portRanges.web.min;
+      const max = this.portRanges.web.max;
+      this.webPort = Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+    
+    generateDbPort() {
+      // Generate a random port within the database-specific range
+      const dbRange = this.portRanges.db[this.dbType] || { min: 3306, max: 3399 };
+      const min = dbRange.min;
+      const max = dbRange.max;
+      this.dbPort = Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+    
+    // When db type changes, update the db port placeholder and clear the value if out of range
+    updateDbType() {
+      if (this.dbPort) {
+        const port = parseInt(this.dbPort);
+        const dbRange = this.portRanges.db[this.dbType] || { min: 0, max: 0 };
+        if (port < dbRange.min || port > dbRange.max) {
+          // Clear the port if it's out of the new range
+          this.dbPort = '';
+        }
       }
     },
     
@@ -213,6 +295,17 @@ export default {
     async createSite() {
       if (!this.dockerInstalled) {
         this.logs.push('Cannot create site: Docker is not installed or not running.');
+        return;
+      }
+
+      // Validate ports if specified
+      if (this.webPort && !this.isWebPortInRange) {
+        this.logs.push(`Web port ${this.webPort} is outside the recommended range (${this.currentWebPortRange})`);
+        return;
+      }
+      
+      if (this.dbPort && !this.isDbPortInRange) {
+        this.logs.push(`DB port ${this.dbPort} is outside the recommended range for ${this.dbType} (${this.currentDbPortRange})`);
         return;
       }
 
@@ -421,5 +514,35 @@ input:checked + .toggle-label:before {
   font-size: 12px;
   margin-top: 4px;
   font-weight: 500;
+}
+
+.port-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.port-input-group input {
+  flex: 1;
+}
+
+.generate-button {
+  padding: 8px 15px;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #333;
+  font-size: 14px;
+}
+
+.port-warning {
+  display: block;
+  color: #e53e3e;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.port-out-of-range {
+  border-color: #e53e3e;
+  background-color: #fff5f5;
 }
 </style>
