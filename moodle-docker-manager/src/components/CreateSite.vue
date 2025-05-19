@@ -1,5 +1,5 @@
 <template>
-  <div class="macos-window max-w-2xl mx-auto my-8 p-6">
+  <div class="bg-white rounded-lg shadow-md border border-gray-200 max-w-2xl mx-auto my-8 p-6">
     
     <!-- Header with App Icon -->
     <div class="flex items-center justify-center mb-6">

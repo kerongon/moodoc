@@ -9,9 +9,10 @@
     "serve": "vite preview",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "css:build": "postcss src/index.css -o public/build.css"
+    "css:build": "npx postcss src/index.css -o public/build.css"
   },
   "dependencies": {
+    "@phosphor-icons/vue": "^2.2.1",
     "@tauri-apps/api": "^1.4.0",
     "pinia": "^2.3.1",
     "vue": "^3.2.0",

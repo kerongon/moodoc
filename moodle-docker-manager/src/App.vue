@@ -30,12 +30,9 @@ export default defineComponent({
 </script>
 
 <style>
+/* The Tailwind classes will be applied from index.css */
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  @apply font-sans antialiased text-gray-800 bg-gray-50;
+  min-height: 100vh;
 }
 </style>

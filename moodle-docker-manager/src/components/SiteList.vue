@@ -1,5 +1,5 @@
 <template>
-  <div class="macos-window max-w-2xl mx-auto my-8 p-6">
+  <div class="bg-white rounded-lg shadow-md border border-gray-200 max-w-4xl mx-auto my-8 p-6">
     <!-- Header -->
     <div class="flex items-center justify-center mb-6">
       <div class="bg-blue-600 rounded-lg p-2 mr-4">
@@ -59,9 +59,13 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { PhList } from '@phosphor-icons/vue';
 
 export default {
   name: 'SiteList',
+  components: {
+    PhList
+  },
   setup(props, { expose }) {
     const sites = ref([]);
     const loading = ref(true);
@@ -206,26 +210,44 @@ th {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
 }
 
 .action-button.start {
-  background-color: #4CAF50;
+  background-color: #10B981;
   color: white;
+}
+
+.action-button.start:hover {
+  background-color: #059669;
 }
 
 .action-button.stop {
-  background-color: #f44336;
+  background-color: #EF4444;
   color: white;
+}
+
+.action-button.stop:hover {
+  background-color: #DC2626;
 }
 
 .action-button.logs {
-  background-color: #2196F3;
+  background-color: #3B82F6;
   color: white;
 }
 
+.action-button.logs:hover {
+  background-color: #2563EB;
+}
+
 .action-button.remove {
-  background-color: #ff9800;
+  background-color: #F59E0B;
   color: white;
+}
+
+.action-button.remove:hover {
+  background-color: #D97706;
 }
 
 .status-running {
