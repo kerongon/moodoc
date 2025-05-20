@@ -11,6 +11,27 @@
       </div>
     </div>
 
+    <!-- Success message notification -->
+    <div v-if="showSuccessMessage" class="mb-4 p-3 bg-green-100 border border-green-200 rounded-md">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-green-800">{{ successMessage }}</p>
+        </div>
+        <div class="ml-auto pl-3">
+          <button @click="showSuccessMessage = false" class="inline-flex text-green-500 hover:text-green-700">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div v-if="loading" class="loading text-xs">
       <div class="flex items-center justify-center space-x-2">
         <div class="h-4 w-4 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.0s"></div>
@@ -20,7 +41,7 @@
       <p class="text-center mt-2">{{ loadingMessage }}</p>
     </div>
     <div v-else-if="error">
-      <p class="error text-xs text-red-500">{{ error }}</p>
+      <div class="error text-xs text-red-500 p-3 bg-red-50 border border-red-100 rounded-md overflow-auto max-h-60" v-html="error"></div>
     </div>
     <div v-else>
       <!-- Actions -->
@@ -143,9 +164,13 @@ export default {
       loading: false,
       isProcessing: false,
       error: null,
-      loadingMessage: 'Loading backups...',
       showRestoreModal: false,
-      selectedBackupTimestamp: null
+      selectedBackupTimestamp: null,
+      confirmingDeleteTimestamp: null,
+      showDeleteConfirm: false,
+      loadingMessage: 'Loading backups...',
+      showSuccessMessage: false,
+      successMessage: '',
     };
   },
   methods: {
@@ -169,7 +194,7 @@ export default {
     async createBackup() {
       this.isProcessing = true;
       this.loading = true;
-      this.loadingMessage = 'Creating backup...';
+      this.loadingMessage = 'Creating backup... This might take a few minutes depending on your site size';
       this.error = null;
       
       try {
@@ -178,10 +203,22 @@ export default {
         });
         
         console.log(result);
+        this.showSuccessMessage = true;
+        this.successMessage = result;
+        setTimeout(() => {
+          this.showSuccessMessage = false;
+        }, 5000);
         await this.refreshBackups();
       } catch (err) {
-        this.error = `Failed to create backup: ${err}`;
-        console.error(err);
+        const errorMsg = String(err);
+        console.error(`Backup error:`, errorMsg);
+        
+        // Format error message for display
+        if (errorMsg.includes("Error output:") || errorMsg.includes("Standard output:")) {
+          this.error = this.formatErrorMessage(errorMsg);
+        } else {
+          this.error = `Failed to create backup: ${errorMsg}`;
+        }
         this.loading = false;
       } finally {
         this.isProcessing = false;
@@ -199,7 +236,7 @@ export default {
       this.isProcessing = true;
       this.showRestoreModal = false;
       this.loading = true;
-      this.loadingMessage = 'Restoring backup...';
+      this.loadingMessage = 'Restoring backup... This might take a few minutes';
       this.error = null;
       
       try {
@@ -209,13 +246,63 @@ export default {
         });
         
         console.log(result);
+        this.showSuccessMessage = true;
+        this.successMessage = result;
+        setTimeout(() => {
+          this.showSuccessMessage = false;
+        }, 5000);
       } catch (err) {
-        this.error = `Failed to restore backup: ${err}`;
+        const errorMsg = String(err);
+        if (errorMsg.includes("Error output:") || errorMsg.includes("Standard output:")) {
+          this.error = this.formatErrorMessage(errorMsg);
+        } else {
+          this.error = `Failed to restore backup: ${errorMsg}`;
+        }
         console.error(err);
       } finally {
         this.loading = false;
         this.isProcessing = false;
       }
+    },
+    
+    // Enhanced error message formatter with better detail extraction
+    formatErrorMessage(errorMsg) {
+      let formattedMsg = 'Operation failed:';
+      
+      // Extract error details
+      const errorOutputMatch = errorMsg.match(/Error output:([\s\S]*?)(?=\n\nStandard output:|$)/);
+      const stdOutputMatch = errorMsg.match(/Standard output:([\s\S]*?)$/);
+      
+      // Extract common database errors
+      const dbErrorMatch = errorMsg.match(/mysqldump: (.*?)$/m) || errorMsg.match(/pg_dumpall: (.*?)$/m);
+      
+      if (dbErrorMatch && dbErrorMatch[1]) {
+        formattedMsg += `\n\n<div class="error-box">
+          <div class="error-title">Database Error Detected:</div>
+          <div class="error-message">${dbErrorMatch[1]}</div>
+          <div class="error-hint">This appears to be a database connection issue. The backup might be missing the database dump.</div>
+        </div>`;
+      }
+      
+      if (errorOutputMatch && errorOutputMatch[1]) {
+        const errorDetails = errorOutputMatch[1].trim();
+        formattedMsg += `\n\n<div class="error-details">
+          <div class="error-title">Error Details:</div>
+          <pre class="error-content">${errorDetails}</pre>
+        </div>`;
+      }
+      
+      if (stdOutputMatch && stdOutputMatch[1]) {
+        const stdOutput = stdOutputMatch[1].trim();
+        if (stdOutput) {
+          formattedMsg += `\n\n<div class="output-details">
+            <div class="output-title">Command Output:</div>
+            <pre class="output-content">${stdOutput}</pre>
+          </div>`;
+        }
+      }
+      
+      return formattedMsg;
     },
     
     formatDate(timestamp) {
@@ -250,17 +337,93 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .site-backups {
   max-width: 800px;
   margin: 0 auto;
 }
 
 .compact-action-button {
-  @apply flex items-center justify-center px-3 py-1 text-xs font-medium rounded-md transition-colors duration-150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.table-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.error-details, .output-details {
+  margin-top: 10px;
+  border: 1px solid #fee2e2;
+  border-radius: 6px;
+  padding: 8px;
+  background-color: #fef2f2;
+}
+
+.error-box {
+  margin-top: 10px;
+  border: 1px solid #f87171;
+  border-radius: 6px;
+  padding: 12px;
+  background-color: #fee2e2;
+}
+
+.error-title, .output-title {
+  font-weight: 500;
+  color: #dc2626;
+  margin-bottom: 4px;
+}
+
+.error-message {
+  font-weight: 500;
+  color: #b91c1c;
+  padding: 6px;
+  background-color: #fecaca;
+  border-radius: 4px;
+  margin: 6px 0;
+}
+
+.error-hint {
+  font-size: 0.7rem;
+  color: #7f1d1d;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.output-title {
+  color: #2563eb;
+}
+
+.error-content, .output-content {
+  font-family: monospace;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 6px;
+  background-color: #fff;
+  border-radius: 4px;
+  border: 1px solid #f3f4f6;
 }
 
 .compact-mini-button {
-  @apply flex items-center justify-center p-1 text-xs font-medium rounded transition-colors duration-150;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.3rem;
+  border-radius: 0.25rem;
+  transition: all 0.15s ease;
 }
 </style>

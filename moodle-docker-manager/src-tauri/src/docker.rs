@@ -1013,27 +1013,50 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
     fs::create_dir_all(&backup_dir)
         .map_err(|e| format!("Failed to create backup directory: {}", e))?;
     
-    // Create the backup script
+    // Create the backup script with support for both MySQL/MariaDB and PostgreSQL
+    let db_type = site.db_type.to_lowercase();
+    let script_path = site.path.to_str().unwrap_or("");
+    let backup_path = backup_dir.to_str().unwrap_or("");
+    let run_status = if is_running { "running" } else { "stopped" };
+    
+    // Use a simplified approach to avoid placeholder mismatch errors
     let backup_script = format!(r#"#!/bin/bash
 set -e
-cd {}
-export COMPOSE_PROJECT_NAME={}
+cd {script_path}
+export COMPOSE_PROJECT_NAME={name}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_DB={db_type}
+export MOODLE_DOCKER_PHP_VERSION={php_version}
+export MOODLE_DOCKER_WEB_PORT={web_port}
 
 # Create backup directory structure
-mkdir -p {}/database
-mkdir -p {}/moodledata
+mkdir -p {backup_path}/database
+mkdir -p {backup_path}/moodledata
 
 echo "Backing up database..."
-# Export database
-if [ "{}" == "running" ]; then
+# Export database based on type
+if [ "{run_status}" == "running" ]; then
     # If running, use docker-compose to export the database
-    ./bin/moodle-docker-compose exec -T db bash -c "mysqldump -u root --password=moodle -h localhost --all-databases" > {}/database/moodle_db.sql
+    if [ "{db_type}" == "pgsql" ] || [ "{db_type}" == "postgres" ] || [ "{db_type}" == "postgresql" ]; then
+        echo "Using PostgreSQL backup command..."
+        ./bin/moodle-docker-compose exec -T db bash -c "PGPASSWORD=moodle pg_dumpall -U postgres" > {backup_path}/database/moodle_db.sql
+    else
+        echo "Using MySQL/MariaDB backup command..."
+        ./bin/moodle-docker-compose exec -T db bash -c "mysqldump -u root -pm@0dl3ing moodle" > {backup_path}/database/moodle_db.sql
+    fi
 else
     echo "Site is not running. Starting containers temporarily for backup..."
     ./bin/moodle-docker-compose up -d db
-    sleep 10  # Wait for the database to start
-    ./bin/moodle-docker-compose exec -T db bash -c "mysqldump -u root --password=moodle -h localhost --all-databases" > {}/database/moodle_db.sql
+    echo "Waiting for database to be ready..."
+    sleep 20  # Increased wait time for the database to start completely
+    
+    if [ "{db_type}" == "pgsql" ] || [ "{db_type}" == "postgres" ] || [ "{db_type}" == "postgresql" ]; then
+        echo "Using PostgreSQL backup command..."
+        ./bin/moodle-docker-compose exec -T db bash -c "PGPASSWORD=moodle pg_dumpall -U postgres" > {backup_path}/database/moodle_db.sql
+    else
+        echo "Using MySQL/MariaDB backup command..."
+        ./bin/moodle-docker-compose exec -T db bash -c "mysqldump -u root -pm@0dl3ing moodle" > {backup_path}/database/moodle_db.sql
+    fi
     
     # Only stop the containers if they weren't running before
     ./bin/moodle-docker-compose down
@@ -1041,43 +1064,38 @@ fi
 
 echo "Backing up Moodle code..."
 # Copy Moodle codebase (excluding git directories to save space)
-rsync -a --exclude='.git' $PWD/moodle/ {}/moodle/
+rsync -a --exclude='.git' $PWD/moodle/ {backup_path}/moodle/
 
 echo "Backing up Moodle data..."
 # Copy moodledata directory if it exists
 if [ -d "$PWD/moodledata" ]; then
-    rsync -a $PWD/moodledata/ {}/moodledata/
+    rsync -a $PWD/moodledata/ {backup_path}/moodledata/
 fi
 
 echo "Creating backup manifest..."
 # Create a manifest file with backup information
-cat << EOF > {}/manifest.json
+cat << EOF > {backup_path}/manifest.json
 {{
-    "name": "{}",
-    "timestamp": "{}",
-    "php_version": "{}",
-    "db_type": "{}",
-    "moodle_branch": "{}"
+    "name": "{name}",
+    "timestamp": "{timestamp}",
+    "php_version": "{php_version}",
+    "db_type": "{db_type_original}",
+    "moodle_branch": "{moodle_branch}"
 }}
 EOF
 
 echo "Backup completed successfully"
 "#, 
-    site.path.to_str().unwrap_or(""),
-    name,
-    backup_dir.to_str().unwrap_or(""),
-    backup_dir.to_str().unwrap_or(""),
-    if is_running { "running" } else { "stopped" },
-    backup_dir.to_str().unwrap_or(""),
-    backup_dir.to_str().unwrap_or(""),
-    backup_dir.to_str().unwrap_or(""),
-    backup_dir.to_str().unwrap_or(""),
-    backup_dir.to_str().unwrap_or(""),
-    name,
-    timestamp,
-    site.php_version,
-    site.db_type,
-    site.moodle_branch
+    script_path = script_path,
+    name = name,
+    db_type = db_type,
+    backup_path = backup_path,
+    run_status = run_status,
+    php_version = site.php_version,
+    db_type_original = site.db_type,
+    moodle_branch = site.moodle_branch,
+    timestamp = timestamp,
+    web_port = site.web_port.unwrap_or(8000)
     );
     
     // Write the backup script
@@ -1099,8 +1117,9 @@ echo "Backup completed successfully"
         return Err(format!("Failed to make backup script executable"));
     }
     
-    // Execute the backup script
-    let output = Command::new(backup_script_path.to_str().unwrap_or("./backup.sh"))
+    // Execute the backup script with better error handling
+    let output = Command::new("bash")
+        .arg(backup_script_path.to_str().unwrap_or("./backup.sh"))
         .output()
         .map_err(|e| {
             let _ = fs::remove_file(&backup_script_path);
@@ -1111,8 +1130,20 @@ echo "Backup completed successfully"
     let _ = fs::remove_file(&backup_script_path);
     
     if !output.status.success() {
-        let error = String::from_utf8_lossy(&output.stderr).to_string();
-        return Err(format!("Failed to backup site: {}", error));
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        
+        let mut error_message = format!("Failed to backup site (exit code: {:?}).", output.status.code());
+        
+        if !stderr.trim().is_empty() {
+            error_message.push_str(&format!("\n\nError output:\n{}", stderr));
+        }
+        
+        if !stdout.trim().is_empty() {
+            error_message.push_str(&format!("\n\nStandard output:\n{}", stdout));
+        }
+        
+        return Err(error_message);
     }
     
     // Return success message with backup path
@@ -1240,9 +1271,12 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
     // Create restore script
     let restore_script = format!(r#"#!/bin/bash
 set -e
-cd {}
-export COMPOSE_PROJECT_NAME={}
+cd {site_path}
+export COMPOSE_PROJECT_NAME={name}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_DB={db_type}
+export MOODLE_DOCKER_PHP_VERSION={php_version}
+export MOODLE_DOCKER_WEB_PORT={web_port}
 
 echo "Restoring Moodle code..."
 # Backup current code before overwriting
@@ -1251,17 +1285,17 @@ if [ -d "$PWD/moodle" ]; then
 fi
 
 # Copy Moodle codebase from backup
-rsync -a {}/moodle/ $PWD/moodle/
+rsync -a {backup_dir}/moodle/ $PWD/moodle/
 
 echo "Restoring Moodle data..."
 # Copy moodledata directory if it exists in the backup
-if [ -d "{}/moodledata" ]; then
+if [ -d "{backup_dir}/moodledata" ]; then
     # Backup current moodledata before overwriting
     if [ -d "$PWD/moodledata" ]; then
         mv $PWD/moodledata $PWD/moodledata.bak.$(date +%s)
     fi
     mkdir -p $PWD/moodledata
-    rsync -a {}/moodledata/ $PWD/moodledata/
+    rsync -a {backup_dir}/moodledata/ $PWD/moodledata/
 fi
 
 echo "Starting database container..."
@@ -1269,11 +1303,17 @@ echo "Starting database container..."
 ./bin/moodle-docker-compose up -d db
 
 echo "Waiting for database to be ready..."
-sleep 10
+sleep 20
 
 echo "Restoring database..."
-# Restore database
-cat {}/database/moodle_db.sql | ./bin/moodle-docker-compose exec -T db bash -c "mysql -u root --password=moodle -h localhost"
+# Restore database based on type
+if [ "{db_type}" == "pgsql" ] || [ "{db_type}" == "postgres" ] || [ "{db_type}" == "postgresql" ]; then
+    echo "Using PostgreSQL restore command..."
+    cat {backup_dir}/database/moodle_db.sql | ./bin/moodle-docker-compose exec -T db bash -c "PGPASSWORD=moodle psql -U postgres"
+else
+    echo "Using MySQL/MariaDB restore command..."
+    cat {backup_dir}/database/moodle_db.sql | ./bin/moodle-docker-compose exec -T db bash -c "mysql -u root -pm@0dl3ing moodle"
+fi
 
 echo "Starting remaining containers..."
 # Start all containers
@@ -1281,12 +1321,12 @@ echo "Starting remaining containers..."
 
 echo "Site restored successfully"
 "#, 
-        site.path.to_str().unwrap_or(""),
-        name,
-        backup_dir.to_str().unwrap_or(""),
-        backup_dir.to_str().unwrap_or(""),
-        backup_dir.to_str().unwrap_or(""),
-        backup_dir.to_str().unwrap_or("")
+        site_path = site.path.to_str().unwrap_or(""),
+        name = name,
+        db_type = site.db_type.to_lowercase(),
+        php_version = site.php_version,
+        web_port = site.web_port.unwrap_or(8000),
+        backup_dir = backup_dir.to_str().unwrap_or("")
     );
     
     // Write the restore script
