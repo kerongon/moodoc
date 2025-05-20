@@ -91,10 +91,12 @@ export default {
 <style scoped>
  .site-logs {
   width: 100%;
-  height: 100vh;
-  margin: 0;
+  max-height: 100vh;
+  margin: 0 auto;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
  .logs-container {
@@ -103,10 +105,11 @@ export default {
   border-radius: 4px;
   padding: 10px;
   flex: 1 1 auto;
+  min-height: 0;
+  max-height: 70vh;
   overflow: auto;
   white-space: pre;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  margin-bottom: 15px;
   font-size: 0.7rem;
   line-height: 1.3;
 }
