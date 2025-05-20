@@ -12,7 +12,7 @@
           <div class="flex items-center justify-between mb-5">
             <div class="flex items-center">
               <div class="bg-orange-600 rounded-lg p-1.5 mr-3 shadow-sm">
-                <PhArrowClockwise class="text-white w-6 h-6" weight="fill" />
+                <PhRecycle class="text-white w-6 h-6" weight="fill" />
               </div>
               <div>
                 <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Update Moodle: {{ siteName }}</h2>
@@ -125,14 +125,15 @@
 
 <script>
 import { invoke } from '@tauri-apps/api/tauri';
-import { PhArrowClockwise, PhX } from '@phosphor-icons/vue';
+import { PhArrowClockwise, PhX, PhRecycle } from '@phosphor-icons/vue';
 import { useSitesStore } from '../stores/sites';
 
 export default {
   name: 'UpdateSite',
   components: {
     PhArrowClockwise,
-    PhX
+    PhX,
+    PhRecycle
   },
   props: {
     siteName: {

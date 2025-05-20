@@ -60,7 +60,7 @@
                 <PhArchiveBox class="w-5 h-5" />
               </button>
               <button @click="showUpdateModal(site.name)" class="icon-action-btn bg-orange-600 text-white p-1.5 rounded-lg hover:bg-orange-700 transition-colors shadow-sm" title="Update">
-                <PhArrowClockwise class="w-5 h-5" weight="fill" />
+                <PhRecycle class="w-5 h-5" weight="fill" />
               </button>
               <button @click="removeSite(site.name)" class="icon-action-btn bg-gray-800 hover:bg-red-700" title="Remove">
                 <PhTrash class="w-5 h-5 text-red-400" />
@@ -126,7 +126,7 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
 
 export default {
@@ -137,6 +137,7 @@ export default {
     PhArrowClockwise,
     PhTrash,
     PhTerminal,
+    PhRecycle,
     UpdateSite
   },
   setup(props, { expose }) {
