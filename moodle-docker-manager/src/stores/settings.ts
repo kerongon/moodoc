@@ -17,7 +17,7 @@ export const useSettingsStore = defineStore('settings', {
     sitesRootDirectory: '',
     isLoading: false,
     error: null as string | null,
-    darkMode: 'system' as 'system' | 'light' | 'dark',
+    darkMode: 'dark' as 'system' | 'light' | 'dark',
   }),
   
   actions: {
@@ -43,10 +43,10 @@ export const useSettingsStore = defineStore('settings', {
           // Create the config directory if it doesn't exist
           await createDir(configDir, { recursive: true });
           
-          // Create default settings
+          // Create default settings with dark mode as default
           const defaultSettings = { 
             sitesRootDirectory: '',
-            darkMode: 'system'
+            darkMode: 'dark'
           };
           await writeTextFile(settingsPath, JSON.stringify(defaultSettings));
         }

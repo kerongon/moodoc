@@ -140,7 +140,7 @@ window.ThemeManager = {
 };
 
 // Apply theme from localStorage first (before rendering)
-const savedTheme = localStorage.getItem('theme') || 'system';
+const savedTheme = localStorage.getItem('theme') || 'dark';
 // @ts-ignore - Using window.ThemeManager
 window.ThemeManager.applyTheme(savedTheme);
 
