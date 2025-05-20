@@ -67,6 +67,7 @@ fn main() {
             docker::check_docker_installed,
             docker::check_docker_running,
             docker::check_platform_compatibility,
+            docker::validate_environment,
             docker::create_site,
             docker::list_sites,
             docker::start_site,

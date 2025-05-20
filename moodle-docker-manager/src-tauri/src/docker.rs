@@ -56,6 +56,9 @@ pub fn create_site(
     web_port: Option<u16>,
     directory: Option<String>
 ) -> Result<String, String> {
+    // First validate the environment to ensure everything is set up correctly
+    validate_environment(app_handle.clone())?;
+    
     // Determine the site directory path based on user preferences
     let site_dir = if let Some(dir) = directory {
         // Use custom directory if provided
@@ -75,6 +78,7 @@ pub fn create_site(
             .ok_or_else(|| "Failed to get app data directory".to_string())?;
         
         let sites_dir = app_dir.join("sites");
+        // Double check that sites directory exists
         if !sites_dir.exists() {
             create_dir_all(&sites_dir)
                 .map_err(|e| format!("Failed to create sites directory: {}", e))?;
@@ -107,11 +111,21 @@ pub fn create_site(
         .map_err(|e| format!("Failed to write docker-compose.yml: {}", e))?;
     
     // Start the containers
-    let output = Command::new("docker-compose")
+    // Try docker compose (with space) first (newer Docker versions)
+    let output = Command::new("docker")
         .current_dir(&site_dir)
-        .args(["-f", "docker-compose.yml", "up", "-d"])
-        .output()
-        .map_err(|e| format!("Failed to execute docker-compose: {}", e))?;
+        .args(["compose", "-f", "docker-compose.yml", "up", "-d"])
+        .output();
+        
+    // If that fails, try docker-compose (with hyphen) as fallback
+    let output = match output {
+        Ok(o) => Ok(o),
+        Err(_) => Command::new("docker-compose")
+            .current_dir(&site_dir)
+            .args(["-f", "docker-compose.yml", "up", "-d"])
+            .output()
+    }
+    .map_err(|e| format!("Failed to execute docker-compose: {}", e))?;
     
     if !output.status.success() {
         let error = String::from_utf8(output.stderr)
@@ -142,6 +156,12 @@ pub fn load_site_configs(app: &tauri::App) -> Result<(), String> {
     let app_handle = app.handle();
     let app_dir = app_handle.path_resolver().app_data_dir()
         .ok_or_else(|| "Failed to get app data directory".to_string())?;
+    
+    // Ensure app data directory exists
+    if !app_dir.exists() {
+        fs::create_dir_all(&app_dir)
+            .map_err(|e| format!("Failed to create app data directory: {}", e))?;
+    }
     
     let config_path = app_dir.join("sites_config.json");
     
@@ -348,9 +368,12 @@ services:
       - MOODLE_DB_NAME=moodle
       - MOODLE_DB_TYPE={}
       - MOODLE_BRANCH={}
+      - MOODLE_DATAROOT=/var/www/moodledata
 {}
     volumes:
       - moodle_data:/var/www/html
+      - moodle_dataroot:/var/www/moodledata
+    restart: unless-stopped
     networks:
       - moodle_network
 
@@ -359,7 +382,11 @@ networks:
 
 volumes:
   db_data:
+    driver: local
   moodle_data:
+    driver: local
+  moodle_dataroot:
+    driver: local
 "#,
         db_image,
         name,
@@ -385,6 +412,12 @@ fn save_site_config(app_handle: AppHandle, site: Site) -> Result<(), String> {
     // Save to config file
     let app_dir = app_handle.path_resolver().app_data_dir()
         .ok_or_else(|| "Failed to get app data directory".to_string())?;
+    
+    // Ensure the app data directory exists
+    if !app_dir.exists() {
+        fs::create_dir_all(&app_dir)
+            .map_err(|e| format!("Failed to create app data directory: {}", e))?;
+    }
     
     let config_path = app_dir.join("sites_config.json");
     
@@ -556,4 +589,42 @@ pub fn check_platform_compatibility(db_type: String) -> Result<String, String> {
     {
         return Ok("Your platform is compatible with the selected database type.".to_string());
     }
+}
+
+// This function will validate the Docker setup and ensure directories exist
+#[command]
+pub fn validate_environment(app_handle: AppHandle) -> Result<String, String> {
+    // Check if Docker is installed and running
+    if !check_docker_installed() || !check_docker_running() {
+        return Err("Docker is not installed or not running".to_string());
+    }
+    
+    // Ensure app data directory exists
+    let app_dir = app_handle.path_resolver().app_data_dir()
+        .ok_or_else(|| "Failed to get app data directory".to_string())?;
+    
+    if !app_dir.exists() {
+        fs::create_dir_all(&app_dir)
+            .map_err(|e| format!("Failed to create app data directory: {}", e))?;
+    }
+    
+    // Create sites directory
+    let sites_dir = app_dir.join("sites");
+    if !sites_dir.exists() {
+        fs::create_dir_all(&sites_dir)
+            .map_err(|e| format!("Failed to create sites directory: {}", e))?;
+    }
+    
+    // Create sites config file if it doesn't exist
+    let config_path = app_dir.join("sites_config.json");
+    if !config_path.exists() {
+        let empty_sites: Vec<Site> = Vec::new();
+        let json = serde_json::to_string_pretty(&empty_sites)
+            .map_err(|e| format!("Failed to create empty sites config: {}", e))?;
+        
+        fs::write(&config_path, json)
+            .map_err(|e| format!("Failed to initialize sites config: {}", e))?;
+    }
+    
+    Ok("Environment validated successfully".to_string())
 }

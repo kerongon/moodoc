@@ -1131,6 +1131,10 @@ export default {
       this.addLogMessage(`Creating site ${this.siteName}...`);
 
       try {
+        // First validate the environment
+        this.addLogMessage('Validating environment...');
+        await invoke('validate_environment');
+        
         // Compile the settings from all tabs
         const siteConfig = {
           name: this.siteName,
