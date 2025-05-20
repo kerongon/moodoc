@@ -155,12 +155,14 @@ pub fn create_site(
     
     // Create a script file to set up the environment and start the containers
     let web_port_str = web_port.map_or("8000".to_string(), |p| p.to_string());
+    let db_port_str = db_port.map_or("3306".to_string(), |p| p.to_string());
     let setup_script = format!(r#"#!/bin/bash
 export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
 export MOODLE_DOCKER_DB={}
 export MOODLE_DOCKER_WEB_PORT={}
 export MOODLE_DOCKER_PHP_VERSION={}
+export MOODLE_DOCKER_DB_PORT={}
 
 # Start the containers
 ./bin/moodle-docker-compose up -d
@@ -174,7 +176,7 @@ export MOODLE_DOCKER_PHP_VERSION={}
 echo "Moodle is now available at http://localhost:{}"
 echo "Admin username: admin"
 echo "Admin password: test"
-"#, name, db_type.to_lowercase(), web_port_str, php_version, web_port_str);
+"#, name, db_type.to_lowercase(), web_port_str, php_version, db_port_str, web_port_str);
 
     let setup_script_path = moodle_docker_dir.join("setup.sh");
     let mut file = File::create(&setup_script_path)
@@ -203,12 +205,13 @@ echo "Admin password: test"
     println!("Attempting to start Docker containers for site: {}", name);
     app_handle.emit_all("site_creation_progress", format!("Starting Docker containers for {}", name)).unwrap_or_default();
     
-    let start_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_WEB_PORT={} && export MOODLE_DOCKER_PHP_VERSION={} && ./bin/moodle-docker-compose up -d"#,
+    let start_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_WEB_PORT={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose up -d"#,
         moodle_docker_dir.to_str().unwrap_or(""),
         name,
         db_type.to_lowercase(),
         web_port.map_or("8000".to_string(), |p| p.to_string()),
-        php_version
+        php_version,
+        db_port.map_or("3306".to_string(), |p| p.to_string())
     );
     
     // Execute the start command
@@ -229,11 +232,12 @@ echo "Admin password: test"
     // Wait for the database to be ready
     println!("Attempting to wait for database for site: {}", name);
     app_handle.emit_all("site_creation_progress", format!("Waiting for database to be ready for {}", name)).unwrap_or_default();
-    let wait_db_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && ./bin/moodle-docker-wait-for-db"#,
+    let wait_db_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-wait-for-db"#,
         moodle_docker_dir.to_str().unwrap_or(""),
         name,
         db_type.to_lowercase(),
-        php_version
+        php_version,
+        db_port.map_or("3306".to_string(), |p| p.to_string())
     );
     
     // Execute the wait for db command
@@ -255,9 +259,10 @@ echo "Admin password: test"
         app_handle.emit_all("site_creation_progress", format!("Failed while waiting for database for {}", name)).unwrap_or_default();
         // Try to get container logs to see what's happening
         println!("Getting container logs to diagnose the issue...");
-        let logs_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && ./bin/moodle-docker-compose logs db"#,
+        let logs_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose logs db"#,
             moodle_docker_dir.to_str().unwrap_or(""),
-            name
+            name,
+            db_port.map_or("3306".to_string(), |p| p.to_string())
         );
         
         let logs_output = Command::new("sh")
@@ -276,11 +281,12 @@ echo "Admin password: test"
     // Install Moodle
     println!("Attempting to install Moodle for site: {}", name);
     app_handle.emit_all("site_creation_progress", format!("Installing Moodle for {}. This may take several minutes...", name)).unwrap_or_default();
-    let install_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname="Docker Moodle" --shortname="docker_moodle" --summary="Docker Moodle site" --adminpass="test" --adminemail="admin@example.com""#,
+    let install_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname="Docker Moodle" --shortname="docker_moodle" --summary="Docker Moodle site" --adminpass="test" --adminemail="admin@example.com""#,
         moodle_docker_dir.to_str().unwrap_or(""),
         name,
         db_type.to_lowercase(),
-        php_version
+        php_version,
+        db_port.map_or("3306".to_string(), |p| p.to_string())
     );
     
     println!("Executing command: {}", install_cmd);
@@ -305,9 +311,10 @@ echo "Admin password: test"
         app_handle.emit_all("site_creation_progress", format!("Failed to install Moodle for {}", name)).unwrap_or_default();
         // Try to get webserver logs to diagnose the issue
         println!("Getting webserver logs to diagnose the issue...");
-        let logs_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && ./bin/moodle-docker-compose logs webserver"#,
+        let logs_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose logs webserver"#,
             moodle_docker_dir.to_str().unwrap_or(""),
-            name
+            name,
+            db_port.map_or("3306".to_string(), |p| p.to_string())
         );
         
         let logs_output = Command::new("sh")
@@ -426,16 +433,18 @@ pub fn get_docker_logs(app_handle: AppHandle, name: String, service: String) -> 
         .ok_or_else(|| format!("Failed to convert moodle www root path to string. Base path: {:?}, Joined path: {:?}", moodle_docker_dir, moodle_www_root))?;
 
     let web_port_str = site.web_port.map_or("8000".to_string(), |p| p.to_string());
+    let db_port_str = site.db_port.map_or("3306".to_string(), |p| p.to_string());
 
     println!(
-        "Executing './bin/moodle-docker-compose logs {}' in dir: {}. Env: COMPOSE_PROJECT_NAME={}, MOODLE_DOCKER_WWWROOT={}, MOODLE_DOCKER_DB={}, MOODLE_DOCKER_PHP_VERSION={}, MOODLE_DOCKER_WEB_PORT={}",
+        "Executing './bin/moodle-docker-compose logs {}' in dir: {}. Env: COMPOSE_PROJECT_NAME={}, MOODLE_DOCKER_WWWROOT={}, MOODLE_DOCKER_DB={}, MOODLE_DOCKER_PHP_VERSION={}, MOODLE_DOCKER_WEB_PORT={}, MOODLE_DOCKER_DB_PORT={}",
         service,
         moodle_docker_dir_str,
         name,
         moodle_www_root_str,
         site.db_type.to_lowercase(),
         site.php_version,
-        web_port_str
+        web_port_str,
+        db_port_str
     );
 
     let output = Command::new("./bin/moodle-docker-compose")
@@ -445,6 +454,7 @@ pub fn get_docker_logs(app_handle: AppHandle, name: String, service: String) -> 
         .env("MOODLE_DOCKER_DB", site.db_type.to_lowercase())
         .env("MOODLE_DOCKER_PHP_VERSION", &site.php_version)
         .env("MOODLE_DOCKER_WEB_PORT", &web_port_str)
+        .env("MOODLE_DOCKER_DB_PORT", &db_port_str)
         .arg("logs")
         .arg(&service)
         .output()
@@ -570,6 +580,7 @@ export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
 export MOODLE_DOCKER_DB={}
 export MOODLE_DOCKER_WEB_PORT={}
+export MOODLE_DOCKER_DB_PORT={}
 
 # Start containers
 ./bin/moodle-docker-compose up -d
@@ -577,7 +588,8 @@ export MOODLE_DOCKER_WEB_PORT={}
     site.path.to_str().unwrap_or(""),
     name,
     site.db_type.to_lowercase(),
-    site.web_port.unwrap_or(8000)
+    site.web_port.unwrap_or(8000),
+    site.db_port.unwrap_or(3306)
     );
     
     // Create .env file to ensure environment variables are properly set
@@ -586,12 +598,14 @@ MOODLE_DOCKER_DB={}
 MOODLE_DOCKER_WWWROOT={}/moodle
 MOODLE_DOCKER_WEB_PORT={}
 MOODLE_DOCKER_PHP_VERSION={}
+MOODLE_DOCKER_DB_PORT={}
 "#, 
     name,
     site.db_type.to_lowercase(),
     site.path.to_str().unwrap_or(""),
     site.web_port.unwrap_or(8000),
-    site.php_version
+    site.php_version,
+    site.db_port.unwrap_or(3306)
     );
 
     // Write the .env file
@@ -665,6 +679,7 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
 export MOODLE_DOCKER_DB={}
 export MOODLE_DOCKER_WEB_PORT={}
 export MOODLE_DOCKER_PHP_VERSION={}
+export MOODLE_DOCKER_DB_PORT={}
 
 # Stop containers
 ./bin/moodle-docker-compose down
@@ -673,7 +688,8 @@ export MOODLE_DOCKER_PHP_VERSION={}
     name,
     site.db_type.to_lowercase(),
     site.web_port.unwrap_or(8000),
-    site.php_version
+    site.php_version,
+    site.db_port.unwrap_or(3306)
     );
     
     // Print debugging information
@@ -914,12 +930,14 @@ pub fn check_site_status(app_handle: AppHandle, name: String) -> Result<Site, St
 cd {}
 export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_DB_PORT={}
 
 # Check if containers are running
 ./bin/moodle-docker-compose ps -q webserver
 "#, 
         site.path.to_str().unwrap_or(""),
-        name
+        name,
+        site.db_port.unwrap_or(3306)
     );
     
     // Write the script to a temporary file
@@ -987,12 +1005,14 @@ pub async fn backup_site(app_handle: AppHandle, name: String) -> Result<String, 
 cd {}
 export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_DB_PORT={}
 
 # Check if containers are running
 ./bin/moodle-docker-compose ps -q webserver
 "#, 
         site.path.to_str().unwrap_or(""),
-        name
+        name,
+        site.db_port.unwrap_or(3306)
     );
     
     // Write the status check script to a temporary file
@@ -1055,6 +1075,7 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
 export MOODLE_DOCKER_DB={db_type}
 export MOODLE_DOCKER_PHP_VERSION={php_version}
 export MOODLE_DOCKER_WEB_PORT={web_port}
+export MOODLE_DOCKER_DB_PORT={db_port}
 
 # Create backup directory structure
 mkdir -p {backup_path}/database
@@ -1122,7 +1143,8 @@ echo "Backup completed successfully"
     db_type_original = site.db_type,
     moodle_branch = site.moodle_branch,
     timestamp = timestamp,
-    web_port = site.web_port.unwrap_or(8000)
+    web_port = site.web_port.unwrap_or(8000),
+    db_port = site.db_port.unwrap_or(3306)
     );
     
     // Write the backup script
@@ -1157,13 +1179,17 @@ echo "Backup completed successfully"
             if let Ok(text) = line {
                 let mut pct = 0;
                 let step = if text.contains("Backing up database") {
-                    pct = 25; "database"
+                    pct = 25;
+                    "database"
                 } else if text.contains("Backing up Moodle code") {
-                    pct = 50; "code"
+                    pct = 50;
+                    "code"
                 } else if text.contains("Backing up Moodle data") {
-                    pct = 75; "data"
+                    pct = 75;
+                    "data"
                 } else if text.contains("Backup completed successfully") {
-                    pct = 100; "done"
+                    pct = 100;
+                    "done"
                 } else {
                     continue;
                 };
@@ -1259,12 +1285,14 @@ pub fn restore_site_backup(app_handle: AppHandle, name: String, backup_timestamp
 cd {}
 export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_DB_PORT={}
 
 # Stop containers if running
 ./bin/moodle-docker-compose down
 "#, 
         site.path.to_str().unwrap_or(""),
-        name
+        name,
+        site.db_port.unwrap_or(3306)
     );
     
     // Write the stop script
@@ -1311,6 +1339,7 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
 export MOODLE_DOCKER_DB={db_type}
 export MOODLE_DOCKER_PHP_VERSION={php_version}
 export MOODLE_DOCKER_WEB_PORT={web_port}
+export MOODLE_DOCKER_DB_PORT={db_port}
 
 echo "Restoring Moodle code..."
 # Backup current code before overwriting
@@ -1360,6 +1389,7 @@ echo "Site restored successfully"
         db_type = site.db_type.to_lowercase(),
         php_version = site.php_version,
         web_port = site.web_port.unwrap_or(8000),
+        db_port = site.db_port.unwrap_or(3306),
         backup_dir = backup_dir.to_str().unwrap_or("")
     );
     
