@@ -303,10 +303,38 @@ export default {
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  color: white;
+  color: white !important;
   margin-right: 4px;
   transition: background-color 0.15s ease;
   cursor: pointer;
+}
+
+/* Ensure action buttons are visible in light mode */
+.icon-action-btn svg, 
+.icon-action-btn path {
+  color: white !important;
+  fill: currentColor;
+}
+
+.icon-action-btn.bg-orange-600 {
+  background-color: #ea580c !important;
+}
+
+/* Ensure settings button is visible in light mode */
+.settings-btn {
+  background-color: #f3f4f6 !important;
+}
+.settings-btn svg {
+  color: #374151 !important;
+}
+
+/* Ensure setting icons are visible */
+.settings-btn .w-5 {
+  color: #4b5563 !important; /* text-gray-600 */
+}
+
+.dark .settings-btn .w-5 {
+  color: #e5e7eb !important; /* dark:text-gray-200 */
 }
 
 .compact-table {
