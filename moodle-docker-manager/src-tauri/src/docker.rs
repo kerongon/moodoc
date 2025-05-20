@@ -6,7 +6,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
-use tauri::{command, AppHandle, Manager};
+use tauri::{command, AppHandle, Manager, State};
 use std::sync::Mutex;
 
 // Define data structures for site configuration
@@ -410,61 +410,82 @@ pub fn remove_docker_container(container_name: &str) -> Result<String, String> {
 
 #[command]
 pub fn get_docker_logs(app_handle: AppHandle, name: String, service: String) -> Result<String, String> {
-    // Get the site information from state
-    let state = app_handle.state::<SiteState>();
+    let state: State<SiteState> = app_handle.state::<SiteState>();
     let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
-    
-    // Find the site
-    let site = match sites.get(&name) {
-        Some(site) => site.clone(),
-        None => return Err(format!("Site '{}' not found", name)),
-    };
-    
-    // Create a script to get logs with proper environment variables
-    let log_script = format!(r#"#!/bin/bash
-cd {}
-export COMPOSE_PROJECT_NAME={}
-export MOODLE_DOCKER_WWWROOT=$PWD/moodle
 
-# Get logs for the requested service
-./bin/moodle-docker-compose logs {}
-"#, 
-        site.path.to_str().unwrap_or(""),
+    let site = sites.get(&name)
+        .ok_or_else(|| format!("Site '{}' not found", name))?;
+
+    let moodle_docker_dir = &site.path; // This is a PathBuf
+    let moodle_docker_dir_str = moodle_docker_dir.to_str()
+        .ok_or_else(|| "Failed to convert site path to string".to_string())?;
+
+    // MOODLE_DOCKER_WWWROOT should be the absolute path to the moodle subdirectory within moodle_docker_dir
+    let moodle_www_root = moodle_docker_dir.join("moodle");
+    let moodle_www_root_str = moodle_www_root.to_str()
+        .ok_or_else(|| format!("Failed to convert moodle www root path to string. Base path: {:?}, Joined path: {:?}", moodle_docker_dir, moodle_www_root))?;
+
+    let web_port_str = site.web_port.map_or("8000".to_string(), |p| p.to_string());
+
+    println!(
+        "Executing './bin/moodle-docker-compose logs {}' in dir: {}. Env: COMPOSE_PROJECT_NAME={}, MOODLE_DOCKER_WWWROOT={}, MOODLE_DOCKER_DB={}, MOODLE_DOCKER_PHP_VERSION={}, MOODLE_DOCKER_WEB_PORT={}",
+        service,
+        moodle_docker_dir_str,
         name,
-        service
+        moodle_www_root_str,
+        site.db_type.to_lowercase(),
+        site.php_version,
+        web_port_str
     );
-    
-    // Write the log script
-    let script_path = site.path.join("get_logs.sh");
-    let mut file = File::create(&script_path)
-        .map_err(|e| format!("Failed to create log script: {}", e))?;
-    
-    file.write_all(log_script.as_bytes())
-        .map_err(|e| format!("Failed to write log script: {}", e))?;
-    
-    // Make the script executable
-    let chmod_output = Command::new("chmod")
-        .args(["+x", script_path.to_str().unwrap_or("get_logs.sh")])
+
+    let output = Command::new("./bin/moodle-docker-compose")
+        .current_dir(moodle_docker_dir_str) // Set the working directory
+        .env("COMPOSE_PROJECT_NAME", &name)
+        .env("MOODLE_DOCKER_WWWROOT", moodle_www_root_str)
+        .env("MOODLE_DOCKER_DB", site.db_type.to_lowercase())
+        .env("MOODLE_DOCKER_PHP_VERSION", &site.php_version)
+        .env("MOODLE_DOCKER_WEB_PORT", &web_port_str)
+        .arg("logs")
+        .arg(&service)
         .output()
-        .map_err(|e| format!("Failed to make log script executable: {}", e))?;
-    
-    if !chmod_output.status.success() {
-        return Err("Failed to make log script executable".to_string());
-    }
-    
-    // Execute the log script
-    let output = Command::new(script_path.to_str().unwrap_or("./get_logs.sh"))
-        .output()
-        .map_err(|e| format!("Failed to execute log script: {}", e))?;
-    
-    // Delete the script
-    let _ = fs::remove_file(&script_path);
-    
-    // Return the logs
+        .map_err(|e| format!("Failed to execute log command './bin/moodle-docker-compose': {}", e))?;
+
     if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        let logs = String::from_utf8(output.stdout)
+            .map_err(|e| format!("Failed to parse logs from stdout: {}", e))?;
+        // If logs are empty, it could still be a success but no logs to show.
+        // The frontend can decide how to display empty logs.
+        println!("Successfully fetched logs for {}/{}:\n{}", name, service, if logs.is_empty() { "[empty]" } else { &logs });
+        Ok(logs)
     } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+        let stderr_output = String::from_utf8_lossy(&output.stderr).to_string();
+        let stdout_output = String::from_utf8_lossy(&output.stdout).to_string();
+        let mut error_description = String::new();
+
+        if !stderr_output.is_empty() {
+            error_description.push_str(&format!("Stderr: {}", stderr_output));
+        }
+        if !stdout_output.is_empty() {
+            if !error_description.is_empty() { error_description.push_str("; "); }
+            error_description.push_str(&format!("Stdout: {}", stdout_output));
+        }
+        
+        // If both stderr and stdout are empty, provide a generic message with status
+        if error_description.is_empty() {
+            error_description = format!("Command failed with status {} but produced no output to stderr or stdout.", output.status);
+        } else {
+            error_description = format!("Details: {}", error_description);
+        }
+
+
+        println!(
+            "Failed to fetch logs for {}/{}. Exit status: {:?}. {}",
+            name, service, output.status, error_description
+        );
+        Err(format!(
+            "Failed to fetch logs for {}/{}. Status: {:?}. {}",
+            name, service, output.status, error_description
+        ))
     }
 }
 
@@ -1154,7 +1175,7 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
         })?;
     
     // Delete the script
-    let _ = fs::remove_file(&stop_script_path);
+    let _ = fs::remove_file(stop_script_path);
     
     if !output.status.success() {
         let error = String::from_utf8_lossy(&output.stderr).to_string();
@@ -1241,7 +1262,7 @@ echo "Site restored successfully"
         })?;
     
     // Delete the script
-    let _ = fs::remove_file(&restore_script_path);
+    let _ = fs::remove_file(restore_script_path);
     
     if !output.status.success() {
         let error = String::from_utf8_lossy(&output.stderr).to_string();
