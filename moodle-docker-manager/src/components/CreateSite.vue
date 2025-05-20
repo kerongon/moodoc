@@ -1087,19 +1087,26 @@ export default {
           siteConfig.customBranch = null;
         }
 
-        // Call your createSite function with this configuration
-        // This is where you would integrate with your existing functionality
         this.addLogMessage('Site configuration prepared, starting Docker containers...');
         
-        // Example of how you might call the backend
-        // const result = await window.__TAURI__.invoke('create_site', { config: siteConfig })
+        // Call the Tauri backend to create the site
+        const result = await invoke('create_site', {
+          name: siteConfig.name,
+          phpVersion: siteConfig.phpVersion,
+          dbType: siteConfig.dbType,
+          moodleBranch: siteConfig.moodleBranch || siteConfig.customBranch || 'MOODLE_400_STABLE',
+          dbPort: siteConfig.dbPort,
+          webPort: siteConfig.webPort,
+          directory: siteConfig.directory
+        });
         
+        this.addLogMessage(`Result: ${result}`);
         this.addLogMessage('Site created successfully!');
         // Add additional logging about the site being created
         this.addLogMessage(`Site URL: http://localhost:${siteConfig.webPort}`);
         
         // Reset the form
-        // this.resetForm()
+        this.resetForm();
       } catch (error) {
         this.addLogMessage(`Error creating site: ${error}`);
       } finally {
