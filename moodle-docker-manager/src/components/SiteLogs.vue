@@ -10,6 +10,14 @@
         <p class="text-xs text-gray-500 dark:text-gray-400">View and monitor the container logs for this site</p>
       </div>
     </div>
+  <!-- Service selector -->
+  <div class="mb-4 flex items-center space-x-2">
+    <label for="service-select" class="text-sm text-gray-700 dark:text-gray-300">Service:</label>
+    <select id="service-select" v-model="selectedService" @change="fetchLogs"
+      class="text-xs p-1 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
+      <option v-for="svc in services" :key="svc" :value="svc">{{ svc }}</option>
+    </select>
+  </div>
 
     <div v-if="loading" class="loading text-xs">
       <p>Loading logs...</p>
@@ -49,22 +57,22 @@ export default {
     return {
       logs: null,
       loading: false,
-      error: null
+      error: null,
+      services: ['db', 'webserver', 'mailpit', 'selenium', 'exttests'],
+      selectedService: 'webserver'
     };
   },
   methods: {
     async fetchLogs() {
       this.loading = true;
       this.error = null;
-      
       try {
-        // Get logs for the webserver service
-        const service = 'webserver'; // The official moodle-docker uses 'webserver' as the service name
-        
+        // Use selected service from dropdown
+        const service = this.selectedService;
         // Call the Rust function to get logs
-        this.logs = await invoke('get_docker_logs', { 
+        this.logs = await invoke('get_docker_logs', {
           name: this.siteName,
-          service: service 
+          service: service
         });
       } catch (err) {
         this.error = `Failed to fetch logs: ${err}`;
