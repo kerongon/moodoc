@@ -1,5 +1,5 @@
 <template>
-  <div class="site-backups bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-4 p-4">
+  <div class="site-backups w-screen h-screen bg-white dark:bg-gray-800 shadow-none border-none p-0">
     <!-- Header - macOS style (more compact) -->
     <div class="flex items-center mb-5">
       <div class="bg-green-600 rounded-lg p-1.5 mr-3 shadow-sm">
@@ -184,7 +184,7 @@
     </div>
     
     <div class="actions mt-3 flex gap-2">
-      <button @click="$router.push('/dashboard')" class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">
+      <button @click="$router.push('/')" class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">
         Back to Dashboard
       </button>
     </div>

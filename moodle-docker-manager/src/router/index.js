@@ -5,6 +5,7 @@ import SiteLogs from '../components/SiteLogs.vue';
 import SiteBackups from '../components/SiteBackups.vue';
 import UpdateSite from '../components/UpdateSite.vue';
 import SettingsView from '../views/SettingsView.vue';
+import BlankView from '../views/BlankView.vue';
 
 const routes = [
   {
@@ -39,6 +40,12 @@ const routes = [
     path: '/settings',
     name: 'Settings',
     component: SettingsView
+  }
+  ,
+  {
+    path: '/blank',
+    name: 'Blank',
+    component: BlankView
   }
 ];
 
