@@ -748,7 +748,7 @@ export MOODLE_DOCKER_PHP_VERSION={}
 }
 
 #[command]
-pub fn remove_site(app_handle: AppHandle, name: String) -> Result<String, String> {
+pub fn remove_site(app_handle: AppHandle, name: String, remove_containers: Option<bool>) -> Result<String, String> {
     let state = app_handle.state::<SiteState>();
     let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
     
@@ -757,6 +757,9 @@ pub fn remove_site(app_handle: AppHandle, name: String) -> Result<String, String
         Some(site) => site.clone(),
         None => return Err(format!("Site '{}' not found", name)),
     };
+    
+    // Default to true if not specified
+    let should_remove_containers = remove_containers.unwrap_or(true);
     
     // Create a cleanup script to ensure proper environment variables are set
     let cleanup_script = format!(r#"#!/bin/bash
@@ -774,28 +777,31 @@ echo "Removed all containers and volumes for {}"
         name
     );
     
-    // Write the cleanup script
-    let script_path = site.path.join("cleanup.sh");
-    let mut file = File::create(&script_path)
-        .map_err(|e| format!("Failed to create cleanup script: {}", e))?;
-    
-    file.write_all(cleanup_script.as_bytes())
-        .map_err(|e| format!("Failed to write cleanup script: {}", e))?;
-    
-    // Make the script executable
-    let chmod_output = Command::new("chmod")
-        .args(["+x", script_path.to_str().unwrap_or("cleanup.sh")])
-        .output()
-        .map_err(|e| format!("Failed to make cleanup script executable: {}", e))?;
-    
-    if !chmod_output.status.success() {
-        return Err("Failed to make cleanup script executable".to_string());
+    // Only remove containers if explicitly requested
+    if should_remove_containers {
+        // Write the cleanup script
+        let script_path = site.path.join("cleanup.sh");
+        let mut file = File::create(&script_path)
+            .map_err(|e| format!("Failed to create cleanup script: {}", e))?;
+        
+        file.write_all(cleanup_script.as_bytes())
+            .map_err(|e| format!("Failed to write cleanup script: {}", e))?;
+        
+        // Make the script executable
+        let chmod_output = Command::new("chmod")
+            .args(["+x", script_path.to_str().unwrap_or("cleanup.sh")])
+            .output()
+            .map_err(|e| format!("Failed to make cleanup script executable: {}", e))?;
+        
+        if !chmod_output.status.success() {
+            return Err("Failed to make cleanup script executable".to_string());
+        }
+        
+        // Execute the cleanup script
+        let _output = Command::new(script_path.to_str().unwrap_or("./cleanup.sh"))
+            .output()
+            .map_err(|e| format!("Failed to execute cleanup script: {}", e))?;
     }
-    
-    // Execute the cleanup script
-    let _output = Command::new(script_path.to_str().unwrap_or("./cleanup.sh"))
-        .output()
-        .map_err(|e| format!("Failed to execute cleanup script: {}", e))?;
     
     // Even if the script fails, we'll try to remove the directory and site from state
     

@@ -119,6 +119,62 @@
       @close="hideUpdateModal"
       @updated="handleSiteUpdated" 
     />
+    
+    <!-- Confirmation Modal for Site Removal -->
+    <div v-if="showRemoveModal" class="fixed inset-0 z-50 overflow-y-auto">
+      <div class="flex items-center justify-center min-h-screen px-4">
+        <!-- Modal backdrop -->
+        <div class="fixed inset-0 bg-black/50 transition-opacity" @click="cancelRemove"></div>
+        
+        <!-- Modal panel -->
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+          <!-- Modal content -->
+          <div class="p-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center">
+                <div class="bg-red-600 rounded-lg p-1.5 mr-3 shadow-sm">
+                  <PhTrash class="text-white w-6 h-6" weight="fill" />
+                </div>
+                <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Remove Site</h2>
+              </div>
+              <button @click="cancelRemove" class="text-gray-400 hover:text-gray-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <!-- Confirmation message -->
+            <div class="mb-4 text-sm text-gray-800 dark:text-gray-200">
+              <p>Are you sure you want to remove the site <span class="font-semibold">{{ siteToRemove }}</span>?</p>
+              <div class="mt-2 flex items-center">
+                <input type="checkbox" id="removeContainers" v-model="removeContainers" class="h-4 w-4 text-blue-600 rounded border-gray-300">
+                <label for="removeContainers" class="ml-2">Also remove Docker containers and volumes</label>
+              </div>
+            </div>
+            
+            <!-- Warning message -->
+            <div class="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-md mb-4">
+              <p class="text-xs text-amber-600 dark:text-amber-400">
+                <span class="font-medium">Warning: </span>
+                This action cannot be undone. Please make sure you have any necessary backups.
+              </p>
+            </div>
+            
+            <!-- Footer -->
+            <div class="mt-4 flex justify-end space-x-2">
+              <button @click="cancelRemove" class="flex items-center justify-center px-3 py-1.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 text-sm min-w-[80px]">
+                Cancel
+              </button>
+              <button @click="confirmRemove" class="flex items-center justify-center px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm min-w-[100px]">
+                Remove Site
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div> 
 </template>
 
@@ -149,6 +205,9 @@ export default {
     const selectedSiteName = ref(null);
     const showErrorModal = ref(false);
     const errorContent = ref('');
+    const showRemoveModal = ref(false);
+    const siteToRemove = ref('');
+    const removeContainers = ref(true);
 
     // Initial load of site list
     const loadSites = async () => {
@@ -225,19 +284,38 @@ export default {
       }
     };
 
-    // Remove a site
-    const removeSite = async (name) => {
-      if (confirm(`Are you sure you want to remove the site '${name}'? This will delete all containers and data.`)) {
-        try {
-          loading.value = true;
-          await invoke('remove_site', { name });
-          await loadSites(); // Refresh site list
-        } catch (err) {
-          console.error(`Failed to remove site ${name}:`, err);
-          showError(`Failed to remove site: ${name}`, String(err));
-        } finally {
-          loading.value = false;
-        }
+    // Show remove site modal
+    const removeSite = (name) => {
+      siteToRemove.value = name;
+      removeContainers.value = true; // Default to true
+      showRemoveModal.value = true;
+    };
+    
+    // Cancel remove operation
+    const cancelRemove = () => {
+      showRemoveModal.value = false;
+      siteToRemove.value = '';
+    };
+    
+    // Confirm and execute site removal
+    const confirmRemove = async () => {
+      try {
+        loading.value = true;
+        showRemoveModal.value = false;
+        
+        // Pass the removeContainers flag to the backend
+        await invoke('remove_site', { 
+          name: siteToRemove.value,
+          removeContainers: removeContainers.value 
+        });
+        
+        await loadSites(); // Refresh site list
+      } catch (err) {
+        console.error(`Failed to remove site ${siteToRemove.value}:`, err);
+        showError(`Failed to remove site: ${siteToRemove.value}`, String(err));
+      } finally {
+        loading.value = false;
+        siteToRemove.value = '';
       }
     };
 
@@ -309,7 +387,13 @@ export default {
       selectedSiteName,
       showErrorModal,
       errorContent,
-      closeErrorModal
+      closeErrorModal,
+      // New removal modal properties and methods
+      showRemoveModal,
+      siteToRemove,
+      removeContainers,
+      cancelRemove,
+      confirmRemove
     };
   }
 };
