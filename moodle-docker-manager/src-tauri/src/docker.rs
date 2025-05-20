@@ -944,8 +944,10 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
     Ok(updated_site)
 }
 
+use std::process::Stdio;
+use std::io::{BufRead, BufReader};
 #[command]
-pub fn backup_site(app_handle: AppHandle, name: String) -> Result<String, String> {
+pub async fn backup_site(app_handle: AppHandle, name: String) -> Result<String, String> {
     let state = app_handle.state::<SiteState>();
     let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
     
@@ -1117,36 +1119,43 @@ echo "Backup completed successfully"
         return Err(format!("Failed to make backup script executable"));
     }
     
-    // Execute the backup script with better error handling
-    let output = Command::new("bash")
+    // Execute the backup script and stream stdout for progress
+    let mut child = Command::new("bash")
         .arg(backup_script_path.to_str().unwrap_or("./backup.sh"))
-        .output()
-        .map_err(|e| {
-            let _ = fs::remove_file(&backup_script_path);
-            format!("Failed to execute backup script: {}", e)
-        })?;
-    
-    // Delete the temporary script
-    let _ = fs::remove_file(&backup_script_path);
-    
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-        
-        let mut error_message = format!("Failed to backup site (exit code: {:?}).", output.status.code());
-        
-        if !stderr.trim().is_empty() {
-            error_message.push_str(&format!("\n\nError output:\n{}", stderr));
+        .stdout(Stdio::piped())
+        .spawn()
+        .map_err(|e| { let _ = fs::remove_file(&backup_script_path); format!("Failed to execute backup script: {}", e) })?;
+    // read output lines
+    if let Some(stdout) = child.stdout.take() {
+        let reader = BufReader::new(stdout);
+        for line in reader.lines() {
+            if let Ok(text) = line {
+                let mut pct = 0;
+                let step = if text.contains("Backing up database") {
+                    pct = 25; "database"
+                } else if text.contains("Backing up Moodle code") {
+                    pct = 50; "code"
+                } else if text.contains("Backing up Moodle data") {
+                    pct = 75; "data"
+                } else if text.contains("Backup completed successfully") {
+                    pct = 100; "done"
+                } else {
+                    continue;
+                };
+                // emit progress event
+                app_handle.emit_all("backup_progress", serde_json::json!({
+                    "site": name,
+                    "percent": pct,
+                    "step": step
+                })).ok();
+            }
         }
-        
-        if !stdout.trim().is_empty() {
-            error_message.push_str(&format!("\n\nStandard output:\n{}", stdout));
-        }
-        
-        return Err(error_message);
     }
-    
-    // Return success message with backup path
+    let status = child.wait().map_err(|e| format!("Error waiting for backup script: {}", e))?;
+    let _ = fs::remove_file(&backup_script_path);
+    if !status.success() {
+        return Err(format!("Backup script exited with status {:?}", status.code()));
+    }
     Ok(format!("Site '{}' backed up successfully to {}", name, backup_dir.to_str().unwrap_or("")))
 }
 
