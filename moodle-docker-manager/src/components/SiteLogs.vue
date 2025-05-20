@@ -20,49 +20,52 @@
         </div>
       </div>
       
-      <div class="site-logs bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-4 p-4">
-        <!-- Breadcrumbs -->
-        <nav class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          <router-link to="/" class="hover:underline">Home</router-link>
-          <span class="mx-2">›</span>
-          <span>Site Logs</span>
-        </nav>
-        
-        <!-- Header - macOS style (more compact) -->
-        <div class="flex items-center mb-5">
-          <div class="bg-blue-600 rounded-lg p-1.5 mr-3 shadow-sm">
-            <PhTerminal class="text-white w-6 h-6" weight="fill" />
+      <!-- Wrap the site-logs in a container with the same padding as the header -->
+      <div class="px-8">
+        <div class="site-logs bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full my-4 p-4">
+          <!-- Breadcrumbs -->
+          <nav class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <router-link to="/" class="hover:underline">Home</router-link>
+            <span class="mx-2">›</span>
+            <span>Site Logs</span>
+          </nav>
+          
+          <!-- Header - macOS style (more compact) -->
+          <div class="flex items-center mb-5">
+            <div class="bg-blue-600 rounded-lg p-1.5 mr-3 shadow-sm">
+              <PhTerminal class="text-white w-6 h-6" weight="fill" />
+            </div>
+            <div>
+              <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Site Logs: {{ siteName }}</h2>
+              <p class="text-xs text-gray-500 dark:text-gray-400">View and monitor the container logs for this site</p>
+            </div>
           </div>
-          <div>
-            <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Site Logs: {{ siteName }}</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">View and monitor the container logs for this site</p>
+          
+          <!-- Service selector -->
+          <div class="mb-4 flex items-center space-x-2">
+            <label for="service-select" class="text-sm text-gray-700 dark:text-gray-300">Service:</label>
+            <select id="service-select" v-model="selectedService" @change="fetchLogs"
+              class="text-xs p-1 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
+              <option v-for="svc in services" :key="svc" :value="svc">{{ svc }}</option>
+            </select>
           </div>
-        </div>
-        
-        <!-- Service selector -->
-        <div class="mb-4 flex items-center space-x-2">
-          <label for="service-select" class="text-sm text-gray-700 dark:text-gray-300">Service:</label>
-          <select id="service-select" v-model="selectedService" @change="fetchLogs"
-            class="text-xs p-1 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
-            <option v-for="svc in services" :key="svc" :value="svc">{{ svc }}</option>
-          </select>
-        </div>
 
-        <div v-if="loading" class="loading text-xs">
-          <p>Loading logs...</p>
-        </div>
-        <div v-else-if="error">
-          <p class="error text-xs">{{ error }}</p>
-        </div>
-        <div v-else-if="!logs">
-          <p class="text-xs">No logs available for this site.</p>
-        </div>
-        <div v-else>
-          <pre class="logs-container text-xs">{{ logs }}</pre>
-        </div>
-        <div class="actions mt-3 flex gap-2">
-          <button @click="fetchLogs" class="compact-action-button bg-blue-500 text-white hover:bg-blue-600">Refresh Logs</button>
-          <button @click="$router.push({ name: 'Dashboard' })" class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">Back to Dashboard</button>
+          <div v-if="loading" class="loading text-xs">
+            <p>Loading logs...</p>
+          </div>
+          <div v-else-if="error">
+            <p class="error text-xs">{{ error }}</p>
+          </div>
+          <div v-else-if="!logs">
+            <p class="text-xs">No logs available for this site.</p>
+          </div>
+          <div v-else>
+            <pre class="logs-container text-xs">{{ logs }}</pre>
+          </div>
+          <div class="actions mt-3 flex gap-2">
+            <button @click="fetchLogs" class="compact-action-button bg-blue-500 text-white hover:bg-blue-600">Refresh Logs</button>
+            <button @click="$router.push({ name: 'Dashboard' })" class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">Back to Dashboard</button>
+          </div>
         </div>
       </div>
     </div>
