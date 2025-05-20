@@ -1,5 +1,5 @@
 <template>
-  <div class="site-list-container bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto p-3 dark:text-gray-100 overflow-hidden flex flex-col">
+  <div class="site-list-container bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto p-3 dark:text-gray-100 flex flex-col">
     <!-- Header - macOS style (more compact) -->
     <div class="flex items-center mb-2">
       <div class="bg-blue-600 rounded-lg p-1 mr-2 shadow-sm">
@@ -10,7 +10,7 @@
         <p class="text-[10px] text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
       </div>
     </div>
-    <div class="site-list overflow-auto flex-1">
+    <div class="site-list flex-1 overflow-x-auto">
     <div v-if="loading" class="loading text-xs">
       Loading sites...
     </div>
@@ -210,10 +210,15 @@ export default {
 </script>
 
 <style scoped>
+
 .site-list {
   width: 100%;
   max-width: 800px;
   margin: auto;
+  /* Changed overflow-auto to overflow-x-auto to only show horizontal scrollbar if needed */
+  /* overflow: auto; */ /* Original */
+  overflow-x: auto; /* Changed */
+  overflow-y: hidden; /* Added to prevent vertical scrollbar on this specific element */
 }
 
 .site-list h2 {
@@ -268,6 +273,8 @@ td {
 .actions {
   display: flex;
   gap: 8px;
+  /* Ensure the actions cell does not cause unnecessary wrapping or overflow that could trigger scrollbars */
+  white-space: nowrap;
 }
 
 .action-button {
@@ -403,18 +410,23 @@ td {
 }
 
 /* More dropdown styling */
+
 .dropdown:hover .dropdown-content {
   display: block;
 }
 
 .dropdown-content {
-  min-width: 8rem;
+  min-width: 8rem; /* Or adjust as needed */
+  /* Consider setting a max-width if content can be very long */
+  /* max-width: 15rem; */ 
   background-color: white;
   border-radius: 0.375rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(209, 213, 219);
-  overflow: hidden;
-  right: 0;
+  /* overflow: hidden; */ /* This was present, ensure it's intended. If it causes issues with dropdown visibility, review. */
+  position: absolute; /* Ensure dropdown is positioned correctly relative to the button */
+  right: 0; /* Align to the right of the button */
+  z-index: 50; /* Increased z-index to ensure it's above other elements */
 }
 
 .compact-dropdown-item {
