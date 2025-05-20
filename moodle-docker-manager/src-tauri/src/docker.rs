@@ -527,9 +527,28 @@ fn save_site_config(app_handle: AppHandle, site: Site) -> Result<(), String> {
 #[command]
 pub fn list_sites(app_handle: AppHandle) -> Result<Vec<Site>, String> {
     let state = app_handle.state::<SiteState>();
-    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    let mut sites_map = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    let mut sites_vec: Vec<Site> = Vec::new();
     
-    let sites_vec: Vec<Site> = sites.values().cloned().collect();
+    // Refresh status by inspecting Docker
+    for site in sites_map.values_mut() {
+        // Get container status for this site
+        let filter = format!("name={}", site.name);
+        let output = Command::new("docker")
+            .args(&["ps", "-a", "--filter", &filter, "--format", "{{.Status}}"])
+            .output();
+        if let Ok(o) = output {
+            let status_str = String::from_utf8_lossy(&o.stdout);
+            if status_str.contains("Up") {
+                site.status = "running".into();
+            } else {
+                site.status = "stopped".into();
+            }
+        } else {
+            site.status = "error".into();
+        }
+        sites_vec.push(site.clone());
+    }
     Ok(sites_vec)
 }
 

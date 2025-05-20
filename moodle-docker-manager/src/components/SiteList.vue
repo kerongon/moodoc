@@ -124,7 +124,7 @@
 
 <script>
 import { invoke } from '@tauri-apps/api/tauri';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
@@ -265,8 +265,14 @@ export default {
       return `.../${parts.slice(-2).join('/')}/${filename}`;
     };
 
+    let refreshTimer;
     onMounted(() => {
       loadSites();
+      // Poll for status updates every 5 seconds
+      refreshTimer = setInterval(loadSites, 5000);
+    });
+    onBeforeUnmount(() => {
+      clearInterval(refreshTimer);
     });
     
     // Expose the loadSites method to parent components
