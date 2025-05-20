@@ -758,7 +758,7 @@ export default {
       useDefaultDirectory: true,
       useRedis: false, // Default to false for Redis support
       phpVersions: ['8.4', '8.3', '8.2', '8.1', '8.0', '7.4', '7.3', '7.2', '7.1', '7.0', '5.6'],
-      dbTypes: ['MySQL', 'MariaDB', 'PostgreSQL', 'Microsoft SQL Server', 'Oracle XE'],
+      dbTypes: ['MySQL', 'MariaDB', 'PostgreSQL', 'Microsoft SQL Server', 'Oracle'],
       moodleBranches: ['MOODLE_500_STABLE', 'MOODLE_405_STABLE', 'MOODLE_404_STABLE', 'MOODLE_403_STABLE', 'MOODLE_402_STABLE', 'MOODLE_401_STABLE'],
       logsExpanded: false, // Controls the visibility of the logs section
       logs: [],
@@ -774,7 +774,7 @@ export default {
           'MariaDB': { min: 3400, max: 3499 },
           'PostgreSQL': { min: 5432, max: 5499 },
           'Microsoft SQL Server': { min: 1433, max: 1499 },
-          'Oracle XE': { min: 1521, max: 1599 }
+          'Oracle': { min: 1521, max: 1599 }
         }
       },
       // Mapping of Moodle branches to PHP versions
@@ -1093,7 +1093,7 @@ export default {
         const result = await invoke('create_site', {
           name: siteConfig.name,
           phpVersion: siteConfig.phpVersion,
-          dbType: siteConfig.dbType,
+          dbType: siteConfig.dbType.toLowerCase(), // Convert to lowercase to match backend expectations
           moodleBranch: siteConfig.moodleBranch || siteConfig.customBranch || 'MOODLE_400_STABLE',
           dbPort: siteConfig.dbPort,
           webPort: siteConfig.webPort,

@@ -222,7 +222,10 @@ fn generate_docker_compose(
     
     let db_image = match db_type.to_lowercase().as_str() {
         "mysql" => "mysql:5.7",
+        "mariadb" => "mariadb:10.6",
         "postgresql" => "postgres:13",
+        "microsoft sql server" => "mcr.microsoft.com/mssql/server:2019-latest",
+        "oracle" => "gvenzl/oracle-xe:21-slim",
         _ => "mysql:5.7", // Default to MySQL
     };
     
@@ -233,16 +236,43 @@ fn generate_docker_compose(
             "MYSQL_USER=moodle",
             "MYSQL_PASSWORD=moodle"
         ],
+        "mariadb" => vec![
+            "MARIADB_ROOT_PASSWORD=moodle",
+            "MARIADB_DATABASE=moodle",
+            "MARIADB_USER=moodle",
+            "MARIADB_PASSWORD=moodle"
+        ],
         "postgresql" => vec![
             "POSTGRES_DB=moodle",
             "POSTGRES_USER=moodle",
             "POSTGRES_PASSWORD=moodle"
         ],
+        "microsoft sql server" => vec![
+            "ACCEPT_EULA=Y",
+            "SA_PASSWORD=MoodleP@ssw0rd",
+            "MSSQL_PID=Express"
+        ],
+        "oracle" => vec![
+            "ORACLE_PASSWORD=moodle",
+            "APP_USER=moodle",
+            "APP_USER_PASSWORD=moodle", 
+            "ORACLE_DATABASE=XE"
+        ],
         _ => vec![], // Default empty
     };
     
+    // Define the default container port based on database type
+    let db_container_port = match db_type.to_lowercase().as_str() {
+        "mysql" => 3306,
+        "mariadb" => 3306,
+        "postgresql" => 5432,
+        "microsoft sql server" => 1433,
+        "oracle" => 1521,
+        _ => 3306, // Default to MySQL port
+    };
+    
     let db_port_mapping = if let Some(port) = db_port {
-        format!("    ports:\n      - \"{}:3306\"", port)
+        format!("    ports:\n      - \"{}:{}\"", port, db_container_port)
     } else {
         "".to_string()
     };
@@ -251,6 +281,26 @@ fn generate_docker_compose(
         format!("    ports:\n      - \"{}:80\"", port)
     } else {
         "".to_string()
+    };
+    
+    // Define database volume path based on database type
+    let db_volume_path = match db_type.to_lowercase().as_str() {
+        "mysql" => "/var/lib/mysql",
+        "mariadb" => "/var/lib/mysql",
+        "postgresql" => "/var/lib/postgresql/data",
+        "microsoft sql server" => "/var/opt/mssql/data",
+        "oracle" => "/opt/oracle/oradata",
+        _ => "/var/lib/mysql", // Default to MySQL
+    };
+    
+    // Map database type to Moodle DB type environment variable
+    let moodle_db_type = match db_type.to_lowercase().as_str() {
+        "mysql" => "mysqli",
+        "mariadb" => "mariadb",
+        "postgresql" => "pgsql",
+        "microsoft sql server" => "sqlsrv",
+        "oracle" => "oci",
+        _ => "mysqli", // Default to MySQL
     };
     
     let db_env_section = db_environment
@@ -269,7 +319,7 @@ services:
 {}
 {}
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data:${db_volume_path}
     networks:
       - moodle_network
 
@@ -283,6 +333,7 @@ services:
       - MOODLE_DB_USER=moodle
       - MOODLE_DB_PASSWORD=moodle
       - MOODLE_DB_NAME=moodle
+      - MOODLE_DB_TYPE={}
       - MOODLE_BRANCH={}
 {}
     volumes:
@@ -303,6 +354,7 @@ volumes:
         db_port_mapping,
         php_version,
         name,
+        moodle_db_type,
         moodle_branch,
         web_port_mapping
     )
