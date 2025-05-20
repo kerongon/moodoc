@@ -17,13 +17,8 @@
             <PhPlus class="w-5 h-5" weight="fill" />
             <span class="sm:inline">New Site</span>
           </router-link>
-          <button @click="openSettings" class="settings-btn flex items-center justify-center bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full p-2 transition-all duration-150" title="Settings">
-            <PhGear class="w-5 h-5" />
-          </button>
         </div>
       </div>
-      
-      <SettingsModal ref="settingsModal" />
       
       <div class="site-logs bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-4 p-4">
         <!-- Breadcrumbs -->
@@ -78,7 +73,6 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { PhTerminal, PhList, PhPlus, PhGear } from '@phosphor-icons/vue';
 import DockerStatus from './DockerStatus.vue';
-import SettingsModal from './SettingsModal.vue';
 
 export default {
   name: 'SiteLogs',
@@ -88,7 +82,6 @@ export default {
     PhPlus,
     PhGear,
     DockerStatus,
-    SettingsModal
   },
   props: {
     siteName: {
@@ -123,9 +116,6 @@ export default {
       } finally {
         this.loading = false;
       }
-    },
-    openSettings() {
-      this.$refs.settingsModal.open();
     }
   },
   mounted() {
@@ -152,7 +142,7 @@ export default {
   padding: 10px;
   flex: 1 1 auto;
   min-height: 0;
-  max-height: 70vh;
+  max-height: 50vh;
   overflow: auto;
   white-space: pre;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
