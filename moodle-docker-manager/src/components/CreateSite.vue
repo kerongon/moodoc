@@ -693,11 +693,11 @@
       <button 
         type="button"
         @click="logsExpanded = !logsExpanded"
-        class="w-full flex items-center justify-between py-2 px-3 rounded bg-gray-50 hover:bg-gray-100 transition-colors duration-150"
+        class="w-full flex items-center justify-between py-2 px-3 rounded bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-150"
       >
         <div class="flex items-center">
-          <h3 class="text-sm font-medium text-gray-700">Logs</h3>
-          <span class="ml-2 text-xs text-gray-500">({{ logs.length }} entries)</span>
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-100">Logs</h3>
+          <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">({{ logs.length }} entries)</span>
           <!-- Show a badge for latest logs -->
           <span v-if="logs.length > 0 && !logsExpanded" class="ml-2 inline-block bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
             {{ logs[logs.length-1].substring(0, 30) }}{{ logs[logs.length-1].length > 30 ? '...' : '' }}
@@ -746,7 +746,7 @@
       >
         <div 
           v-if="logsExpanded"
-          class="bg-gray-100 rounded-md p-3 font-mono text-xs transition-all duration-300 overflow-auto"
+          class="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-3 font-mono text-xs dark:text-gray-200 transition-all duration-300 overflow-auto"
           style="max-height: 200px;"
         >
           <div v-for="(log, i) in logs" :key="i" class="pb-1 whitespace-pre-wrap break-words">{{ log }}</div>
