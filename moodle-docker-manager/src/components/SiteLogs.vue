@@ -25,7 +25,7 @@
     </div>
     <div class="actions mt-3 flex gap-2">
       <button @click="fetchLogs" class="compact-action-button bg-blue-500 text-white hover:bg-blue-600">Refresh Logs</button>
-      <button @click="$router.push('/dashboard')" class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">Back to Dashboard</button>
+      <button @click="$router.push({ name: 'Dashboard' })" class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">Back to Dashboard</button>
     </div>
   </div>
 </template>
@@ -81,19 +81,22 @@ export default {
 </script>
 
 <style scoped>
-.site-logs {
-  max-width: 800px;
-  margin: 0 auto;
+ .site-logs {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.logs-container {
+ .logs-container {
   background-color: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   padding: 10px;
-  max-height: 450px;
-  overflow-y: auto;
-  white-space: pre-wrap;
+  flex: 1 1 auto;
+  overflow: auto;
+  white-space: pre;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   margin-bottom: 15px;
   font-size: 0.7rem;
