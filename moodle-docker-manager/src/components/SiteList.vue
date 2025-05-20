@@ -1,5 +1,5 @@
 <template>
-  <div class="site-list-container bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto p-3 dark:text-gray-100 flex flex-col">
+  <div class="site-list-container bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full p-3 dark:text-gray-100 flex flex-col">
     <!-- Header - macOS style (more compact) -->
     <div class="flex items-center mb-2">
       <div class="bg-blue-600 rounded-lg p-1 mr-2 shadow-sm">
@@ -47,29 +47,24 @@
             </span>
           </td>
           <td class="actions">
-            <button v-if="site.status !== 'running'" @click="startSite(site.name)" class="compact-action-button bg-green-500 text-white hover:bg-green-600">Start</button>
-            <button v-else @click="stopSite(site.name)" class="compact-action-button bg-red-500 text-white hover:bg-red-600">Stop</button>
-            <button @click="viewLogs(site.name)" class="compact-action-button bg-blue-500 text-white hover:bg-blue-600">Logs</button>
-            <div class="dropdown inline-block relative">
-              <button class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">
-                More
-                <span class="ml-1">▼</span>
-              </button>
-              <div class="dropdown-content absolute hidden pt-1 z-10">
-                <button @click="viewBackups(site.name)" class="compact-dropdown-item">
-                  <PhArchiveBox class="w-3 h-3 mr-1" />
-                  Backups
-                </button>
-                <button @click="updateSite(site.name)" class="compact-dropdown-item">
-                  <PhArrowClockwise class="w-3 h-3 mr-1" />
-                  Update
-                </button>
-                <button @click="removeSite(site.name)" class="compact-dropdown-item text-red-600 hover:bg-red-50">
-                  <PhTrash class="w-3 h-3 mr-1" />
-                  Remove
-                </button>
-              </div>
-            </div>
+            <button v-if="site.status !== 'running'" @click="startSite(site.name)" class="icon-action-btn bg-green-500 hover:bg-green-600" title="Start">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg>
+            </button>
+            <button v-else @click="stopSite(site.name)" class="icon-action-btn bg-red-500 hover:bg-red-600" title="Stop">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+            </button>
+            <button @click="viewLogs(site.name)" class="icon-action-btn bg-blue-500 hover:bg-blue-600" title="Logs">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
+            </button>
+            <button @click="viewBackups(site.name)" class="icon-action-btn bg-gray-500 hover:bg-gray-600" title="Backups">
+              <PhArchiveBox class="w-5 h-5" />
+            </button>
+            <button @click="updateSite(site.name)" class="icon-action-btn bg-yellow-500 hover:bg-yellow-600" title="Update">
+              <PhArrowClockwise class="w-5 h-5" />
+            </button>
+            <button @click="removeSite(site.name)" class="icon-action-btn bg-gray-800 hover:bg-red-700" title="Remove">
+              <PhTrash class="w-5 h-5 text-red-400" />
+            </button>
           </td>
         </tr>
       </tbody>
@@ -210,15 +205,32 @@ export default {
 </script>
 
 <style scoped>
+.icon-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 0.5rem;
+  color: #fff;
+  margin-right: 2px;
+  transition: background 0.15s, color 0.15s;
+  font-size: 1rem;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  z-index: 10;
+}
+
+.icon-action-btn:last-child {
+  margin-right: 0;
+}
+
 
 .site-list {
   width: 100%;
-  max-width: 800px;
-  margin: auto;
-  /* Changed overflow-auto to overflow-x-auto to only show horizontal scrollbar if needed */
-  /* overflow: auto; */ /* Original */
-  overflow-x: auto; /* Changed */
-  overflow-y: hidden; /* Added to prevent vertical scrollbar on this specific element */
+  overflow-x: auto;
 }
 
 .site-list h2 {
@@ -229,7 +241,25 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
-  font-size: 0.75rem; /* Smaller text */
+  font-size: 0.95rem;
+}
+
+/* Alternating row hover effect */
+tbody tr {
+  transition: background 0.15s;
+}
+tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+tbody tr:hover {
+  background-color: #e0e7ef;
+}
+
+.dark tbody tr:nth-child(even) {
+  background-color: #23272f;
+}
+.dark tbody tr:hover {
+  background-color: #2d3748;
 }
 
 thead {

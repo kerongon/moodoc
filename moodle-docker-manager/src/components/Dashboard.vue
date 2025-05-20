@@ -1,26 +1,34 @@
 <template>
-  <div class="dashboard p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 max-w-4xl mx-auto my-8">
-    <h1 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Moodle Docker Manager Dashboard</h1>
-    <div class="docker-status">
-      <DockerStatus />
+  <div class="dashboard-full bg-white dark:bg-gray-800 min-h-screen w-full p-0">
+    <div class="flex items-center justify-between px-8 pt-8 pb-2">
+      <div class="flex items-center gap-3">
+        <PhList class="w-10 h-10 text-blue-500 drop-shadow" weight="fill" />
+        <h1 class="text-4xl font-extrabold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight flex items-center">
+          Moodle Docker Manager
+        </h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="docker-status-top">
+          <DockerStatus />
+        </div>
+        <router-link to="/create" class="create-site-btn flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-4 py-2 text-base shadow transition-all duration-150" title="Create New Site">
+          <PhPlus class="w-5 h-5" />
+          <span class="hidden sm:inline">New Site</span>
+        </router-link>
+        <router-link to="/settings" class="settings-btn flex items-center justify-center bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full p-2 transition-all duration-150" title="Settings">
+          <PhGear class="w-5 h-5" />
+        </router-link>
+      </div>
     </div>
-    <div class="actions flex items-center justify-between">
-      <router-link to="/create" class="create-button macos-button macos-button-primary">Create New Site</router-link>
-      <router-link to="/settings" class="settings-button macos-button macos-button-secondary flex items-center">
-        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-        </svg>
-        Settings
-      </router-link>
-    </div>
-    <div class="site-list-container">
+    <div class="px-8 pb-8">
       <SiteList ref="siteList" />
     </div>
   </div>
 </template>
 
 <script>
-import { invoke } from '@tauri-apps/api/tauri';
+
+import { PhList, PhPlus, PhGear } from '@phosphor-icons/vue';
 import SiteList from './SiteList.vue';
 import DockerStatus from './DockerStatus.vue';
 
@@ -28,7 +36,10 @@ export default {
   name: 'Dashboard',
   components: {
     SiteList,
-    DockerStatus
+    DockerStatus,
+    PhList,
+    PhPlus,
+    PhGear
   },
   data() {
     return {
@@ -48,15 +59,29 @@ export default {
 </script>
 
 <style scoped>
-.dashboard {
-  padding: 20px;
+
+.dashboard-full {
+  min-height: 100vh;
+  width: 100vw;
+  background: inherit;
+  padding: 0;
 }
 
-.site-list {
-  margin-bottom: 20px;
+.docker-status-top {
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-.docker-status {
-  margin-top: 20px;
+.create-site-btn {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1rem;
+}
+
+.settings-btn {
+  min-width: 44px;
+  min-height: 44px;
 }
 </style>
