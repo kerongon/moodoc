@@ -1,5 +1,11 @@
 <template>
-  <div class="site-logs bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-4 p-4">
+    <div class="site-logs bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto my-4 p-4">
+      <!-- Breadcrumbs -->
+      <nav class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <router-link to="/" class="hover:underline">Home</router-link>
+        <span class="mx-2">›</span>
+        <span>Site Logs</span>
+      </nav>
     <!-- Header - macOS style (more compact) -->
     <div class="flex items-center mb-5">
       <div class="bg-blue-600 rounded-lg p-1.5 mr-3 shadow-sm">
@@ -35,7 +41,7 @@
       <button @click="fetchLogs" class="compact-action-button bg-blue-500 text-white hover:bg-blue-600">Refresh Logs</button>
       <button @click="$router.push({ name: 'Dashboard' })" class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">Back to Dashboard</button>
     </div>
-  </div>
+    </div>
 </template>
 
 <script>
@@ -44,9 +50,7 @@ import { PhTerminal } from '@phosphor-icons/vue';
 
 export default {
   name: 'SiteLogs',
-  components: {
-    PhTerminal
-  },
+  components: { PhTerminal },
   props: {
     siteName: {
       type: String,
