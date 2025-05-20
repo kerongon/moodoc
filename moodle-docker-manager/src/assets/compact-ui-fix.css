@@ -253,6 +253,142 @@ body[data-theme="light"] select {
   color: #000000 !important;
 }
 
+/* Specifically fix the buttons with dark backgrounds */
+html:not(.dark) .macos-button-secondary,
+body[data-theme="light"] .macos-button-secondary {
+  background-color: #f3f4f6 !important; /* light gray background */
+  color: #111827 !important; /* dark text */
+  border-color: #d1d5db !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+/* Fix "Reset" and "Use Stable" buttons specifically */
+html:not(.dark) button[class*="macos-button"],
+body[data-theme="light"] button[class*="macos-button"] {
+  background-color: #f3f4f6 !important; /* light gray background */
+  color: #111827 !important; /* dark text */
+  border-color: #d1d5db !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Direct fixes for specific buttons (Reset, Use Stable) in Custom tab */
+html:not(.dark) button.macos-button.macos-button-secondary,
+body[data-theme="light"] button.macos-button.macos-button-secondary {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+  text-align: center !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 28px !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  font-size: 0.75rem !important;
+}
+
+/* Maximum specificity overrides for buttons - target them by their contained text */
+html:not(.dark) button:has(> :not(:empty):first-child:contains("Reset")),
+html:not(.dark) button:has(> :not(:empty):first-child:contains("Use Stable")),
+body[data-theme="light"] button:has(> :not(:empty):first-child:contains("Reset")),
+body[data-theme="light"] button:has(> :not(:empty):first-child:contains("Use Stable")) {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+  text-align: center !important;
+}
+
+/* Very targeted fix for the buttons in custom tab - force inline-block display */
+html:not(.dark) #customRepo + button,
+html:not(.dark) #customBranch + button,
+body[data-theme="light"] #customRepo + button,
+body[data-theme="light"] #customBranch + button {
+  display: inline-block !important;
+  text-align: center !important;
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+  line-height: 1.5 !important;
+  padding: 0.25rem 0.75rem !important;
+}
+
+/* Fix for Cancel/Save buttons at the bottom */
+html:not(.dark) button.cancel-button,
+html:not(.dark) button.browse-button,
+body[data-theme="light"] button.cancel-button,
+body[data-theme="light"] button.browse-button {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+/* Fix text alignment in all buttons */
+button.macos-button,
+button.macos-button-secondary,
+button.browse-button,
+button.cancel-button,
+button.save-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  line-height: normal !important;
+}
+
+/* Fix button text size and font */
+button.text-xs {
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+  font-weight: 500 !important;
+}
+
+/* Fix blue buttons in light mode */
+html:not(.dark) button.macos-button-primary,
+html:not(.dark) button.save-button,
+body[data-theme="light"] button.macos-button-primary,
+body[data-theme="light"] button.save-button {
+  background-color: #3b82f6 !important; /* blue-500 */
+  color: #ffffff !important; /* white text */
+  border-color: #2563eb !important; /* blue-600 */
+}
+
+/* Fix hover states */
+html:not(.dark) button.macos-button:hover,
+html:not(.dark) button.macos-button-secondary:hover,
+html:not(.dark) button.browse-button:hover,
+html:not(.dark) button.cancel-button:hover,
+body[data-theme="light"] button.macos-button:hover,
+body[data-theme="light"] button.macos-button-secondary:hover,
+body[data-theme="light"] button.browse-button:hover,
+body[data-theme="light"] button.cancel-button:hover {
+  background-color: #e5e7eb !important; /* gray-200 */
+}
+
+html:not(.dark) button.macos-button-primary:hover,
+html:not(.dark) button.save-button:hover,
+body[data-theme="light"] button.macos-button-primary:hover,
+body[data-theme="light"] button.save-button:hover {
+  background-color: #2563eb !important; /* blue-600 */
+}
+
+/* Fix specific buttons in the CustomRepo section */
+html:not(.dark) [id="customRepo"] + button,
+html:not(.dark) [id="customBranch"] + button,
+body[data-theme="light"] [id="customRepo"] + button,
+body[data-theme="light"] [id="customBranch"] + button {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+  height: auto !important;
+}
+
 /* Disable transitions temporarily when switching modes for an immediate change */
 html.theme-switching * {
   transition: none !important;

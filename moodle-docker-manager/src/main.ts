@@ -109,10 +109,32 @@ window.ThemeManager = {
       document.documentElement.style.setProperty('--bg-color', '#ffffff');
       document.documentElement.style.setProperty('--text-color', '#111827');
       document.documentElement.style.setProperty('--border-color', '#e5e7eb');
+
+      // Force update button styling in light mode
+      document.querySelectorAll('button.macos-button-secondary').forEach((btn) => {
+        (btn as HTMLElement).style.setProperty('background-color', '#f3f4f6', 'important');
+        (btn as HTMLElement).style.setProperty('color', '#111827', 'important');
+        (btn as HTMLElement).style.setProperty('border-color', '#d1d5db', 'important');
+        (btn as HTMLElement).style.setProperty('display', 'inline-flex', 'important');
+        (btn as HTMLElement).style.setProperty('align-items', 'center', 'important');
+        (btn as HTMLElement).style.setProperty('justify-content', 'center', 'important');
+        (btn as HTMLElement).style.setProperty('text-align', 'center', 'important');
+      });
     } else {
       document.documentElement.style.setProperty('--bg-color', '#111827');
       document.documentElement.style.setProperty('--text-color', '#f9fafb');
       document.documentElement.style.setProperty('--border-color', '#374151');
+      
+      // Force update button styling in dark mode
+      document.querySelectorAll('button.macos-button-secondary').forEach((btn) => {
+        (btn as HTMLElement).style.setProperty('background-color', '#374151', 'important');
+        (btn as HTMLElement).style.setProperty('color', '#f3f4f6', 'important');
+        (btn as HTMLElement).style.setProperty('border-color', '#4b5563', 'important');
+        (btn as HTMLElement).style.setProperty('display', 'inline-flex', 'important');
+        (btn as HTMLElement).style.setProperty('align-items', 'center', 'important');
+        (btn as HTMLElement).style.setProperty('justify-content', 'center', 'important');
+        (btn as HTMLElement).style.setProperty('text-align', 'center', 'important');
+      });
     }
   }
 };
