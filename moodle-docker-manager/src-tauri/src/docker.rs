@@ -221,12 +221,25 @@ fn generate_docker_compose(
     let _web_port_str = web_port.map_or_else(|| "".to_string(), |p| p.to_string());
     
     let db_image = match db_type.to_lowercase().as_str() {
-        "mysql" => "mysql:5.7",
-        "mariadb" => "mariadb:10.6",
-        "postgresql" => "postgres:13",
-        "microsoft sql server" => "mcr.microsoft.com/mssql/server:2019-latest",
-        "oracle" => "gvenzl/oracle-xe:21-slim",
-        _ => "mysql:5.7", // Default to MySQL
+        "mysql" => "mysql:8.0", // 8.0 has ARM64 support
+        "mariadb" => "mariadb:10.6", // MariaDB has ARM64 support
+        "postgresql" => "postgres:13", // PostgreSQL has ARM64 support
+        "microsoft sql server" => {
+            if cfg!(target_arch = "aarch64") {
+                "mcr.microsoft.com/azure-sql-edge:latest" // SQL Server Edge for ARM64
+            } else {
+                "mcr.microsoft.com/mssql/server:2019-latest" // Regular SQL Server for x86_64
+            }
+        },
+        "oracle" => {
+            // Oracle DB doesn't have official arm64 images, so we'll use a custom build that works on ARM
+            if cfg!(target_arch = "aarch64") {
+                "gvenzl/oracle-xe:21-slim-faststart" // This tag has experimental ARM support
+            } else {
+                "gvenzl/oracle-xe:21-slim" // Regular Oracle XE for x86_64
+            }
+        },
+        _ => "mysql:8.0", // Default to MySQL with ARM64 support
     };
     
     let db_environment = match db_type.to_lowercase().as_str() {
@@ -319,7 +332,7 @@ services:
 {}
 {}
     volumes:
-      - db_data:${db_volume_path}
+      - db_data:{}
     networks:
       - moodle_network
 
@@ -352,6 +365,7 @@ volumes:
         name,
         db_env_section,
         db_port_mapping,
+        db_volume_path,
         php_version,
         name,
         moodle_db_type,
@@ -516,4 +530,30 @@ pub fn remove_site(app_handle: AppHandle, name: String) -> Result<String, String
         .map_err(|e| format!("Failed to write sites config: {}", e))?;
     
     Ok(format!("Site '{}' removed successfully", name))
+}
+
+#[command]
+pub fn check_platform_compatibility(db_type: String) -> Result<String, String> {
+    // Check if we're on ARM architecture (like Apple Silicon)
+    #[cfg(target_arch = "aarch64")]
+    {
+        // All database types that might have compatibility issues on ARM
+        match db_type.to_lowercase().as_str() {
+            "oracle" => {
+                return Ok("Note: Oracle on ARM64 uses an experimental image. You may experience some performance issues.".to_string());
+            },
+            "microsoft sql server" => {
+                return Ok("Note: SQL Server on ARM64 uses Azure SQL Edge, which has some feature limitations compared to SQL Server.".to_string());
+            },
+            _ => {
+                return Ok("Your platform is compatible with the selected database type.".to_string());
+            }
+        }
+    }
+    
+    // For non-ARM architectures, all database types should work fine
+    #[cfg(not(target_arch = "aarch64"))]
+    {
+        return Ok("Your platform is compatible with the selected database type.".to_string());
+    }
 }

@@ -703,17 +703,40 @@
             {{ logs[logs.length-1].substring(0, 30) }}{{ logs[logs.length-1].length > 30 ? '...' : '' }}
           </span>
         </div>
-        <div class="flex items-center text-gray-500 text-xs">
-          {{ logsExpanded ? 'Hide details' : 'Show details' }}
-          <svg 
-            class="ml-1 w-4 h-4 transform transition-transform duration-200" 
-            :class="logsExpanded ? 'rotate-180' : ''"
-            xmlns="http://www.w3.org/2000/svg" 
-            viewBox="0 0 20 20" 
-            fill="currentColor"
+        <div class="flex items-center space-x-3">
+          <!-- Copy Logs Button -->
+          <button
+            v-if="logs.length > 0" 
+            type="button"
+            @click.stop="copyLogs($event)"
+            class="flex items-center text-blue-600 hover:text-blue-800 text-xs px-1.5 py-0.5 bg-blue-50 hover:bg-blue-100 rounded transition-colors duration-150"
+            title="Copy all log entries to clipboard"
           >
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
+            <svg 
+              class="w-3 h-3 mr-0.5" 
+              xmlns="http://www.w3.org/2000/svg" 
+              viewBox="0 0 20 20" 
+              fill="currentColor"
+            >
+              <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+              <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+            </svg>
+            Copy
+          </button>
+          
+          <!-- Show/Hide Details -->
+          <div class="flex items-center text-gray-500 text-xs">
+            {{ logsExpanded ? 'Hide details' : 'Show details' }}
+            <svg 
+              class="ml-1 w-4 h-4 transform transition-transform duration-200" 
+              :class="logsExpanded ? 'rotate-180' : ''"
+              xmlns="http://www.w3.org/2000/svg" 
+              viewBox="0 0 20 20" 
+              fill="currentColor"
+            >
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </div>
         </div>
       </button>
       <transition
@@ -891,6 +914,7 @@ export default {
     this.checkDockerStatus();
     this.updatePHPVersion(); // Set initial PHP version based on default Moodle branch
     this.initializeAdvancedTabData(); // Initialize default values for the advanced tab
+    this.checkPlatformCompatibility(); // Check if selected DB is compatible with current platform
   },
   methods: {
     initializeAdvancedTabData() {
@@ -961,12 +985,61 @@ export default {
           this.dbPort = '';
         }
       }
+      
+      // Check platform compatibility with the selected database type
+      this.checkPlatformCompatibility();
+    },
+    
+    async checkPlatformCompatibility() {
+      try {
+        const compatMessage = await invoke('check_platform_compatibility', {
+          dbType: this.dbType
+        });
+        
+        if (compatMessage && !compatMessage.includes('compatible')) {
+          // This is a warning message
+          this.addLogMessage(`⚠️ ${compatMessage}`);
+        }
+      } catch (error) {
+        console.error("Error checking platform compatibility:", error);
+      }
     },
     
     // Helper method to add log messages without auto-expanding logs
     addLogMessage(message) {
       this.logs.push(message);
       // Logs will remain collapsed by default
+    },
+    
+    // Copy logs to clipboard
+    async copyLogs(event) {
+      try {
+        // Store the original button text
+        const button = event.currentTarget;
+        const originalText = button.innerHTML;
+        const originalClass = button.className;
+        
+        // Copy logs to clipboard
+        const logText = this.logs && this.logs.length ? this.logs.join('\n') : 'No logs available';
+        await navigator.clipboard.writeText(logText);
+        
+        // Update button to show success
+        button.innerHTML = '<svg class="w-3 h-3 mr-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>Copied!';
+        button.className = originalClass.replace('text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100', 'text-green-600 bg-green-50');
+        
+        // Show a brief notification in logs
+        this.addLogMessage('Logs copied to clipboard');
+        
+        // Reset button after a short delay
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.className = originalClass;
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy logs:', err);
+        // Show error in logs
+        this.addLogMessage('Failed to copy logs: ' + err.message);
+      }
     },
     
     async checkDockerStatus() {
