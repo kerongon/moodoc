@@ -16,7 +16,7 @@
           <span class="sm:inline">New Site</span>
         </router-link>
         <router-link to="/settings" class="settings-btn flex items-center justify-center bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full p-2 transition-all duration-150" title="Settings">
-          <PhGear weight="fill" class="w-5 h-5 text-gray-700" />
+          <PhGear class="w-5 h-5" />
         </router-link>
       </div>
     </div>
@@ -85,10 +85,5 @@ export default {
 .settings-btn {
   min-width: 44px;
   min-height: 44px;
-  background-color: #f3f4f6 !important;
-}
-
-.settings-btn svg {
-  color: #374151 !important;
 }
 </style>
