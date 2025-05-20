@@ -561,6 +561,28 @@ export MOODLE_DOCKER_WEB_PORT={}
     site.web_port.unwrap_or(8000)
     );
     
+    // Create .env file to ensure environment variables are properly set
+    let env_content = format!(r#"COMPOSE_PROJECT_NAME={}
+MOODLE_DOCKER_DB={}
+MOODLE_DOCKER_WWWROOT={}/moodle
+MOODLE_DOCKER_WEB_PORT={}
+MOODLE_DOCKER_PHP_VERSION={}
+"#, 
+    name,
+    site.db_type.to_lowercase(),
+    site.path.to_str().unwrap_or(""),
+    site.web_port.unwrap_or(8000),
+    site.php_version
+    );
+
+    // Write the .env file
+    let env_file_path = site.path.join(".env");
+    let mut env_file = File::create(&env_file_path)
+        .map_err(|e| format!("Failed to create .env file: {}", e))?;
+    
+    env_file.write_all(env_content.as_bytes())
+        .map_err(|e| format!("Failed to write .env file: {}", e))?;
+
     // Write the script to a temporary file
     let temp_script_path = site.path.join("start.sh");
     let mut file = File::create(&temp_script_path)
@@ -621,13 +643,34 @@ pub fn stop_site(app_handle: AppHandle, name: String) -> Result<String, String> 
 cd {}
 export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_DB={}
+export MOODLE_DOCKER_WEB_PORT={}
+export MOODLE_DOCKER_PHP_VERSION={}
 
 # Stop containers
 ./bin/moodle-docker-compose down
 "#, 
     site.path.to_str().unwrap_or(""),
-    name
+    name,
+    site.db_type.to_lowercase(),
+    site.web_port.unwrap_or(8000),
+    site.php_version
     );
+    
+    // Print debugging information
+    println!("Stopping site: {}", name);
+    println!("Site path: {:?}", site.path);
+    
+    // Check if directory exists
+    if !site.path.exists() {
+        return Err(format!("Site directory does not exist: {:?}", site.path));
+    }
+    
+    // Check if moodle-docker-compose exists
+    let compose_script = site.path.join("bin").join("moodle-docker-compose");
+    if !compose_script.exists() {
+        return Err(format!("Docker compose script not found at: {:?}", compose_script));
+    }
     
     // Write the script to a temporary file
     let temp_script_path = site.path.join("stop.sh");
@@ -647,8 +690,9 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
         return Err(format!("Failed to make script executable"));
     }
     
-    // Execute the script
-    let output = Command::new(temp_script_path.to_str().unwrap_or("./stop.sh"))
+    // Execute the script with proper shell
+    let output = Command::new("bash")
+        .arg(temp_script_path.to_str().unwrap_or("./stop.sh"))
         .output()
         .map_err(|e| format!("Failed to execute stop script: {}", e))?;
     
@@ -656,9 +700,20 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
     let _ = fs::remove_file(temp_script_path);
     
     if !output.status.success() {
-        let error = String::from_utf8(output.stderr)
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        return Err(format!("Failed to stop containers: {}", error));
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        
+        let mut error_message = format!("Failed to stop containers (exit code: {:?}).", output.status.code());
+        
+        if !stderr.trim().is_empty() {
+            error_message.push_str(&format!("\n\nError output:\n{}", stderr));
+        }
+        
+        if !stdout.trim().is_empty() {
+            error_message.push_str(&format!("\n\nStandard output:\n{}", stdout));
+        }
+        
+        return Err(error_message);
     }
     
     // Update site status
