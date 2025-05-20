@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build Moodle Docker Manager",
+			"type": "shell",
+			"command": "cd /Users/kerongonzales/code/moodoc/moodle-docker-manager && npm run tauri dev",
+			"isBackground": false,
+			"group": "build",
+			"problemMatcher": [
+				"$rustc"
+			]
+		}
+	]
+}

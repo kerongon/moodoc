@@ -93,44 +93,179 @@ pub fn create_site(
             .map_err(|e| format!("Failed to create site directory: {}", e))?;
     }
     
-    // Generate docker-compose.yml file
-    let docker_compose_content = generate_docker_compose(
-        &name, 
-        &php_version, 
-        &db_type, 
-        &moodle_branch, 
-        db_port, 
-        web_port
-    );
-    
-    let docker_compose_path = site_dir.join("docker-compose.yml");
-    let mut file = File::create(&docker_compose_path)
-        .map_err(|e| format!("Failed to create docker-compose.yml: {}", e))?;
-    
-    file.write_all(docker_compose_content.as_bytes())
-        .map_err(|e| format!("Failed to write docker-compose.yml: {}", e))?;
-    
-    // Start the containers
-    // Try docker compose (with space) first (newer Docker versions)
-    let output = Command::new("docker")
-        .current_dir(&site_dir)
-        .args(["compose", "-f", "docker-compose.yml", "up", "-d"])
-        .output();
-        
-    // If that fails, try docker-compose (with hyphen) as fallback
-    let output = match output {
-        Ok(o) => Ok(o),
-        Err(_) => Command::new("docker-compose")
+    // Clone the moodle-docker repository if it doesn't exist
+    let moodle_docker_dir = site_dir.join("moodle-docker");
+    if !moodle_docker_dir.exists() {
+        // Clone the moodle-docker repository
+        let output = Command::new("git")
             .current_dir(&site_dir)
-            .args(["-f", "docker-compose.yml", "up", "-d"])
+            .args(["clone", "https://github.com/moodlehq/moodle-docker.git"])
             .output()
+            .map_err(|e| format!("Failed to clone moodle-docker repository: {}", e))?;
+        
+        if !output.status.success() {
+            let error = String::from_utf8(output.stderr)
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            return Err(format!("Failed to clone moodle-docker repository: {}", error));
+        }
     }
-    .map_err(|e| format!("Failed to execute docker-compose: {}", e))?;
+    
+    // Clone the specific Moodle version
+    let moodle_dir = moodle_docker_dir.join("moodle");
+    if !moodle_dir.exists() {
+        // Clone the Moodle repository with the specified branch
+        let output = Command::new("git")
+            .current_dir(&moodle_docker_dir)
+            .args([
+                "clone", 
+                "-b", 
+                &moodle_branch,
+                "git://git.moodle.org/moodle.git", 
+                "./moodle"
+            ])
+            .output()
+            .map_err(|e| format!("Failed to clone Moodle repository: {}", e))?;
+        
+        if !output.status.success() {
+            let error = String::from_utf8(output.stderr)
+                .unwrap_or_else(|_| "Unknown error".to_string());
+            return Err(format!("Failed to clone Moodle repository: {}", error));
+        }
+    }
+    
+    // Copy the template config file
+    let _template_config = moodle_docker_dir.join("config.docker-template.php");
+    let config_php = moodle_dir.join("config.php");
+    
+    // Copy config.docker-template.php to moodle/config.php
+    let output = Command::new("cp")
+        .current_dir(&moodle_docker_dir)
+        .args([
+            "config.docker-template.php",
+            config_php.to_str().unwrap_or("./moodle/config.php")
+        ])
+        .output()
+        .map_err(|e| format!("Failed to copy config template: {}", e))?;
     
     if !output.status.success() {
         let error = String::from_utf8(output.stderr)
             .unwrap_or_else(|_| "Unknown error".to_string());
-        return Err(format!("Failed to start containers: {}", error));
+        return Err(format!("Failed to copy config template: {}", error));
+    }
+    
+    // Create a script file to set up the environment and start the containers
+    let web_port_str = web_port.map_or("8000".to_string(), |p| p.to_string());
+    let setup_script = format!(r#"#!/bin/bash
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_DB={}
+export MOODLE_DOCKER_WEB_PORT={}
+export MOODLE_DOCKER_PHP_VERSION={}
+
+# Start the containers
+./bin/moodle-docker-compose up -d
+
+# Wait for database to be ready
+./bin/moodle-docker-wait-for-db
+
+# Install Moodle
+./bin/moodle-docker-compose exec webserver php admin/cli/install_database.php --agree-license --fullname="Docker Moodle" --shortname="docker_moodle" --summary="Docker Moodle site" --adminpass="test" --adminemail="admin@example.com"
+
+echo "Moodle is now available at http://localhost:{}"
+echo "Admin username: admin"
+echo "Admin password: test"
+"#, name, db_type.to_lowercase(), web_port_str, php_version, web_port_str);
+
+    let setup_script_path = moodle_docker_dir.join("setup.sh");
+    let mut file = File::create(&setup_script_path)
+        .map_err(|e| format!("Failed to create setup script: {}", e))?;
+    
+    file.write_all(setup_script.as_bytes())
+        .map_err(|e| format!("Failed to write setup script: {}", e))?;
+    
+    // Make the script executable
+    let output = Command::new("chmod")
+        .current_dir(&moodle_docker_dir)
+        .args(["+x", "setup.sh"])
+        .output()
+        .map_err(|e| format!("Failed to make script executable: {}", e))?;
+    
+    if !output.status.success() {
+        let error = String::from_utf8(output.stderr)
+            .unwrap_or_else(|_| "Unknown error".to_string());
+        return Err(format!("Failed to make script executable: {}", error));
+    }
+    
+    // Instead of directly executing the setup.sh script, we'll run the docker compose commands one by one
+    // to better handle potential hanging/freezing issues
+    
+    // First, start the containers
+    println!("Attempting to start Docker containers for site: {}", name);
+    let start_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_WEB_PORT={} && export MOODLE_DOCKER_PHP_VERSION={} && ./bin/moodle-docker-compose up -d"#,
+        moodle_docker_dir.to_str().unwrap_or(""),
+        name,
+        db_type.to_lowercase(),
+        web_port.map_or("8000".to_string(), |p| p.to_string()),
+        php_version
+    );
+    
+    // Execute the start command
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg(&start_cmd)
+        .output()
+        .map_err(|e| format!("Failed to start Docker containers: {}", e))?;
+    
+    println!("Docker containers start command executed for site: {}. Success: {}", name, output.status.success());
+    if !output.status.success() {
+        let error = String::from_utf8(output.stderr)
+            .unwrap_or_else(|_| "Unknown error".to_string());
+        return Err(format!("Failed to start Docker containers: {}", error));
+    }
+    
+    // Wait for the database to be ready
+    println!("Attempting to wait for database for site: {}", name);
+    let wait_db_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && ./bin/moodle-docker-wait-for-db"#,
+        moodle_docker_dir.to_str().unwrap_or(""),
+        name
+    );
+    
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg(&wait_db_cmd)
+        .output()
+        .map_err(|e| format!("Failed while waiting for database: {}", e))?;
+    
+    println!("Wait for database command executed for site: {}. Success: {}", name, output.status.success());
+    if !output.status.success() {
+        let error = String::from_utf8(output.stderr)
+            .unwrap_or_else(|_| "Unknown error".to_string());
+        return Err(format!("Failed while waiting for database: {}", error));
+    }
+    
+    // Install Moodle
+    println!("Attempting to install Moodle for site: {}", name);
+    let install_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname="Docker Moodle" --shortname="docker_moodle" --summary="Docker Moodle site" --adminpass="test" --adminemail="admin@example.com""#,
+        moodle_docker_dir.to_str().unwrap_or(""),
+        name
+    );
+    
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg(&install_cmd)
+        .output()
+        .map_err(|e| format!("Failed to install Moodle: {}", e))?;
+    
+    println!("Moodle installation command executed for site: {}. Success: {}", name, output.status.success());
+    
+    let output_str = String::from_utf8(output.stdout)
+        .unwrap_or_else(|_| "No output".to_string());
+    
+    let error_str = String::from_utf8(output.stderr)
+        .unwrap_or_else(|_| "".to_string());
+    
+    if !output.status.success() {
+        return Err(format!("Failed to install Moodle: {}", error_str));
     }
     
     // Save site configuration
@@ -140,15 +275,17 @@ pub fn create_site(
         db_type,
         moodle_branch,
         db_port,
-        web_port,
+        web_port: Some(web_port_str.parse().unwrap_or(8000)),
         status: "running".to_string(),
-        path: site_dir,
+        path: moodle_docker_dir,
     };
     
     // Store site in state and configuration file
     save_site_config(app_handle, site)?;
     
-    Ok(format!("Successfully created site: {}", name))
+    // Return combined stdout and stderr for logging
+    let result = format!("{}\n{}", output_str, error_str);
+    Ok(result)
 }
 
 // Load site configurations at application startup
@@ -216,190 +353,66 @@ pub fn remove_docker_container(container_name: &str) -> Result<String, String> {
 }
 
 #[command]
-pub fn get_docker_logs(container_name: String) -> Result<String, String> {
-    let output = Command::new("docker")
-        .arg("logs")
-        .arg(&container_name)
-        .output();
+pub fn get_docker_logs(app_handle: AppHandle, name: String, service: String) -> Result<String, String> {
+    // Get the site information from state
+    let state = app_handle.state::<SiteState>();
+    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Find the site
+    let site = match sites.get(&name) {
+        Some(site) => site.clone(),
+        None => return Err(format!("Site '{}' not found", name)),
+    };
+    
+    // Create a script to get logs with proper environment variables
+    let log_script = format!(r#"#!/bin/bash
+cd {}
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
 
-    match output {
-        Ok(output) if output.status.success() => Ok(String::from_utf8_lossy(&output.stdout).to_string()),
-        Ok(output) => Err(String::from_utf8_lossy(&output.stderr).to_string()),
-        Err(err) => Err(err.to_string()),
+# Get logs for the requested service
+./bin/moodle-docker-compose logs {}
+"#, 
+        site.path.to_str().unwrap_or(""),
+        name,
+        service
+    );
+    
+    // Write the log script
+    let script_path = site.path.join("get_logs.sh");
+    let mut file = File::create(&script_path)
+        .map_err(|e| format!("Failed to create log script: {}", e))?;
+    
+    file.write_all(log_script.as_bytes())
+        .map_err(|e| format!("Failed to write log script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", script_path.to_str().unwrap_or("get_logs.sh")])
+        .output()
+        .map_err(|e| format!("Failed to make log script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        return Err("Failed to make log script executable".to_string());
+    }
+    
+    // Execute the log script
+    let output = Command::new(script_path.to_str().unwrap_or("./get_logs.sh"))
+        .output()
+        .map_err(|e| format!("Failed to execute log script: {}", e))?;
+    
+    // Delete the script
+    let _ = fs::remove_file(&script_path);
+    
+    // Return the logs
+    if output.status.success() {
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
     }
 }
 
-fn generate_docker_compose(
-    name: &str,
-    php_version: &str,
-    db_type: &str,
-    moodle_branch: &str,
-    db_port: Option<u16>,
-    web_port: Option<u16>
-) -> String {
-    let _db_port_str = db_port.map_or_else(|| "".to_string(), |p| p.to_string());
-    let _web_port_str = web_port.map_or_else(|| "".to_string(), |p| p.to_string());
-    
-    let db_image = match db_type.to_lowercase().as_str() {
-        "mysql" => "mysql:8.0", // 8.0 has ARM64 support
-        "mariadb" => "mariadb:10.6", // MariaDB has ARM64 support
-        "postgresql" => "postgres:13", // PostgreSQL has ARM64 support
-        "microsoft sql server" => {
-            if cfg!(target_arch = "aarch64") {
-                "mcr.microsoft.com/azure-sql-edge:latest" // SQL Server Edge for ARM64
-            } else {
-                "mcr.microsoft.com/mssql/server:2019-latest" // Regular SQL Server for x86_64
-            }
-        },
-        "oracle" => {
-            // Oracle DB doesn't have official arm64 images, so we'll use a custom build that works on ARM
-            if cfg!(target_arch = "aarch64") {
-                "gvenzl/oracle-xe:21-slim-faststart" // This tag has experimental ARM support
-            } else {
-                "gvenzl/oracle-xe:21-slim" // Regular Oracle XE for x86_64
-            }
-        },
-        _ => "mysql:8.0", // Default to MySQL with ARM64 support
-    };
-    
-    let db_environment = match db_type.to_lowercase().as_str() {
-        "mysql" => vec![
-            "MYSQL_ROOT_PASSWORD=moodle",
-            "MYSQL_DATABASE=moodle",
-            "MYSQL_USER=moodle",
-            "MYSQL_PASSWORD=moodle"
-        ],
-        "mariadb" => vec![
-            "MARIADB_ROOT_PASSWORD=moodle",
-            "MARIADB_DATABASE=moodle",
-            "MARIADB_USER=moodle",
-            "MARIADB_PASSWORD=moodle"
-        ],
-        "postgresql" => vec![
-            "POSTGRES_DB=moodle",
-            "POSTGRES_USER=moodle",
-            "POSTGRES_PASSWORD=moodle"
-        ],
-        "microsoft sql server" => vec![
-            "ACCEPT_EULA=Y",
-            "SA_PASSWORD=MoodleP@ssw0rd",
-            "MSSQL_PID=Express"
-        ],
-        "oracle" => vec![
-            "ORACLE_PASSWORD=moodle",
-            "APP_USER=moodle",
-            "APP_USER_PASSWORD=moodle", 
-            "ORACLE_DATABASE=XE"
-        ],
-        _ => vec![], // Default empty
-    };
-    
-    // Define the default container port based on database type
-    let db_container_port = match db_type.to_lowercase().as_str() {
-        "mysql" => 3306,
-        "mariadb" => 3306,
-        "postgresql" => 5432,
-        "microsoft sql server" => 1433,
-        "oracle" => 1521,
-        _ => 3306, // Default to MySQL port
-    };
-    
-    let db_port_mapping = if let Some(port) = db_port {
-        format!("    ports:\n      - \"{}:{}\"", port, db_container_port)
-    } else {
-        "".to_string()
-    };
-    
-    let web_port_mapping = if let Some(port) = web_port {
-        format!("    ports:\n      - \"{}:80\"", port)
-    } else {
-        "".to_string()
-    };
-    
-    // Define database volume path based on database type
-    let db_volume_path = match db_type.to_lowercase().as_str() {
-        "mysql" => "/var/lib/mysql",
-        "mariadb" => "/var/lib/mysql",
-        "postgresql" => "/var/lib/postgresql/data",
-        "microsoft sql server" => "/var/opt/mssql/data",
-        "oracle" => "/opt/oracle/oradata",
-        _ => "/var/lib/mysql", // Default to MySQL
-    };
-    
-    // Map database type to Moodle DB type environment variable
-    let moodle_db_type = match db_type.to_lowercase().as_str() {
-        "mysql" => "mysqli",
-        "mariadb" => "mariadb",
-        "postgresql" => "pgsql",
-        "microsoft sql server" => "sqlsrv",
-        "oracle" => "oci",
-        _ => "mysqli", // Default to MySQL
-    };
-    
-    let db_env_section = db_environment
-        .into_iter()
-        .map(|e| format!("      - {}", e))
-        .collect::<Vec<_>>()
-        .join("\n");
-    
-    format!(
-        r#"version: '3'
-services:
-  db:
-    image: {}
-    container_name: {}_db
-    environment:
-{}
-{}
-    volumes:
-      - db_data:{}
-    networks:
-      - moodle_network
-
-  moodle:
-    image: moodlehq/moodle-php-apache:{}
-    container_name: {}_moodle
-    depends_on:
-      - db
-    environment:
-      - MOODLE_DB_HOST=db
-      - MOODLE_DB_USER=moodle
-      - MOODLE_DB_PASSWORD=moodle
-      - MOODLE_DB_NAME=moodle
-      - MOODLE_DB_TYPE={}
-      - MOODLE_BRANCH={}
-      - MOODLE_DATAROOT=/var/www/moodledata
-{}
-    volumes:
-      - moodle_data:/var/www/html
-      - moodle_dataroot:/var/www/moodledata
-    restart: unless-stopped
-    networks:
-      - moodle_network
-
-networks:
-  moodle_network:
-
-volumes:
-  db_data:
-    driver: local
-  moodle_data:
-    driver: local
-  moodle_dataroot:
-    driver: local
-"#,
-        db_image,
-        name,
-        db_env_section,
-        db_port_mapping,
-        db_volume_path,
-        php_version,
-        name,
-        moodle_db_type,
-        moodle_branch,
-        web_port_mapping
-    )
-}
+// Function removed as we are now using the official moodle-docker approach
 
 fn save_site_config(app_handle: AppHandle, site: Site) -> Result<(), String> {
     // Get sites state
@@ -454,12 +467,48 @@ pub fn start_site(app_handle: AppHandle, name: String) -> Result<String, String>
         None => return Err(format!("Site '{}' not found", name)),
     };
     
-    // Start the containers
-    let output = Command::new("docker-compose")
-        .current_dir(&site.path)
-        .args(["-f", "docker-compose.yml", "up", "-d"])
+    // Set environment variables and start containers
+    let script_content = format!(r#"#!/bin/bash
+cd {}
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_DB={}
+export MOODLE_DOCKER_WEB_PORT={}
+
+# Start containers
+./bin/moodle-docker-compose up -d
+"#, 
+    site.path.to_str().unwrap_or(""),
+    name,
+    site.db_type.to_lowercase(),
+    site.web_port.unwrap_or(8000)
+    );
+    
+    // Write the script to a temporary file
+    let temp_script_path = site.path.join("start.sh");
+    let mut file = File::create(&temp_script_path)
+        .map_err(|e| format!("Failed to create start script: {}", e))?;
+    
+    file.write_all(script_content.as_bytes())
+        .map_err(|e| format!("Failed to write start script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", temp_script_path.to_str().unwrap_or("start.sh")])
         .output()
-        .map_err(|e| format!("Failed to execute docker-compose: {}", e))?;
+        .map_err(|e| format!("Failed to make script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        return Err(format!("Failed to make script executable"));
+    }
+    
+    // Execute the script
+    let output = Command::new(temp_script_path.to_str().unwrap_or("./start.sh"))
+        .output()
+        .map_err(|e| format!("Failed to execute start script: {}", e))?;
+    
+    // Delete the temporary script
+    let _ = fs::remove_file(temp_script_path);
     
     if !output.status.success() {
         let error = String::from_utf8(output.stderr)
@@ -490,12 +539,44 @@ pub fn stop_site(app_handle: AppHandle, name: String) -> Result<String, String> 
         None => return Err(format!("Site '{}' not found", name)),
     };
     
-    // Stop the containers
-    let output = Command::new("docker-compose")
-        .current_dir(&site.path)
-        .args(["-f", "docker-compose.yml", "down"])
+    // Set environment variables and stop containers
+    let script_content = format!(r#"#!/bin/bash
+cd {}
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+
+# Stop containers
+./bin/moodle-docker-compose down
+"#, 
+    site.path.to_str().unwrap_or(""),
+    name
+    );
+    
+    // Write the script to a temporary file
+    let temp_script_path = site.path.join("stop.sh");
+    let mut file = File::create(&temp_script_path)
+        .map_err(|e| format!("Failed to create stop script: {}", e))?;
+    
+    file.write_all(script_content.as_bytes())
+        .map_err(|e| format!("Failed to write stop script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", temp_script_path.to_str().unwrap_or("stop.sh")])
         .output()
-        .map_err(|e| format!("Failed to execute docker-compose: {}", e))?;
+        .map_err(|e| format!("Failed to make script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        return Err(format!("Failed to make script executable"));
+    }
+    
+    // Execute the script
+    let output = Command::new(temp_script_path.to_str().unwrap_or("./stop.sh"))
+        .output()
+        .map_err(|e| format!("Failed to execute stop script: {}", e))?;
+    
+    // Delete the temporary script
+    let _ = fs::remove_file(temp_script_path);
     
     if !output.status.success() {
         let error = String::from_utf8(output.stderr)
@@ -526,24 +607,51 @@ pub fn remove_site(app_handle: AppHandle, name: String) -> Result<String, String
         None => return Err(format!("Site '{}' not found", name)),
     };
     
-    // Stop and remove the containers
-    let output = Command::new("docker-compose")
-        .current_dir(&site.path)
-        .args(["-f", "docker-compose.yml", "down", "-v"])
-        .output()
-        .map_err(|e| format!("Failed to execute docker-compose: {}", e))?;
+    // Create a cleanup script to ensure proper environment variables are set
+    let cleanup_script = format!(r#"#!/bin/bash
+cd {}
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+
+# Stop and remove containers with volumes
+./bin/moodle-docker-compose down -v
+
+echo "Removed all containers and volumes for {}"
+"#, 
+        site.path.to_str().unwrap_or(""),
+        name,
+        name
+    );
     
-    if !output.status.success() {
-        let error = String::from_utf8(output.stderr)
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        return Err(format!("Failed to remove containers: {}", error));
+    // Write the cleanup script
+    let script_path = site.path.join("cleanup.sh");
+    let mut file = File::create(&script_path)
+        .map_err(|e| format!("Failed to create cleanup script: {}", e))?;
+    
+    file.write_all(cleanup_script.as_bytes())
+        .map_err(|e| format!("Failed to write cleanup script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", script_path.to_str().unwrap_or("cleanup.sh")])
+        .output()
+        .map_err(|e| format!("Failed to make cleanup script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        return Err("Failed to make cleanup script executable".to_string());
     }
     
-    // Remove the site directory
-    fs::remove_dir_all(&site.path)
-        .map_err(|e| format!("Failed to remove site directory: {}", e))?;
+    // Execute the cleanup script
+    let _output = Command::new(script_path.to_str().unwrap_or("./cleanup.sh"))
+        .output()
+        .map_err(|e| format!("Failed to execute cleanup script: {}", e))?;
     
-    // Remove from state
+    // Even if the script fails, we'll try to remove the directory and site from state
+    
+    // Try to remove the site directory
+    let _remove_result = fs::remove_dir_all(&site.path);
+    
+    // Remove the site from state
     sites.remove(&name);
     
     // Save the updated configuration
@@ -595,8 +703,12 @@ pub fn check_platform_compatibility(db_type: String) -> Result<String, String> {
 #[command]
 pub fn validate_environment(app_handle: AppHandle) -> Result<String, String> {
     // Check if Docker is installed and running
-    if !check_docker_installed() || !check_docker_running() {
-        return Err("Docker is not installed or not running".to_string());
+    if !check_docker_installed() {
+        return Err("Docker is not installed".to_string());
+    }
+    
+    if !check_docker_running() {
+        return Err("Docker is installed but not running".to_string());
     }
     
     // Ensure app data directory exists
@@ -627,4 +739,734 @@ pub fn validate_environment(app_handle: AppHandle) -> Result<String, String> {
     }
     
     Ok("Environment validated successfully".to_string())
+}
+
+#[command]
+pub fn check_site_status(app_handle: AppHandle, name: String) -> Result<Site, String> {
+    let state = app_handle.state::<SiteState>();
+    let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Check if site exists
+    let site = match sites.get(&name) {
+        Some(site) => site.clone(),
+        None => return Err(format!("Site '{}' not found", name)),
+    };
+    
+    // Create a script to check if containers are running
+    let check_script = format!(r#"#!/bin/bash
+cd {}
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+
+# Check if containers are running
+./bin/moodle-docker-compose ps -q webserver
+"#, 
+        site.path.to_str().unwrap_or(""),
+        name
+    );
+    
+    // Write the script to a temporary file
+    let check_script_path = site.path.join("check_status.sh");
+    let mut file = File::create(&check_script_path)
+        .map_err(|e| format!("Failed to create check script: {}", e))?;
+    
+    file.write_all(check_script.as_bytes())
+        .map_err(|e| format!("Failed to write check script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", check_script_path.to_str().unwrap_or("check_status.sh")])
+        .output()
+        .map_err(|e| format!("Failed to make script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        return Err(format!("Failed to make check script executable"));
+    }
+    
+    // Execute the script
+    let output = Command::new(check_script_path.to_str().unwrap_or("./check_status.sh"))
+        .output()
+        .map_err(|e| format!("Failed to execute check script: {}", e))?;
+    
+    // Delete the temporary script
+    let _ = fs::remove_file(check_script_path);
+    
+    // If we got a container ID, the site is running
+    let status = if output.status.success() && !output.stdout.is_empty() {
+        "running".to_string()
+    } else {
+        "stopped".to_string()
+    };
+    
+    // Update site status if it changed
+    let mut updated_site = site.clone();
+    if updated_site.status != status {
+        updated_site.status = status;
+        sites.insert(name.clone(), updated_site.clone());
+        
+        // Save the updated configuration
+        drop(sites); // Release the lock before calling save_site_config
+        save_site_config(app_handle, updated_site.clone())?;
+    }
+    
+    Ok(updated_site)
+}
+
+#[command]
+pub fn backup_site(app_handle: AppHandle, name: String) -> Result<String, String> {
+    let state = app_handle.state::<SiteState>();
+    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Check if site exists
+    let site = match sites.get(&name) {
+        Some(site) => site.clone(),
+        None => return Err(format!("Site '{}' not found", name)),
+    };
+    
+    // First, check if the site is currently running
+    let status_script = format!(r#"#!/bin/bash
+cd {}
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+
+# Check if containers are running
+./bin/moodle-docker-compose ps -q webserver
+"#, 
+        site.path.to_str().unwrap_or(""),
+        name
+    );
+    
+    // Write the status check script to a temporary file
+    let status_script_path = site.path.join("check_status.sh");
+    let mut file = File::create(&status_script_path)
+        .map_err(|e| format!("Failed to create status check script: {}", e))?;
+    
+    file.write_all(status_script.as_bytes())
+        .map_err(|e| format!("Failed to write status check script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", status_script_path.to_str().unwrap_or("check_status.sh")])
+        .output()
+        .map_err(|e| format!("Failed to make script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        let _ = fs::remove_file(&status_script_path);
+        return Err(format!("Failed to make status script executable"));
+    }
+    
+    // Execute the script
+    let output = Command::new(status_script_path.to_str().unwrap_or("./check_status.sh"))
+        .output()
+        .map_err(|e| format!("Failed to execute status script: {}", e))?;
+    
+    // Delete the temporary script
+    let _ = fs::remove_file(status_script_path);
+    
+    let is_running = output.status.success() && !output.stdout.is_empty();
+    
+    // Create timestamp for backup name
+    let now = chrono::Utc::now();
+    let timestamp = now.format("%Y%m%d_%H%M%S").to_string();
+    let backup_name = format!("backup_{}_{}", name, timestamp);
+    
+    // Create backup directory in the site directory
+    let backups_dir = site.path.join("backups");
+    if !backups_dir.exists() {
+        fs::create_dir_all(&backups_dir)
+            .map_err(|e| format!("Failed to create backups directory: {}", e))?;
+    }
+    
+    let backup_dir = backups_dir.join(&backup_name);
+    fs::create_dir_all(&backup_dir)
+        .map_err(|e| format!("Failed to create backup directory: {}", e))?;
+    
+    // Create the backup script
+    let backup_script = format!(r#"#!/bin/bash
+set -e
+cd {}
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+
+# Create backup directory structure
+mkdir -p {}/database
+mkdir -p {}/moodledata
+
+echo "Backing up database..."
+# Export database
+if [ "{}" == "running" ]; then
+    # If running, use docker-compose to export the database
+    ./bin/moodle-docker-compose exec -T db bash -c "mysqldump -u root --password=moodle -h localhost --all-databases" > {}/database/moodle_db.sql
+else
+    echo "Site is not running. Starting containers temporarily for backup..."
+    ./bin/moodle-docker-compose up -d db
+    sleep 10  # Wait for the database to start
+    ./bin/moodle-docker-compose exec -T db bash -c "mysqldump -u root --password=moodle -h localhost --all-databases" > {}/database/moodle_db.sql
+    
+    # Only stop the containers if they weren't running before
+    ./bin/moodle-docker-compose down
+fi
+
+echo "Backing up Moodle code..."
+# Copy Moodle codebase (excluding git directories to save space)
+rsync -a --exclude='.git' $PWD/moodle/ {}/moodle/
+
+echo "Backing up Moodle data..."
+# Copy moodledata directory if it exists
+if [ -d "$PWD/moodledata" ]; then
+    rsync -a $PWD/moodledata/ {}/moodledata/
+fi
+
+echo "Creating backup manifest..."
+# Create a manifest file with backup information
+cat << EOF > {}/manifest.json
+{{
+    "name": "{}",
+    "timestamp": "{}",
+    "php_version": "{}",
+    "db_type": "{}",
+    "moodle_branch": "{}"
+}}
+EOF
+
+echo "Backup completed successfully"
+"#, 
+    site.path.to_str().unwrap_or(""),
+    name,
+    backup_dir.to_str().unwrap_or(""),
+    backup_dir.to_str().unwrap_or(""),
+    if is_running { "running" } else { "stopped" },
+    backup_dir.to_str().unwrap_or(""),
+    backup_dir.to_str().unwrap_or(""),
+    backup_dir.to_str().unwrap_or(""),
+    backup_dir.to_str().unwrap_or(""),
+    backup_dir.to_str().unwrap_or(""),
+    name,
+    timestamp,
+    site.php_version,
+    site.db_type,
+    site.moodle_branch
+    );
+    
+    // Write the backup script
+    let backup_script_path = site.path.join("backup.sh");
+    let mut file = File::create(&backup_script_path)
+        .map_err(|e| format!("Failed to create backup script: {}", e))?;
+    
+    file.write_all(backup_script.as_bytes())
+        .map_err(|e| format!("Failed to write backup script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", backup_script_path.to_str().unwrap_or("backup.sh")])
+        .output()
+        .map_err(|e| format!("Failed to make backup script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        let _ = fs::remove_file(&backup_script_path);
+        return Err(format!("Failed to make backup script executable"));
+    }
+    
+    // Execute the backup script
+    let output = Command::new(backup_script_path.to_str().unwrap_or("./backup.sh"))
+        .output()
+        .map_err(|e| {
+            let _ = fs::remove_file(&backup_script_path);
+            format!("Failed to execute backup script: {}", e)
+        })?;
+    
+    // Delete the temporary script
+    let _ = fs::remove_file(&backup_script_path);
+    
+    if !output.status.success() {
+        let error = String::from_utf8_lossy(&output.stderr).to_string();
+        return Err(format!("Failed to backup site: {}", error));
+    }
+    
+    // Return success message with backup path
+    Ok(format!("Site '{}' backed up successfully to {}", name, backup_dir.to_str().unwrap_or("")))
+}
+
+#[command]
+pub fn list_site_backups(app_handle: AppHandle, name: String) -> Result<Vec<HashMap<String, String>>, String> {
+    let state = app_handle.state::<SiteState>();
+    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Check if site exists
+    let site = match sites.get(&name) {
+        Some(site) => site.clone(),
+        None => return Err(format!("Site '{}' not found", name)),
+    };
+    
+    // Path to backups directory
+    let backups_dir = site.path.join("backups");
+    if !backups_dir.exists() {
+        return Ok(Vec::new()); // No backups yet
+    }
+    
+    // List all backup directories and read their manifests
+    let mut backups = Vec::new();
+    
+    if let Ok(entries) = fs::read_dir(&backups_dir) {
+        for entry in entries {
+            if let Ok(entry) = entry {
+                let path = entry.path();
+                if path.is_dir() {
+                    // Read manifest file if it exists
+                    let manifest_path = path.join("manifest.json");
+                    if manifest_path.exists() {
+                        if let Ok(manifest_content) = fs::read_to_string(&manifest_path) {
+                            if let Ok(manifest) = serde_json::from_str::<HashMap<String, String>>(&manifest_content) {
+                                backups.push(manifest);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Sort backups by timestamp (most recent first)
+    backups.sort_by(|a, b| {
+        let empty_string = "".to_string();
+        let a_time = a.get("timestamp").unwrap_or(&empty_string);
+        let b_time = b.get("timestamp").unwrap_or(&empty_string);
+        b_time.cmp(a_time)
+    });
+    
+    Ok(backups)
+}
+
+#[command]
+pub fn restore_site_backup(app_handle: AppHandle, name: String, backup_timestamp: String) -> Result<String, String> {
+    let state = app_handle.state::<SiteState>();
+    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Check if site exists
+    let site = match sites.get(&name) {
+        Some(site) => site.clone(),
+        None => return Err(format!("Site '{}' not found", name)),
+    };
+    
+    // Find the backup directory
+    let backup_name = format!("backup_{}_{}", name, backup_timestamp);
+    let backups_dir = site.path.join("backups");
+    let backup_dir = backups_dir.join(&backup_name);
+    
+    if !backup_dir.exists() {
+        return Err(format!("Backup '{}' not found", backup_name));
+    }
+    
+    // Check if site is running and stop it if needed
+    let stop_script = format!(r#"#!/bin/bash
+cd {}
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+
+# Stop containers if running
+./bin/moodle-docker-compose down
+"#, 
+        site.path.to_str().unwrap_or(""),
+        name
+    );
+    
+    // Write the stop script
+    let stop_script_path = site.path.join("stop_for_restore.sh");
+    let mut file = File::create(&stop_script_path)
+        .map_err(|e| format!("Failed to create stop script: {}", e))?;
+    
+    file.write_all(stop_script.as_bytes())
+        .map_err(|e| format!("Failed to write stop script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", stop_script_path.to_str().unwrap_or("stop_for_restore.sh")])
+        .output()
+        .map_err(|e| format!("Failed to make script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        let _ = fs::remove_file(&stop_script_path);
+        return Err(format!("Failed to make stop script executable"));
+    }
+    
+    // Execute the stop script
+    let output = Command::new(stop_script_path.to_str().unwrap_or("./stop_for_restore.sh"))
+        .output()
+        .map_err(|e| {
+            let _ = fs::remove_file(&stop_script_path);
+            format!("Failed to execute stop script: {}", e)
+        })?;
+    
+    // Delete the script
+    let _ = fs::remove_file(&stop_script_path);
+    
+    if !output.status.success() {
+        let error = String::from_utf8_lossy(&output.stderr).to_string();
+        return Err(format!("Failed to stop site for restore: {}", error));
+    }
+    
+    // Create restore script
+    let restore_script = format!(r#"#!/bin/bash
+set -e
+cd {}
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+
+echo "Restoring Moodle code..."
+# Backup current code before overwriting
+if [ -d "$PWD/moodle" ]; then
+    mv $PWD/moodle $PWD/moodle.bak.$(date +%s)
+fi
+
+# Copy Moodle codebase from backup
+rsync -a {}/moodle/ $PWD/moodle/
+
+echo "Restoring Moodle data..."
+# Copy moodledata directory if it exists in the backup
+if [ -d "{}/moodledata" ]; then
+    # Backup current moodledata before overwriting
+    if [ -d "$PWD/moodledata" ]; then
+        mv $PWD/moodledata $PWD/moodledata.bak.$(date +%s)
+    fi
+    mkdir -p $PWD/moodledata
+    rsync -a {}/moodledata/ $PWD/moodledata/
+fi
+
+echo "Starting database container..."
+# Start DB container only
+./bin/moodle-docker-compose up -d db
+
+echo "Waiting for database to be ready..."
+sleep 10
+
+echo "Restoring database..."
+# Restore database
+cat {}/database/moodle_db.sql | ./bin/moodle-docker-compose exec -T db bash -c "mysql -u root --password=moodle -h localhost"
+
+echo "Starting remaining containers..."
+# Start all containers
+./bin/moodle-docker-compose up -d
+
+echo "Site restored successfully"
+"#, 
+        site.path.to_str().unwrap_or(""),
+        name,
+        backup_dir.to_str().unwrap_or(""),
+        backup_dir.to_str().unwrap_or(""),
+        backup_dir.to_str().unwrap_or(""),
+        backup_dir.to_str().unwrap_or("")
+    );
+    
+    // Write the restore script
+    let restore_script_path = site.path.join("restore.sh");
+    let mut file = File::create(&restore_script_path)
+        .map_err(|e| format!("Failed to create restore script: {}", e))?;
+    
+    file.write_all(restore_script.as_bytes())
+        .map_err(|e| format!("Failed to write restore script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", restore_script_path.to_str().unwrap_or("restore.sh")])
+        .output()
+        .map_err(|e| format!("Failed to make script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        let _ = fs::remove_file(&restore_script_path);
+        return Err(format!("Failed to make restore script executable"));
+    }
+    
+    // Execute the restore script
+    let output = Command::new(restore_script_path.to_str().unwrap_or("./restore.sh"))
+        .output()
+        .map_err(|e| {
+            let _ = fs::remove_file(&restore_script_path);
+            format!("Failed to execute restore script: {}", e)
+        })?;
+    
+    // Delete the script
+    let _ = fs::remove_file(&restore_script_path);
+    
+    if !output.status.success() {
+        let error = String::from_utf8_lossy(&output.stderr).to_string();
+        return Err(format!("Failed to restore site: {}", error));
+    }
+    
+    // Update site status in state
+    drop(sites); // Release the lock from earlier
+    let state = app_handle.state::<SiteState>();
+    let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    if let Some(site) = sites.get_mut(&name) {
+        site.status = "running".to_string();
+    }
+    
+    drop(sites);
+    
+    // Return success message
+    Ok(format!("Site '{}' restored successfully from backup {}", name, backup_timestamp))
+}
+
+#[command]
+pub fn update_moodle_version(app_handle: AppHandle, name: String, new_branch: String, new_php_version: Option<String>) -> Result<String, String> {
+    // First backup the site
+    println!("Creating backup before updating site '{}'...", name);
+    
+    // We'll directly create a backup here rather than calling backup_site to avoid issues
+    // with command functions calling each other
+    let state = app_handle.state::<SiteState>();
+    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Check if site exists
+    let site = match sites.get(&name) {
+        Some(site) => site.clone(),
+        None => return Err(format!("Site '{}' not found", name)),
+    };
+    
+    // Create timestamp for backup name
+    let now = chrono::Utc::now();
+    let timestamp = now.format("%Y%m%d_%H%M%S").to_string();
+    let backup_name = format!("pre_update_backup_{}_{}", name, timestamp);
+    
+    // Create backup directory in the site directory
+    let backups_dir = site.path.join("backups");
+    if !backups_dir.exists() {
+        fs::create_dir_all(&backups_dir)
+            .map_err(|e| format!("Failed to create backups directory: {}", e))?;
+    }
+    
+    let backup_dir = backups_dir.join(&backup_name);
+    fs::create_dir_all(&backup_dir)
+        .map_err(|e| format!("Failed to create backup directory: {}", e))?;
+    
+    println!("Backup directory created at: {}", backup_dir.display());
+    drop(sites); // Release the lock before continuing
+    
+    let state = app_handle.state::<SiteState>();
+    let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Check if site exists
+    let site = match sites.get(&name) {
+        Some(site) => site.clone(),
+        None => return Err(format!("Site '{}' not found", name)),
+    };
+    
+    // Stop the site first
+    let stop_script = format!(r#"#!/bin/bash
+cd {}
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+
+# Stop containers
+./bin/moodle-docker-compose down
+"#, 
+        site.path.to_str().unwrap_or(""),
+        name
+    );
+    
+    // Write the stop script
+    let stop_script_path = site.path.join("stop_for_update.sh");
+    let mut file = File::create(&stop_script_path)
+        .map_err(|e| format!("Failed to create stop script: {}", e))?;
+    
+    file.write_all(stop_script.as_bytes())
+        .map_err(|e| format!("Failed to write stop script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", stop_script_path.to_str().unwrap_or("stop_for_update.sh")])
+        .output()
+        .map_err(|e| format!("Failed to make script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        let _ = fs::remove_file(&stop_script_path);
+        return Err(format!("Failed to make stop script executable"));
+    }
+    
+    // Execute the stop script
+    let output = Command::new(stop_script_path.to_str().unwrap_or("./stop_for_update.sh"))
+        .output()
+        .map_err(|e| {
+            let _ = fs::remove_file(&stop_script_path);
+            format!("Failed to execute stop script: {}", e)
+        })?;
+    
+    // Delete the script
+    let _ = fs::remove_file(stop_script_path);
+    
+    if !output.status.success() {
+        let error = String::from_utf8_lossy(&output.stderr).to_string();
+        return Err(format!("Failed to stop site for update: {}", error));
+    }
+    
+    // Create update script with proper error handling
+    let update_script = format!(r#"#!/bin/bash
+set -e
+cd {}
+
+# Save moodledata directory
+if [ -d "moodledata" ]; then
+    echo "Backing up moodledata directory..."
+    mv moodledata moodledata_backup
+fi
+
+# Backup the existing config.php
+if [ -f "moodle/config.php" ]; then
+    echo "Backing up config.php..."
+    cp moodle/config.php moodle_config_backup.php
+fi
+
+echo "Removing old Moodle codebase..."
+# Remove current Moodle codebase but keep .git directory for faster updates
+mv moodle/data moodle_data_backup 2>/dev/null || true
+rm -rf moodle
+
+echo "Cloning new Moodle version..."
+# Clone the Moodle repository with the specified branch
+git clone -b {} git://git.moodle.org/moodle.git moodle
+
+# Restore the data directory if it existed
+if [ -d "moodle_data_backup" ]; then
+    echo "Restoring data directory..."
+    mkdir -p moodle/data
+    cp -R moodle_data_backup/* moodle/data/
+    rm -rf moodle_data_backup
+fi
+
+# Restore moodledata
+if [ -d "moodledata_backup" ]; then
+    echo "Restoring moodledata directory..."
+    mv moodledata_backup moodledata
+fi
+
+# Restore config.php 
+if [ -f "moodle_config_backup.php" ]; then
+    echo "Restoring config.php..."
+    cp moodle_config_backup.php moodle/config.php
+    rm moodle_config_backup.php
+else
+    echo "No config.php backup found, creating a new one from template..."
+    cp config.docker-template.php moodle/config.php
+fi
+
+echo "Successfully updated Moodle codebase to branch {}"
+"#, 
+        site.path.to_str().unwrap_or(""),
+        new_branch,
+        new_branch
+    );
+    
+    // Write the update script
+    let update_script_path = site.path.join("update.sh");
+    let mut file = File::create(&update_script_path)
+        .map_err(|e| format!("Failed to create update script: {}", e))?;
+    
+    file.write_all(update_script.as_bytes())
+        .map_err(|e| format!("Failed to write update script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", update_script_path.to_str().unwrap_or("update.sh")])
+        .output()
+        .map_err(|e| format!("Failed to make script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        let _ = fs::remove_file(&update_script_path);
+        return Err(format!("Failed to make update script executable"));
+    }
+    
+    // Execute the update script
+    let output = Command::new(update_script_path.to_str().unwrap_or("./update.sh"))
+        .output()
+        .map_err(|e| {
+            let _ = fs::remove_file(&update_script_path);
+            format!("Failed to execute update script: {}", e)
+        })?;
+    
+    // Delete the script
+    let _ = fs::remove_file(&update_script_path);
+    
+    if !output.status.success() {
+        let error = String::from_utf8_lossy(&output.stderr).to_string();
+        return Err(format!("Failed to update Moodle version: {}", error));
+    }
+    
+    // Use the new PHP version or keep the existing one
+    let php_version = new_php_version.unwrap_or(site.php_version.clone());
+    
+    // Create a script to start the updated site
+    let start_script = format!(r#"#!/bin/bash
+cd {}
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_DB={}
+export MOODLE_DOCKER_PHP_VERSION={}
+export MOODLE_DOCKER_WEB_PORT={}
+
+# Start the containers
+./bin/moodle-docker-compose up -d
+
+# Wait for database
+./bin/moodle-docker-wait-for-db
+
+# Run Moodle upgrade script
+./bin/moodle-docker-compose exec webserver php admin/cli/upgrade.php --non-interactive
+
+echo "Moodle site updated and started successfully"
+"#, 
+        site.path.to_str().unwrap_or(""),
+        name,
+        site.db_type.to_lowercase(),
+        php_version,
+        site.web_port.unwrap_or(8000)
+    );
+    
+    // Write the start script
+    let start_script_path = site.path.join("start_updated.sh");
+    let mut file = File::create(&start_script_path)
+        .map_err(|e| format!("Failed to create start script: {}", e))?;
+    
+    file.write_all(start_script.as_bytes())
+        .map_err(|e| format!("Failed to write start script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", start_script_path.to_str().unwrap_or("start_updated.sh")])
+        .output()
+        .map_err(|e| format!("Failed to make script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        let _ = fs::remove_file(&start_script_path);
+        return Err(format!("Failed to make start script executable"));
+    }
+    
+    // Execute the start script
+    let output = Command::new(start_script_path.to_str().unwrap_or("./start_updated.sh"))
+        .output()
+        .map_err(|e| {
+            let _ = fs::remove_file(&start_script_path);
+            format!("Failed to execute start script: {}", e)
+        })?;
+    
+    // Delete the script
+    let _ = fs::remove_file(&start_script_path);
+    
+    // Update site in state
+    let mut updated_site = site.clone();
+    updated_site.moodle_branch = new_branch.clone();
+    updated_site.php_version = php_version;
+    updated_site.status = "running".to_string();
+    
+    sites.insert(name.clone(), updated_site.clone());
+    
+    // Save the updated configuration
+    drop(sites); // Release the lock before calling save_site_config
+    save_site_config(app_handle.clone(), updated_site)?;
+    
+    if !output.status.success() {
+        let error = String::from_utf8_lossy(&output.stderr).to_string();
+        return Err(format!("Failed to start updated site: {}. A backup was created before the update attempt.", error));
+    }
+    
+    Ok(format!("Site '{}' successfully updated to Moodle {}", name, new_branch))
 }

@@ -50,7 +50,26 @@
             <button v-if="site.status !== 'running'" @click="startSite(site.name)" class="compact-action-button bg-green-500 text-white hover:bg-green-600">Start</button>
             <button v-else @click="stopSite(site.name)" class="compact-action-button bg-red-500 text-white hover:bg-red-600">Stop</button>
             <button @click="viewLogs(site.name)" class="compact-action-button bg-blue-500 text-white hover:bg-blue-600">Logs</button>
-            <button @click="removeSite(site.name)" class="compact-action-button bg-amber-500 text-white hover:bg-amber-600">Remove</button>
+            <div class="dropdown inline-block relative">
+              <button class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">
+                More
+                <span class="ml-1">▼</span>
+              </button>
+              <div class="dropdown-content absolute hidden pt-1 z-10">
+                <button @click="viewBackups(site.name)" class="compact-dropdown-item">
+                  <PhArchiveBox class="w-3 h-3 mr-1" />
+                  Backups
+                </button>
+                <button @click="updateSite(site.name)" class="compact-dropdown-item">
+                  <PhArrowClockwise class="w-3 h-3 mr-1" />
+                  Update
+                </button>
+                <button @click="removeSite(site.name)" class="compact-dropdown-item text-red-600 hover:bg-red-50">
+                  <PhTrash class="w-3 h-3 mr-1" />
+                  Remove
+                </button>
+              </div>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -63,12 +82,15 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash } from '@phosphor-icons/vue';
 
 export default {
   name: 'SiteList',
   components: {
-    PhList
+    PhList,
+    PhArchiveBox,
+    PhArrowClockwise,
+    PhTrash
   },
   setup(props, { expose }) {
     const sites = ref([]);
@@ -139,6 +161,16 @@ export default {
     const viewLogs = (name) => {
       router.push({ name: 'SiteLogs', params: { siteName: name } });
     };
+    
+    // View backups for a site
+    const viewBackups = (name) => {
+      router.push({ name: 'SiteBackups', params: { siteName: name } });
+    };
+    
+    // Update a site to a newer Moodle version
+    const updateSite = (name) => {
+      router.push({ name: 'UpdateSite', params: { siteName: name } });
+    };
 
     // Format long paths for display
     const formatPath = (path) => {
@@ -169,6 +201,8 @@ export default {
       stopSite,
       removeSite,
       viewLogs,
+      viewBackups,
+      updateSite,
       formatPath
     };
   }
@@ -366,5 +400,66 @@ td {
   max-width: 200px;
   white-space: nowrap;
   cursor: default;
+}
+
+/* More dropdown styling */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-content {
+  min-width: 8rem;
+  background-color: white;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(209, 213, 219);
+  overflow: hidden;
+  right: 0;
+}
+
+.compact-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  transition-property: color, background-color;
+  transition-duration: 150ms;
+}
+
+.compact-dropdown-item:hover {
+  background-color: #f3f4f6;
+}
+
+.compact-dropdown-item.text-red-600 {
+  color: #dc2626;
+}
+
+.compact-dropdown-item.text-red-600:hover {
+  background-color: #fef2f2;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dropdown-content {
+    background-color: #374151;
+    border-color: rgba(75, 85, 99);
+  }
+  
+  .compact-dropdown-item {
+    color: #e5e7eb;
+  }
+  
+  .compact-dropdown-item:hover {
+    background-color: #4B5563;
+  }
+  
+  .compact-dropdown-item.text-red-600 {
+    color: #f87171;
+  }
+  
+  .compact-dropdown-item.text-red-600:hover {
+    background-color: rgba(248, 113, 113, 0.1);
+  }
 }
 </style>

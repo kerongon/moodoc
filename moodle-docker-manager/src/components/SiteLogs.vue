@@ -58,11 +58,14 @@ export default {
       this.error = null;
       
       try {
-        // Construct container name based on site name
-        const containerName = `${this.siteName}_moodle`;
+        // Get logs for the webserver service
+        const service = 'webserver'; // The official moodle-docker uses 'webserver' as the service name
         
         // Call the Rust function to get logs
-        this.logs = await invoke('get_docker_logs', { containerName });
+        this.logs = await invoke('get_docker_logs', { 
+          name: this.siteName,
+          service: service 
+        });
       } catch (err) {
         this.error = `Failed to fetch logs: ${err}`;
         console.error(err);
