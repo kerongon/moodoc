@@ -1,6 +1,7 @@
 <template>
-  <div class="dashboard-full bg-white dark:bg-gray-800 min-h-screen w-full p-0">
-    <div class="flex items-center justify-between px-8 pt-8 pb-2">
+  <div>
+    <div class="dashboard-full bg-white dark:bg-gray-800 min-h-screen w-full p-0">
+      <div class="flex items-center justify-between px-8 pt-8 pb-2">
       <div class="flex items-center gap-3">
         <PhList class="w-10 h-10 text-blue-500 drop-shadow" weight="fill" />
         <h1 class="text-4xl font-extrabold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight flex items-center">
@@ -15,28 +16,34 @@
           <PhPlus class="w-5 h-5" weight="fill" />
           <span class="sm:inline">New Site</span>
         </router-link>
-        <router-link to="/settings" class="settings-btn flex items-center justify-center bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full p-2 transition-all duration-150" title="Settings">
+        <button @click="openSettings" class="settings-btn flex items-center justify-center bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full p-2 transition-all duration-150" title="Settings">
           <PhGear class="w-5 h-5" />
-        </router-link>
+        </button>
+      </div>
+      </div>
+      <div class="px-8 pb-8">
+        <SiteList ref="siteList" />
       </div>
     </div>
-    <div class="px-8 pb-8">
-      <SiteList ref="siteList" />
-    </div>
+    <!-- Settings modal popup -->
+    <SettingsModal ref="settingsModal"></SettingsModal>
   </div>
 </template>
 
 <script>
 
+import { invoke } from '@tauri-apps/api/tauri';
 import { PhList, PhPlus, PhGear } from '@phosphor-icons/vue';
 import SiteList from './SiteList.vue';
 import DockerStatus from './DockerStatus.vue';
+import SettingsModal from './SettingsModal.vue';
 
 export default {
   name: 'Dashboard',
   components: {
     SiteList,
     DockerStatus,
+    SettingsModal,
     PhList,
     PhPlus,
     PhGear
@@ -46,6 +53,14 @@ export default {
       dockerInstalled: false,
       dockerRunning: false
     };
+  },
+  methods: {
+    openSettings() {
+      const modal = this.$refs.settingsModal;
+      if (modal && typeof modal.openModal === 'function') {
+        modal.openModal();
+      }
+    }
   },
   async mounted() {
     try {

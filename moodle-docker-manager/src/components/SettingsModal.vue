@@ -166,6 +166,13 @@ export default {
     const closeModal = () => {
       isVisible.value = false;
     };
+    // Method to open the modal programmatically
+    const openModal = () => {
+      // Refresh values from store
+      sitesDirectory.value = settingsStore.sitesRootDirectory;
+      darkMode.value = settingsStore.darkMode;
+      isVisible.value = true;
+    };
     
     return {
       settingsStore,
@@ -175,7 +182,8 @@ export default {
       isVisible,
       selectDirectory,
       saveSettings,
-      closeModal
+      closeModal,
+      openModal
     };
   }
 };
