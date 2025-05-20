@@ -148,12 +148,12 @@ export default {
     const showErrorModal = ref(false);
     const errorContent = ref('');
 
-    // Load sites from Rust backend
+    // Initial load of site list
     const loadSites = async () => {
       loading.value = true;
       error.value = null;
-
       try {
+        // fetch full list including statuses
         sites.value = await invoke('list_sites');
       } catch (err) {
         console.error('Failed to load sites:', err);
@@ -180,6 +180,20 @@ export default {
       errorContent.value = '';
     };
 
+    // Refresh only statuses without replacing list
+    const refreshStatuses = async () => {
+      try {
+        const updated = await invoke('list_sites');
+        updated.forEach(u => {
+          const existing = sites.value.find(s => s.name === u.name);
+          if (existing && existing.status !== u.status) {
+            existing.status = u.status;
+          }
+        });
+      } catch (err) {
+        console.error('Failed to refresh site statuses:', err);
+      }
+    };
     // Start a site
     const startSite = async (name) => {
       try {
@@ -268,12 +282,10 @@ export default {
     let refreshTimer;
     onMounted(() => {
       loadSites();
-      // Poll for status updates every 5 seconds
-      refreshTimer = setInterval(loadSites, 5000);
+      // Poll for status changes every 5 seconds without full re-render
+      refreshTimer = setInterval(refreshStatuses, 5000);
     });
-    onBeforeUnmount(() => {
-      clearInterval(refreshTimer);
-    });
+    onBeforeUnmount(() => clearInterval(refreshTimer));
     
     // Expose the loadSites method to parent components
     expose({ loadSites });
