@@ -54,7 +54,7 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
               </button>
               <button @click="viewLogs(site.name)" class="icon-action-btn bg-blue-500 hover:bg-blue-600" title="Logs">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
+                <PhFileText class="w-5 h-5" weight="fill" />
               </button>
               <button @click="viewBackups(site.name)" class="icon-action-btn bg-gray-500 hover:bg-gray-600" title="Backups">
                 <PhArchiveBox class="w-5 h-5" />
@@ -126,7 +126,7 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
 
 export default {
@@ -136,6 +136,7 @@ export default {
     PhArchiveBox,
     PhArrowClockwise,
     PhTrash,
+    PhTerminal,
     UpdateSite
   },
   setup(props, { expose }) {
