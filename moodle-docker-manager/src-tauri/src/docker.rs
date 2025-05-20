@@ -201,6 +201,8 @@ echo "Admin password: test"
     
     // First, start the containers
     println!("Attempting to start Docker containers for site: {}", name);
+    app_handle.emit_all("site_creation_progress", format!("Starting Docker containers for {}", name)).unwrap_or_default();
+    
     let start_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_WEB_PORT={} && export MOODLE_DOCKER_PHP_VERSION={} && ./bin/moodle-docker-compose up -d"#,
         moodle_docker_dir.to_str().unwrap_or(""),
         name,
@@ -218,6 +220,7 @@ echo "Admin password: test"
     
     println!("Docker containers start command executed for site: {}. Success: {}", name, output.status.success());
     if !output.status.success() {
+        app_handle.emit_all("site_creation_progress", format!("Failed to start Docker containers for {}", name)).unwrap_or_default();
         let error = String::from_utf8(output.stderr)
             .unwrap_or_else(|_| "Unknown error".to_string());
         return Err(format!("Failed to start Docker containers: {}", error));
@@ -225,31 +228,62 @@ echo "Admin password: test"
     
     // Wait for the database to be ready
     println!("Attempting to wait for database for site: {}", name);
-    let wait_db_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && ./bin/moodle-docker-wait-for-db"#,
+    app_handle.emit_all("site_creation_progress", format!("Waiting for database to be ready for {}", name)).unwrap_or_default();
+    let wait_db_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && ./bin/moodle-docker-wait-for-db"#,
         moodle_docker_dir.to_str().unwrap_or(""),
-        name
+        name,
+        db_type.to_lowercase(),
+        php_version
     );
     
+    // Execute the wait for db command
+    println!("Executing command: {}", wait_db_cmd);
     let output = Command::new("sh")
         .arg("-c")
         .arg(&wait_db_cmd)
         .output()
         .map_err(|e| format!("Failed while waiting for database: {}", e))?;
     
+    let std_output = String::from_utf8_lossy(&output.stdout).to_string();
+    let error_output = String::from_utf8_lossy(&output.stderr).to_string();
+    
     println!("Wait for database command executed for site: {}. Success: {}", name, output.status.success());
+    println!("STDOUT: {}", std_output);
+    println!("STDERR: {}", error_output);
+    
     if !output.status.success() {
-        let error = String::from_utf8(output.stderr)
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        return Err(format!("Failed while waiting for database: {}", error));
+        app_handle.emit_all("site_creation_progress", format!("Failed while waiting for database for {}", name)).unwrap_or_default();
+        // Try to get container logs to see what's happening
+        println!("Getting container logs to diagnose the issue...");
+        let logs_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && ./bin/moodle-docker-compose logs db"#,
+            moodle_docker_dir.to_str().unwrap_or(""),
+            name
+        );
+        
+        let logs_output = Command::new("sh")
+            .arg("-c")
+            .arg(&logs_cmd)
+            .output();
+            
+        if let Ok(logs) = logs_output {
+            let logs_str = String::from_utf8_lossy(&logs.stdout).to_string();
+            println!("Database container logs: {}", logs_str);
+        }
+        
+        return Err(format!("Failed while waiting for database: {}", error_output));
     }
     
     // Install Moodle
     println!("Attempting to install Moodle for site: {}", name);
-    let install_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname="Docker Moodle" --shortname="docker_moodle" --summary="Docker Moodle site" --adminpass="test" --adminemail="admin@example.com""#,
+    app_handle.emit_all("site_creation_progress", format!("Installing Moodle for {}. This may take several minutes...", name)).unwrap_or_default();
+    let install_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname="Docker Moodle" --shortname="docker_moodle" --summary="Docker Moodle site" --adminpass="test" --adminemail="admin@example.com""#,
         moodle_docker_dir.to_str().unwrap_or(""),
-        name
+        name,
+        db_type.to_lowercase(),
+        php_version
     );
     
+    println!("Executing command: {}", install_cmd);
     let output = Command::new("sh")
         .arg("-c")
         .arg(&install_cmd)
@@ -264,11 +298,33 @@ echo "Admin password: test"
     let error_str = String::from_utf8(output.stderr)
         .unwrap_or_else(|_| "".to_string());
     
+    println!("STDOUT: {}", output_str);
+    println!("STDERR: {}", error_str);
+    
     if !output.status.success() {
+        app_handle.emit_all("site_creation_progress", format!("Failed to install Moodle for {}", name)).unwrap_or_default();
+        // Try to get webserver logs to diagnose the issue
+        println!("Getting webserver logs to diagnose the issue...");
+        let logs_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && ./bin/moodle-docker-compose logs webserver"#,
+            moodle_docker_dir.to_str().unwrap_or(""),
+            name
+        );
+        
+        let logs_output = Command::new("sh")
+            .arg("-c")
+            .arg(&logs_cmd)
+            .output();
+            
+        if let Ok(logs) = logs_output {
+            let logs_str = String::from_utf8_lossy(&logs.stdout).to_string();
+            println!("Webserver container logs: {}", logs_str);
+        }
+        
         return Err(format!("Failed to install Moodle: {}", error_str));
     }
     
     // Save site configuration
+    app_handle.emit_all("site_creation_progress", format!("Finalizing setup for {}", name)).unwrap_or_default();
     let site = Site {
         name: name.clone(),
         php_version,
