@@ -17,19 +17,19 @@
       <button 
         class="flex-1 py-0.5 px-2 text-[10px] font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'standard'"
-        :class="activeTab === 'standard' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+        :class="activeTab === 'standard' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Standard
       </button>
       <button 
         class="flex-1 py-0.5 px-2 text-[10px] font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'custom'"
-        :class="activeTab === 'custom' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+        :class="activeTab === 'custom' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Custom
       </button>
       <button 
         class="flex-1 py-0.5 px-2 text-[10px] font-medium transition-all duration-150 relative overflow-hidden" 
         @click="activeTab = 'advanced'"
-        :class="activeTab === 'advanced' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-gray-800 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+        :class="activeTab === 'advanced' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
         Advanced
       </button>
     </div>
@@ -139,7 +139,7 @@
                   type="number" 
                   v-model="dbPort" 
                   :placeholder="`${currentDbPortRange}`" 
-                  :class="['macos-input h-7 py-0.5 text-xs pr-8', 
+                  :class="['macos-input h-7 py-0.5 text-xs pr-12', 
                     { 
                       'border-red-500 focus:ring-red-500 focus:border-red-500': dbPort && !isDbPortInRange,
                       'border-green-500 focus:ring-green-500 focus:border-green-500': dbPort && isDbPortInRange && isPortAvailable(dbPort)
@@ -149,12 +149,12 @@
                 <button 
                   type="button" 
                   @click="generateDbPort" 
-                  class="absolute right-1.5 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-all duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-all duration-150 p-1"
                   title="Generate random port"
                   aria-label="Generate random database port"
                 >
                   <!-- Refresh/recycle icon with improved styling -->
-                  <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                   </svg>
                 </button>
@@ -197,7 +197,7 @@
                   type="number" 
                   v-model="webPort" 
                   :placeholder="`${currentWebPortRange}`" 
-                  :class="['macos-input h-7 py-0.5 text-xs pr-8', 
+                  :class="['macos-input h-7 py-0.5 text-xs pr-12', 
                     { 
                       'border-red-500 focus:ring-red-500 focus:border-red-500': webPort && !isWebPortInRange,
                       'border-green-500 focus:ring-green-500 focus:border-green-500': webPort && isWebPortInRange && isPortAvailable(webPort)
@@ -207,12 +207,12 @@
                 <button 
                   type="button" 
                   @click="generateWebPort" 
-                  class="absolute right-1.5 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-all duration-150 p-0.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-all duration-150 p-1"
                   title="Generate random port"
                   aria-label="Generate random web server port"
                 >
                   <!-- Refresh/recycle icon with improved styling -->
-                  <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                   </svg>
                 </button>
@@ -237,7 +237,7 @@
         <div class="mb-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
           <label class="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1 flex items-center">
             <svg class="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h2V2zM5 5h10v10H5V5z" />
             </svg>
             Site Directory
           </label>
@@ -292,21 +292,17 @@
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Improves performance for larger Moodle sites</p>
             </div>
           </div>
-          <div class="relative inline-block w-10 align-middle select-none">
-            <button 
-              type="button"
-              role="switch"
-              :aria-checked="useRedis.toString()"
-              @click="useRedis = !useRedis"
-              class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-green-500 focus:ring-offset-1"
-              :class="useRedis ? 'bg-green-600' : 'bg-gray-200'"
-            >
-              <span class="sr-only">Use Redis</span>
-              <span 
-                class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
-                :class="useRedis ? 'translate-x-4' : 'translate-x-0'"
-              ></span>
-            </button>
+          <div class="relative inline-flex h-5 align-middle">
+            <input 
+              type="checkbox"
+              id="redisToggle" 
+              v-model="useRedis"
+              class="sr-only peer"
+            />
+            <label 
+              for="redisToggle"
+              class="flex w-9 h-5 bg-gray-200 rounded-full cursor-pointer peer-focus:ring-1 peer-focus:ring-blue-300 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"
+            ></label>
           </div>
         </div>
       </div>

@@ -1,0 +1,39 @@
+/* Compact UI Fixes for known issues */
+
+/* Port buttons in input fields */
+.relative .absolute.right-2 {
+  right: 0.5rem !important;
+}
+
+/* Make input padding more consistent for randomize buttons */
+input.pr-12 {
+  padding-right: 3rem !important;
+}
+
+/* Style for randomize buttons in input fields */
+.relative .absolute.right-2.top-1\/2.-translate-y-1\/2.text-gray-400 {
+  font-size: 0.75rem !important;
+  padding: 0.125rem !important;
+}
+
+/* Ensure toggle switches are properly sized */
+.compact-toggle, 
+[role="switch"] {
+  height: 1.25rem !important;
+  width: 2.25rem !important;
+  border-radius: 9999px !important;
+}
+
+/* Ensure blue highlights are visible on tabs */
+.macos-tab-container [class*="text-blue"] {
+  border-bottom: 2px solid #3b82f6 !important;
+}
+.dark .macos-tab-container [class*="text-blue"] {
+  border-bottom: 2px solid #60a5fa !important;
+}
+
+/* Fix svg icons in buttons to be properly sized */
+button svg.w-3 {
+  width: 0.75rem !important;
+  height: 0.75rem !important;
+}

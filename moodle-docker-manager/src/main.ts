@@ -8,6 +8,8 @@ import { useSettingsStore } from './stores/settings';
 import './index.css';
 // Import compact UI styles
 import './assets/compact-ui.css';
+// Import compact UI fixes
+import './assets/compact-ui-fix.css';
 
 // Import icons
 import * as PhosphorIcons from '@phosphor-icons/vue';
