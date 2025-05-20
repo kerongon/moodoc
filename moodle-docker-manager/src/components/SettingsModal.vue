@@ -79,6 +79,13 @@
 </template>
 
 <script>
+/**
+ * @typedef {Object} ThemeManager
+ * @property {function(string): boolean} applyTheme - Apply theme mode
+ * 
+ * @typedef {Object} Window
+ * @property {ThemeManager} [ThemeManager] - Global theme manager
+ */
 import { ref, computed, onMounted, watch } from 'vue';
 import { useSettingsStore } from '../stores/settings';
 import { open } from '@tauri-apps/api/dialog';
@@ -97,6 +104,26 @@ export default {
     
     // Watch for dark mode changes and apply them immediately
     watch(darkMode, (newMode) => {
+      // Add a class to prevent transitions during theme change
+      document.documentElement.classList.add('theme-switching');
+      
+      // Force apply theme immediately using ThemeManager
+      if (window.ThemeManager) {
+        // Apply the theme
+        window.ThemeManager.applyTheme(newMode);
+        
+        // For more stubborn UI, do a full refresh
+        setTimeout(() => {
+          window.ThemeManager.refreshTheme();
+          
+          // Remove the transition-disabling class after the change
+          setTimeout(() => {
+            document.documentElement.classList.remove('theme-switching');
+          }, 50);
+        }, 10);
+      }
+      
+      // Also update the store
       settingsStore.setDarkMode(newMode);
     });
     

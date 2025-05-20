@@ -3,12 +3,21 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { appConfigDir } from '@tauri-apps/api/path';
 import { readTextFile, writeTextFile, createDir, exists } from '@tauri-apps/api/fs';
 
+// Define a type for the window extension
+declare global {
+  interface Window {
+    ThemeManager?: {
+      applyTheme(mode: string): boolean;
+    };
+  }
+}
+
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
     sitesRootDirectory: '',
     isLoading: false,
-    error: null,
-    darkMode: 'system', // 'system', 'light', or 'dark'
+    error: null as string | null,
+    darkMode: 'system' as 'system' | 'light' | 'dark',
   }),
   
   actions: {
@@ -79,38 +88,38 @@ export const useSettingsStore = defineStore('settings', {
       this.darkMode = mode;
       await this.saveSettings();
       
-      // Apply the dark mode
-      this.applyDarkMode();
+      // Use the ThemeManager to apply the theme if available
+      if (window.ThemeManager) {
+        window.ThemeManager.applyTheme(mode);
+      } else {
+        // Fall back to the old method if ThemeManager is not available
+        this.applyDarkMode(true);
+      }
     },
     
-    applyDarkMode() {
-      // Get the HTML element
-      const html = document.documentElement;
+    applyDarkMode(force = false) {
+      // Use ThemeManager if available
+      if (window.ThemeManager) {
+        window.ThemeManager.applyTheme(this.darkMode);
+        return;
+      }
       
-      // Apply dark mode based on the setting
-      if (this.darkMode === 'dark') {
+      // Legacy implementation as fallback
+      const html = document.documentElement;
+      const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      if (this.darkMode === 'dark' || (this.darkMode === 'system' && prefersDarkScheme)) {
         html.classList.add('dark');
-      } else if (this.darkMode === 'light') {
-        html.classList.remove('dark');
-      } else {
-        // System preference - check the prefers-color-scheme
-        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (prefersDarkMode) {
-          html.classList.add('dark');
-        } else {
-          html.classList.remove('dark');
+        if (force) {
+          document.body.style.setProperty('background-color', '#111827', 'important');
+          document.body.style.setProperty('color', '#f9fafb', 'important');
         }
-        
-        // Add a listener for system preference changes
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-          if (this.darkMode === 'system') {
-            if (e.matches) {
-              html.classList.add('dark');
-            } else {
-              html.classList.remove('dark');
-            }
-          }
-        });
+      } else {
+        html.classList.remove('dark');
+        if (force) {
+          document.body.style.setProperty('background-color', '#ffffff', 'important');
+          document.body.style.setProperty('color', '#111827', 'important');
+        }
       }
     }
   }

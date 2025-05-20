@@ -37,3 +37,223 @@ button svg.w-3 {
   width: 0.75rem !important;
   height: 0.75rem !important;
 }
+
+/* Better theme transitions */
+html, body {
+  transition: background-color 0.3s ease, color 0.3s ease !important;
+}
+
+/* Force light mode - stronger specificity */
+html:not(.dark),
+html:not(.dark) body,
+body[data-theme="light"] {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+/* Force dark mode - stronger specificity */
+html.dark,
+html.dark body,
+body[data-theme="dark"] {
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+}
+
+/* Fix for dark mode inputs - stronger selectors */
+html.dark input, 
+html.dark select, 
+html.dark textarea,
+body[data-theme="dark"] input,
+body[data-theme="dark"] select,
+body[data-theme="dark"] textarea {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f9fafb !important;
+}
+
+/* Fix for light mode inputs - ensure proper styling */
+html:not(.dark) input, 
+html:not(.dark) select, 
+html:not(.dark) textarea,
+body[data-theme="light"] input,
+body[data-theme="light"] select,
+body[data-theme="light"] textarea {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+/* Fix for dark mode buttons */
+html.dark button:not([class*="bg-"]),
+body[data-theme="dark"] button:not([class*="bg-"]) {
+  color: #f9fafb !important;
+}
+
+/* Fix for light mode buttons */
+html:not(.dark) button:not([class*="bg-"]):not([class*="text-white"]),
+body[data-theme="light"] button:not([class*="bg-"]):not([class*="text-white"]) {
+  color: #111827 !important;
+}
+
+/* Ensure proper dark mode text */
+html.dark .text-gray-700,
+html.dark .text-gray-800,
+html.dark .text-gray-900,
+body[data-theme="dark"] .text-gray-700,
+body[data-theme="dark"] .text-gray-800,
+body[data-theme="dark"] .text-gray-900 {
+  color: #f3f4f6 !important;
+}
+
+/* Ensure proper light mode text */
+html:not(.dark) .dark\:text-gray-100,
+html:not(.dark) .dark\:text-gray-200,
+html:not(.dark) .dark\:text-gray-300,
+body[data-theme="light"] .dark\:text-gray-100,
+body[data-theme="light"] .dark\:text-gray-200,
+body[data-theme="light"] .dark\:text-gray-300 {
+  color: #111827 !important;
+}
+
+/* Force dark mode backgrounds */
+html.dark .bg-white,
+body[data-theme="dark"] .bg-white {
+  background-color: #111827 !important;
+}
+
+/* Force light mode backgrounds */
+html:not(.dark) .dark\:bg-gray-800,
+body[data-theme="light"] .dark\:bg-gray-800 {
+  background-color: #ffffff !important;
+}
+
+/* ADDITIONAL FIXES FOR LIGHT MODE */
+
+/* Fix cards, sections and containers in light mode */
+html:not(.dark) .bg-gray-50,
+html:not(.dark) .bg-gray-100, 
+html:not(.dark) .dark\:bg-gray-700,
+html:not(.dark) .dark\:bg-gray-800,
+html:not(.dark) .dark\:bg-gray-900,
+body[data-theme="light"] .bg-gray-50,
+body[data-theme="light"] .bg-gray-100,
+body[data-theme="light"] .dark\:bg-gray-700,
+body[data-theme="light"] .dark\:bg-gray-800,
+body[data-theme="light"] .dark\:bg-gray-900 {
+  background-color: #f9fafb !important; /* light gray for sections */
+}
+
+/* Fix container borders in light mode */
+html:not(.dark) .border-gray-600,
+html:not(.dark) .border-gray-700,
+html:not(.dark) .dark\:border-gray-600,
+html:not(.dark) .dark\:border-gray-700,
+body[data-theme="light"] .border-gray-600,
+body[data-theme="light"] .border-gray-700,
+body[data-theme="light"] .dark\:border-gray-600,
+body[data-theme="light"] .dark\:border-gray-700 {
+  border-color: #d1d5db !important; /* light border color */
+}
+
+/* Fix input fields in light mode */
+html:not(.dark) .macos-input,
+html:not(.dark) input[type="text"],
+html:not(.dark) input[type="number"],
+html:not(.dark) input[type="email"],
+body[data-theme="light"] .macos-input,
+body[data-theme="light"] input[type="text"],
+body[data-theme="light"] input[type="number"],
+body[data-theme="light"] input[type="email"] {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+
+/* Fix select dropdowns in light mode */
+html:not(.dark) select,
+html:not(.dark) .macos-select,
+body[data-theme="light"] select,
+body[data-theme="light"] .macos-select {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+
+/* Fix tabs in light mode */
+html:not(.dark) .macos-tab-container button,
+body[data-theme="light"] .macos-tab-container button {
+  color: #4b5563 !important; /* gray-600 */
+}
+
+html:not(.dark) .macos-tab-container button[aria-selected="true"],
+html:not(.dark) .macos-tab-container button.active,
+body[data-theme="light"] .macos-tab-container button[aria-selected="true"],
+body[data-theme="light"] .macos-tab-container button.active {
+  background-color: #ffffff !important;
+  color: #3b82f6 !important; /* blue-500 */
+}
+
+/* Fix specifically for the moodle site card */
+html:not(.dark) .rounded-lg.shadow-md.border.border-gray-200.dark\:border-gray-700.dark\:bg-gray-800,
+body[data-theme="light"] .rounded-lg.shadow-md.border.border-gray-200.dark\:border-gray-700.dark\:bg-gray-800 {
+  background-color: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Fix for the tab container */
+html:not(.dark) .bg-gray-100.dark\:bg-gray-700.rounded-md.p-0\.5.mb-2.border.border-gray-200.dark\:border-gray-600,
+body[data-theme="light"] .bg-gray-100.dark\:bg-gray-700.rounded-md.p-0\.5.mb-2.border.border-gray-200.dark\:border-gray-600 {
+  background-color: #f3f4f6 !important; /* gray-100 */
+  border-color: #e5e7eb !important; /* gray-200 */
+}
+
+/* Fix for toggle in light mode */
+html:not(.dark) [role="switch"]::before,
+body[data-theme="light"] [role="switch"]::before {
+  background-color: #ffffff !important;
+}
+
+html:not(.dark) [role="switch"],
+body[data-theme="light"] [role="switch"] {
+  background-color: #d1d5db !important; /* gray-300 */
+}
+
+html:not(.dark) [role="switch"][aria-checked="true"],
+body[data-theme="light"] [role="switch"][aria-checked="true"] {
+  background-color: #3b82f6 !important; /* blue-500 */
+}
+
+/* Catch-all for dark text and backgrounds in light mode */
+html:not(.dark) [class*="dark:text-gray"],
+body[data-theme="light"] [class*="dark:text-gray"] {
+  color: #111827 !important;
+}
+
+html:not(.dark) [class*="dark:bg-gray"],
+body[data-theme="light"] [class*="dark:bg-gray"] {
+  background-color: #ffffff !important;
+}
+
+/* PRIORITY OVERRIDES - These must win over all other rules */
+html:not(.dark) *[class*="dark:bg-"], 
+body[data-theme="light"] *[class*="dark:bg-"] {
+  background-color: var(--bg-color, #ffffff) !important;
+}
+
+html:not(.dark) .rounded-lg, 
+body[data-theme="light"] .rounded-lg {
+  background-color: #ffffff !important;
+}
+
+html:not(.dark) input, 
+html:not(.dark) select,
+body[data-theme="light"] input, 
+body[data-theme="light"] select {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Disable transitions temporarily when switching modes for an immediate change */
+html.theme-switching * {
+  transition: none !important;
+}
