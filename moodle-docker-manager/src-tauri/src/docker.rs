@@ -1380,6 +1380,117 @@ echo "Site restored successfully"
 }
 
 #[command]
+pub fn delete_site_backup(app_handle: AppHandle, name: String, backup_timestamp: String) -> Result<String, String> {
+    let state = app_handle.state::<SiteState>();
+    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Check if site exists
+    let site = match sites.get(&name) {
+        Some(site) => site.clone(),
+        None => return Err(format!("Site '{}' not found", name)),
+    };
+    
+    // Find the backup directory
+    let backup_name = format!("backup_{}_{}", name, backup_timestamp);
+    let backups_dir = site.path.join("backups");
+    let backup_dir = backups_dir.join(&backup_name);
+    
+    if !backup_dir.exists() {
+        return Err(format!("Backup '{}' not found", backup_name));
+    }
+    
+    // Delete the backup directory
+    fs::remove_dir_all(&backup_dir)
+        .map_err(|e| format!("Failed to delete backup: {}", e))?;
+    
+    Ok(format!("Backup '{}' deleted successfully", backup_name))
+}
+
+#[command]
+pub fn open_backup_location(app_handle: AppHandle, name: String, backup_timestamp: Option<String>) -> Result<String, String> {
+    let state = app_handle.state::<SiteState>();
+    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Check if site exists
+    let site = match sites.get(&name) {
+        Some(site) => site.clone(),
+        None => return Err(format!("Site '{}' not found", name)),
+    };
+    
+    // Determine which path to open - specific backup or backups directory
+    let target_path = if let Some(ref timestamp) = backup_timestamp {
+        // Open specific backup folder
+        let backup_name = format!("backup_{}_{}", name, timestamp);
+        site.path.join("backups").join(backup_name)
+    } else {
+        // Open the general backups folder
+        site.path.join("backups")
+    };
+    
+    // Check if path exists
+    if !target_path.exists() {
+        if let Some(ref timestamp) = backup_timestamp {
+            return Err(format!("Backup '{}' not found", timestamp));
+        } else {
+            // Create backups directory if it doesn't exist
+            fs::create_dir_all(&target_path)
+                .map_err(|e| format!("Failed to create backups directory: {}", e))?;
+        }
+    }
+    
+    // Use open command on macOS to open the directory in Finder
+    #[cfg(target_os = "macos")]
+    {
+        let output = Command::new("open")
+            .arg(target_path.to_str().unwrap_or(""))
+            .output()
+            .map_err(|e| format!("Failed to open directory in Finder: {}", e))?;
+        
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(format!("Failed to open directory in Finder: {}", error));
+        }
+        
+        return Ok(format!("Opened in Finder: {}", target_path.display()));
+    }
+    
+    // For Windows
+    #[cfg(target_os = "windows")]
+    {
+        let output = Command::new("explorer")
+            .arg(target_path.to_str().unwrap_or(""))
+            .output()
+            .map_err(|e| format!("Failed to open directory in Explorer: {}", e))?;
+        
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(format!("Failed to open directory in Explorer: {}", error));
+        }
+        
+        return Ok(format!("Opened in Explorer: {}", target_path.display()));
+    }
+    
+    // For Linux
+    #[cfg(target_os = "linux")]
+    {
+        let output = Command::new("xdg-open")
+            .arg(target_path.to_str().unwrap_or(""))
+            .output()
+            .map_err(|e| format!("Failed to open directory: {}", e))?;
+        
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(format!("Failed to open directory: {}", error));
+        }
+        
+        return Ok(format!("Opened directory: {}", target_path.display()));
+    }
+    
+    #[allow(unreachable_code)]
+    Ok(format!("Path: {}", target_path.display()))
+}
+
+#[command]
 pub fn update_moodle_version(app_handle: AppHandle, name: String, new_branch: String, new_php_version: Option<String>) -> Result<String, String> {
     // First backup the site
     println!("Creating backup before updating site '{}'...", name);

@@ -46,12 +46,21 @@
     <div v-else>
       <!-- Actions -->
       <div class="mb-4 flex justify-between items-center">
-        <button @click="createBackup" 
-                :disabled="isProcessing" 
-                class="compact-action-button bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed">
-          <PhPlus class="w-4 h-4 mr-1" />
-          Create Backup
-        </button>
+        <div class="flex space-x-2">
+          <button @click="createBackup" 
+                  :disabled="isProcessing" 
+                  class="compact-action-button bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed">
+            <PhPlus class="w-4 h-4 mr-1" />
+            Create Backup
+          </button>
+          
+          <button @click="openBackupsFolder" 
+                  :disabled="isProcessing" 
+                  class="compact-action-button bg-gray-500 text-white hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed">
+            <PhFolderOpen class="w-4 h-4 mr-1" />
+            Open Folder
+          </button>
+        </div>
         
         <button @click="refreshBackups" 
                 :disabled="isProcessing" 
@@ -96,6 +105,20 @@
                     title="Restore this backup">
                     <PhArrowClockwise class="w-3 h-3" />
                   </button>
+                  <button 
+                    @click="openInFinder(backup.timestamp)" 
+                    :disabled="isProcessing" 
+                    class="compact-mini-button bg-green-500 hover:bg-green-600 text-white"
+                    title="Show in Finder">
+                    <PhFolderOpen class="w-3 h-3" />
+                  </button>
+                  <button 
+                    @click="confirmDelete(backup.timestamp)" 
+                    :disabled="isProcessing" 
+                    class="compact-mini-button bg-red-500 hover:bg-red-600 text-white"
+                    title="Delete this backup">
+                    <PhTrash class="w-3 h-3" />
+                  </button>
                 </div>
               </td>
             </tr>
@@ -132,6 +155,34 @@
       </div>
     </div>
     
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteConfirm" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-5 w-96 mx-3">
+        <div class="mb-4">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Confirm Delete</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Are you sure you want to delete this backup from {{ formatDate(confirmingDeleteTimestamp) }}?
+          </p>
+        </div>
+        <div class="text-xs text-red-500 font-medium mb-3">
+          <p>⚠️ This action cannot be undone.</p>
+        </div>
+        <div class="flex justify-end space-x-3">
+          <button 
+            @click="showDeleteConfirm = false" 
+            class="compact-action-button bg-gray-300 text-gray-700 hover:bg-gray-400">
+            Cancel
+          </button>
+          <button 
+            @click="deleteBackup" 
+            :disabled="isProcessing" 
+            class="compact-action-button bg-red-500 text-white hover:bg-red-600 disabled:bg-gray-300">
+            {{ isProcessing ? 'Deleting...' : 'Delete Backup' }}
+          </button>
+        </div>
+      </div>
+    </div>
+    
     <div class="actions mt-3 flex gap-2">
       <button @click="$router.push('/dashboard')" class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">
         Back to Dashboard
@@ -142,7 +193,7 @@
 
 <script>
 import { invoke } from '@tauri-apps/api/tauri';
-import { PhArchiveBox, PhPlus, PhArrowClockwise, PhFolderNotch } from '@phosphor-icons/vue';
+import { PhArchiveBox, PhPlus, PhArrowClockwise, PhFolderNotch, PhFolderOpen, PhTrash } from '@phosphor-icons/vue';
 
 export default {
   name: 'SiteBackups',
@@ -150,7 +201,9 @@ export default {
     PhArchiveBox,
     PhPlus,
     PhArrowClockwise,
-    PhFolderNotch
+    PhFolderNotch,
+    PhFolderOpen,
+    PhTrash
   },
   props: {
     siteName: {
@@ -262,6 +315,68 @@ export default {
       } finally {
         this.loading = false;
         this.isProcessing = false;
+      }
+    },
+    
+    confirmDelete(timestamp) {
+      this.confirmingDeleteTimestamp = timestamp;
+      this.showDeleteConfirm = true;
+    },
+    
+    async deleteBackup() {
+      if (!this.confirmingDeleteTimestamp) return;
+      
+      this.isProcessing = true;
+      this.showDeleteConfirm = false;
+      this.loading = true;
+      this.loadingMessage = 'Deleting backup...';
+      this.error = null;
+      
+      try {
+        const result = await invoke('delete_site_backup', { 
+          name: this.siteName,
+          backupTimestamp: this.confirmingDeleteTimestamp
+        });
+        
+        console.log(result);
+        this.showSuccessMessage = true;
+        this.successMessage = result;
+        setTimeout(() => {
+          this.showSuccessMessage = false;
+        }, 5000);
+        await this.refreshBackups();
+      } catch (err) {
+        this.error = `Failed to delete backup: ${err}`;
+        console.error(err);
+      } finally {
+        this.loading = false;
+        this.isProcessing = false;
+        this.confirmingDeleteTimestamp = null;
+      }
+    },
+    
+    async openInFinder(timestamp) {
+      try {
+        const result = await invoke('open_backup_location', { 
+          name: this.siteName,
+          backupTimestamp: timestamp
+        });
+        console.log(result);
+      } catch (err) {
+        this.error = `Failed to open in Finder: ${err}`;
+        console.error(err);
+      }
+    },
+    
+    async openBackupsFolder() {
+      try {
+        const result = await invoke('open_backup_location', { 
+          name: this.siteName
+        });
+        console.log(result);
+      } catch (err) {
+        this.error = `Failed to open backups folder: ${err}`;
+        console.error(err);
       }
     },
     

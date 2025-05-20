@@ -78,6 +78,8 @@ fn main() {
             docker::backup_site,
             docker::list_site_backups,
             docker::restore_site_backup,
+            docker::delete_site_backup,
+            docker::open_backup_location,
             docker::update_moodle_version,
         ])
         .run(tauri::generate_context!())
