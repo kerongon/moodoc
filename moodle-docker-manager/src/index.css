@@ -44,7 +44,14 @@ body:not(.dark) .create-site-btn svg {
   color: white !important;
 }
 
+/* Fix the blue header icon in SiteList.vue for light mode */
+html body:not(.dark) .site-list-container .bg-blue-600 .text-white {
+  color: white !important;
+}
 
+html body:not(.dark) .site-list-container .bg-blue-600 {
+  background-color: #2563eb !important; /* blue-600 */
+}
 
 body:not(.dark) .icon-action-btn svg {
   color: white !important;

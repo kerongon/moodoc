@@ -2,7 +2,7 @@
   <div class="site-list-container bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full p-3 dark:text-gray-100 flex flex-col">
     <!-- Header - macOS style (more compact) -->
     <div class="flex items-center mb-2">
-      <div class="bg-blue-600 rounded-lg p-1 mr-2 shadow-sm">
+      <div class="bg-blue-600 rounded-lg p-1 mr-2 shadow-sm site-list-icon">
         <PhList class="text-white w-5 h-5" weight="fill" />
       </div>
       <div>
@@ -316,11 +316,27 @@ export default {
   fill: currentColor;
 }
 
+/* Explicit styling for the orange update button to ensure visibility in both modes */
 .icon-action-btn.bg-orange-600 {
   background-color: #ea580c !important;
 }
+.icon-action-btn.bg-orange-600 svg {
+  color: white !important;
+  fill: currentColor;
+}
 
-
+/* Explicit styling for the blue site list icon to ensure visibility in both modes */
+.site-list-icon {
+  background-color: #2563eb !important; /* bg-blue-600 */
+}
+.site-list-icon svg {
+  color: white !important;
+  fill: currentColor;
+}
+.site-list-icon svg {
+  color: white !important;
+  fill: currentColor;
+}
 
 .compact-table {
   width: 100%;
