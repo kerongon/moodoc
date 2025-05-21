@@ -219,7 +219,26 @@ echo "Admin password: test"
         db_port_str
     );
     fs::write(&env_file_path, env_content)
-        .map_err(|e| format!("Failed to write .env file: {}", e))?;
+    .map_err(|e| format!("Failed to write .env file: {}", e))?;
+    // Create local.yml for persistent volumes (DB and Mailpit)
+    let local_yml_path = moodle_docker_dir.join("local.yml");
+    let db_data_path = if db_env == "pgsql" { "/var/lib/postgresql/data" } else { "/var/lib/mysql" };
+    let local_yml_content = format!(r#"services:
+  db:
+    volumes:
+      - moodledb_data:{}
+  mailpit:
+    volumes:
+      - mailpit_data:/data
+
+volumes:
+  moodledb_data:
+    driver: local
+  mailpit_data:
+    driver: local
+"#, db_data_path);
+    fs::write(&local_yml_path, local_yml_content)
+        .map_err(|e| format!("Failed to write local.yml: {}", e))?;
     // First, start the containers
     println!("Attempting to start Docker containers for site: {}", name);
     app_handle.emit_all("site_creation_progress", format!("Starting Docker containers for {}", name)).unwrap_or_default();
