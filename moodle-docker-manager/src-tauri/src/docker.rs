@@ -9,6 +9,47 @@ use serde::{Serialize, Deserialize};
 use tauri::{command, AppHandle, Manager, State};
 use std::sync::Mutex;
 
+// Helper function for safe event emission
+fn safe_emit<T: serde::Serialize + Clone>(app_handle: &AppHandle, event: &str, payload: T) {
+    if let Err(e) = app_handle.emit_all(event, payload.clone()) {
+        println!("Warning: Failed to emit event {}: {}", event, e);
+    }
+}
+
+// Helper function to safely execute a temporary script with cleanup
+fn run_temp_script(path: &PathBuf, script_content: &str, use_bash: bool) -> Result<std::process::Output, String> {
+    (|| -> Result<std::process::Output, String> {
+        // Create and write the file
+        let mut file = File::create(path)
+            .map_err(|e| format!("Failed to create script at {}: {}", path.display(), e))?;
+        
+        file.write_all(script_content.as_bytes())
+            .map_err(|e| format!("Failed to write script at {}: {}", path.display(), e))?;
+        
+        // Make executable
+        let chmod_output = Command::new("chmod")
+            .args(["+x", path.to_str().unwrap_or("script.sh")])
+            .output()
+            .map_err(|e| format!("Failed to make script executable: {}", e))?;
+        
+        if !chmod_output.status.success() {
+            return Err("Failed to make script executable".to_string());
+        }
+        
+        // Run the script
+        if use_bash {
+            Command::new("bash")
+                .arg(path.to_str().unwrap_or("./script.sh"))
+                .output()
+                .map_err(|e| format!("Failed to execute script: {}", e))
+        } else {
+            Command::new(path.to_str().unwrap_or("./script.sh"))
+                .output()
+                .map_err(|e| format!("Failed to execute script: {}", e))
+        }
+    })()
+}
+
 // Define data structures for site configuration
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Site {
@@ -60,7 +101,7 @@ pub async fn create_site(
     let app = app_handle.clone();
     let res = tauri::async_runtime::spawn_blocking(move || {
         // synchronous creation code
-        let mut result = create_site_blocking(app, name, php_version, db_type, moodle_branch, db_port, web_port, directory);
+        let result = create_site_blocking(app, name, php_version, db_type, moodle_branch, db_port, web_port, directory);
         result
     })
     .await
@@ -264,7 +305,7 @@ volumes:
         .map_err(|e| format!("Failed to write local.yml: {}", e))?;
     // First, start the containers
     println!("Attempting to start Docker containers for site: {}", name);
-    app_handle.emit_all("site_creation_progress", format!("Starting Docker containers for {}", name)).unwrap_or_default();
+    safe_emit(&app_handle, "site_creation_progress", format!("Starting Docker containers for {}", name));
     
     let start_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_WEB_PORT={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose up -d"#,
         moodle_docker_dir.to_str().unwrap_or(""),
@@ -284,7 +325,7 @@ volumes:
     
     println!("Docker containers start command executed for site: {}. Success: {}", name, output.status.success());
     if !output.status.success() {
-        app_handle.emit_all("site_creation_progress", format!("Failed to start Docker containers for {}", name)).unwrap_or_default();
+        safe_emit(&app_handle, "site_creation_progress", format!("Failed to start Docker containers for {}", name));
         let error = String::from_utf8(output.stderr)
             .unwrap_or_else(|_| "Unknown error".to_string());
         return Err(format!("Failed to start Docker containers: {}", error));
@@ -292,7 +333,7 @@ volumes:
     
     // Wait for the database to be ready
     println!("Attempting to wait for database for site: {}", name);
-    app_handle.emit_all("site_creation_progress", format!("Waiting for database to be ready for {}", name)).unwrap_or_default();
+    safe_emit(&app_handle, "site_creation_progress", format!("Waiting for database to be ready for {}", name));
     let wait_db_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-wait-for-db"#,
         moodle_docker_dir.to_str().unwrap_or(""),
         name,
@@ -317,7 +358,7 @@ volumes:
     println!("STDERR: {}", error_output);
     
     if !output.status.success() {
-        app_handle.emit_all("site_creation_progress", format!("Failed while waiting for database for {}", name)).unwrap_or_default();
+        safe_emit(&app_handle, "site_creation_progress", format!("Failed while waiting for database for {}", name));
         // Try to get container logs to see what's happening
         println!("Getting container logs to diagnose the issue...");
         let logs_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose logs db"#,
@@ -341,7 +382,7 @@ volumes:
     
     // Install Moodle
     println!("Attempting to install Moodle for site: {}", name);
-    app_handle.emit_all("site_creation_progress", format!("Installing Moodle for {}. This may take several minutes...", name)).unwrap_or_default();
+    safe_emit(&app_handle, "site_creation_progress", format!("Installing Moodle for {}. This may take several minutes...", name));
     // Use single quotes to properly quote arguments in bash
     let install_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname='Docker Moodle' --shortname='docker_moodle' --summary='Docker Moodle site' --adminpass='test' --adminemail='admin@example.com'"#,
         moodle_docker_dir.to_str().unwrap_or(""),
@@ -370,7 +411,7 @@ volumes:
     println!("STDERR: {}", error_str);
     
     if !output.status.success() {
-        app_handle.emit_all("site_creation_progress", format!("Failed to install Moodle for {}", name)).unwrap_or_default();
+        safe_emit(&app_handle, "site_creation_progress", format!("Failed to install Moodle for {}", name));
         // Try to get webserver logs to diagnose the issue
         println!("Getting webserver logs to diagnose the issue...");
         let logs_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose logs webserver"#,
@@ -393,7 +434,7 @@ volumes:
     }
     
     // Save site configuration
-    app_handle.emit_all("site_creation_progress", format!("Finalizing setup for {}", name)).unwrap_or_default();
+    safe_emit(&app_handle, "site_creation_progress", format!("Finalizing setup for {}", name));
     let site = Site {
         name: name.clone(),
         php_version,
@@ -451,6 +492,7 @@ pub fn load_site_configs(app: &tauri::App) -> Result<(), String> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn stop_docker_container(container_name: &str) -> Result<String, String> {
     let output = Command::new("docker")
         .arg("stop")
@@ -464,6 +506,7 @@ pub fn stop_docker_container(container_name: &str) -> Result<String, String> {
     }
 }
 
+#[allow(dead_code)]
 pub fn remove_docker_container(container_name: &str) -> Result<String, String> {
     let output = Command::new("docker")
         .arg("rm")
@@ -678,31 +721,40 @@ MOODLE_DOCKER_DB_PORT={}
     env_file.write_all(env_content.as_bytes())
         .map_err(|e| format!("Failed to write .env file: {}", e))?;
 
-    // Write the script to a temporary file
+    // Write the script to a temporary file and execute it with guaranteed cleanup
     let temp_script_path = site.path.join("start.sh");
-    let mut file = File::create(&temp_script_path)
-        .map_err(|e| format!("Failed to create start script: {}", e))?;
     
-    file.write_all(script_content.as_bytes())
-        .map_err(|e| format!("Failed to write start script: {}", e))?;
+    let start_result = (|| -> Result<std::process::Output, String> {
+        // Create and write the file
+        let mut file = File::create(&temp_script_path)
+            .map_err(|e| format!("Failed to create start script: {}", e))?;
+        
+        file.write_all(script_content.as_bytes())
+            .map_err(|e| format!("Failed to write start script: {}", e))?;
+        
+        // Make the script executable
+        let chmod_output = Command::new("chmod")
+            .args(["+x", temp_script_path.to_str().unwrap_or("start.sh")])
+            .output()
+            .map_err(|e| format!("Failed to make script executable: {}", e))?;
+        
+        if !chmod_output.status.success() {
+            return Err(format!("Failed to make script executable"));
+        }
+        
+        // Execute the script
+        Command::new(temp_script_path.to_str().unwrap_or("./start.sh"))
+            .output()
+            .map_err(|e| format!("Failed to execute start script: {}", e))
+    })();
     
-    // Make the script executable
-    let chmod_output = Command::new("chmod")
-        .args(["+x", temp_script_path.to_str().unwrap_or("start.sh")])
-        .output()
-        .map_err(|e| format!("Failed to make script executable: {}", e))?;
-    
-    if !chmod_output.status.success() {
-        return Err(format!("Failed to make script executable"));
+    // Always clean up the temporary script regardless of success/failure
+    if let Err(e) = fs::remove_file(&temp_script_path) {
+        println!("Warning: Failed to remove temporary script {}: {}", temp_script_path.display(), e);
     }
     
-    // Execute the script
-    let output = Command::new(temp_script_path.to_str().unwrap_or("./start.sh"))
-        .output()
-        .map_err(|e| format!("Failed to execute start script: {}", e))?;
-    
-    // Delete the temporary script
-    let _ = fs::remove_file(temp_script_path);
+    // Now we can safely process the result
+    let output = start_result?;
     
     if !output.status.success() {
         let error = String::from_utf8(output.stderr)
@@ -769,32 +821,40 @@ export MOODLE_DOCKER_DB_PORT={}
         return Err(format!("Docker compose script not found at: {:?}", compose_script));
     }
     
-    // Write the script to a temporary file
+    // Write the script to a temporary file with guaranteed cleanup
     let temp_script_path = site.path.join("stop.sh");
-    let mut file = File::create(&temp_script_path)
-        .map_err(|e| format!("Failed to create stop script: {}", e))?;
     
-    file.write_all(script_content.as_bytes())
-        .map_err(|e| format!("Failed to write stop script: {}", e))?;
+    let stop_result = (|| -> Result<std::process::Output, String> {
+        let mut file = File::create(&temp_script_path)
+            .map_err(|e| format!("Failed to create stop script: {}", e))?;
+        
+        file.write_all(script_content.as_bytes())
+            .map_err(|e| format!("Failed to write stop script: {}", e))?;
+        
+        // Make the script executable
+        let chmod_output = Command::new("chmod")
+            .args(["+x", temp_script_path.to_str().unwrap_or("stop.sh")])
+            .output()
+            .map_err(|e| format!("Failed to make script executable: {}", e))?;
+        
+        if !chmod_output.status.success() {
+            return Err(format!("Failed to make script executable"));
+        }
+        
+        // Execute the script with proper shell
+        Command::new("bash")
+            .arg(temp_script_path.to_str().unwrap_or("./stop.sh"))
+            .output()
+            .map_err(|e| format!("Failed to execute stop script: {}", e))
+    })();
     
-    // Make the script executable
-    let chmod_output = Command::new("chmod")
-        .args(["+x", temp_script_path.to_str().unwrap_or("stop.sh")])
-        .output()
-        .map_err(|e| format!("Failed to make script executable: {}", e))?;
-    
-    if !chmod_output.status.success() {
-        return Err(format!("Failed to make script executable"));
+    // Always clean up the temporary script
+    if let Err(e) = fs::remove_file(&temp_script_path) {
+        println!("Warning: Failed to remove temporary script {}: {}", temp_script_path.display(), e);
     }
     
-    // Execute the script with proper shell
-    let output = Command::new("bash")
-        .arg(temp_script_path.to_str().unwrap_or("./stop.sh"))
-        .output()
-        .map_err(|e| format!("Failed to execute stop script: {}", e))?;
-    
-    // Delete the temporary script
-    let _ = fs::remove_file(temp_script_path);
+    // Now we can safely process the result
+    let output = stop_result?;
     
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -857,28 +917,44 @@ echo "Removed all containers and volumes for {}"
     
     // Only remove containers if explicitly requested
     if should_remove_containers {
-        // Write the cleanup script
+        // Use a cleanup script with guaranteed cleanup
         let script_path = site.path.join("cleanup.sh");
-        let mut file = File::create(&script_path)
-            .map_err(|e| format!("Failed to create cleanup script: {}", e))?;
         
-        file.write_all(cleanup_script.as_bytes())
-            .map_err(|e| format!("Failed to write cleanup script: {}", e))?;
+        let cleanup_result = (|| -> Result<(), String> {
+            let mut file = File::create(&script_path)
+                .map_err(|e| format!("Failed to create cleanup script: {}", e))?;
+            
+            file.write_all(cleanup_script.as_bytes())
+                .map_err(|e| format!("Failed to write cleanup script: {}", e))?;
+            
+            // Make the script executable
+            let chmod_output = Command::new("chmod")
+                .args(["+x", script_path.to_str().unwrap_or("cleanup.sh")])
+                .output()
+                .map_err(|e| format!("Failed to make cleanup script executable: {}", e))?;
+            
+            if !chmod_output.status.success() {
+                return Err("Failed to make cleanup script executable".to_string());
+            }
+            
+            // Execute the cleanup script
+            let _output = Command::new(script_path.to_str().unwrap_or("./cleanup.sh"))
+                .output()
+                .map_err(|e| format!("Failed to execute cleanup script: {}", e))?;
+                
+            Ok(())
+        })();
         
-        // Make the script executable
-        let chmod_output = Command::new("chmod")
-            .args(["+x", script_path.to_str().unwrap_or("cleanup.sh")])
-            .output()
-            .map_err(|e| format!("Failed to make cleanup script executable: {}", e))?;
-        
-        if !chmod_output.status.success() {
-            return Err("Failed to make cleanup script executable".to_string());
+        // Always clean up the script
+        if let Err(e) = fs::remove_file(&script_path) {
+            println!("Warning: Failed to remove cleanup script {}: {}", script_path.display(), e);
         }
         
-        // Execute the cleanup script
-        let _output = Command::new(script_path.to_str().unwrap_or("./cleanup.sh"))
-            .output()
-            .map_err(|e| format!("Failed to execute cleanup script: {}", e))?;
+        // Only return error if we couldn't execute the cleanup and the error is worth reporting
+        if let Err(e) = cleanup_result {
+            println!("Warning during container cleanup: {}", e);
+            // We don't return the error since we still want to remove the site from state
+        }
     }
     
     // Even if the script fails, we'll try to remove the directory and site from state
@@ -1002,31 +1078,40 @@ export MOODLE_DOCKER_DB_PORT={}
         site.db_port.unwrap_or(3306)
     );
     
-    // Write the script to a temporary file
+    // Use a temporary file with guaranteed cleanup
     let check_script_path = site.path.join("check_status.sh");
-    let mut file = File::create(&check_script_path)
-        .map_err(|e| format!("Failed to create check script: {}", e))?;
     
-    file.write_all(check_script.as_bytes())
-        .map_err(|e| format!("Failed to write check script: {}", e))?;
+    let check_result = (|| -> Result<std::process::Output, String> {
+        // Write the script to a temporary file
+        let mut file = File::create(&check_script_path)
+            .map_err(|e| format!("Failed to create check script: {}", e))?;
+        
+        file.write_all(check_script.as_bytes())
+            .map_err(|e| format!("Failed to write check script: {}", e))?;
+        
+        // Make the script executable
+        let chmod_output = Command::new("chmod")
+            .args(["+x", check_script_path.to_str().unwrap_or("check_status.sh")])
+            .output()
+            .map_err(|e| format!("Failed to make script executable: {}", e))?;
+        
+        if !chmod_output.status.success() {
+            return Err(format!("Failed to make check script executable"));
+        }
+        
+        // Execute the script
+        Command::new(check_script_path.to_str().unwrap_or("./check_status.sh"))
+            .output()
+            .map_err(|e| format!("Failed to execute check script: {}", e))
+    })();
     
-    // Make the script executable
-    let chmod_output = Command::new("chmod")
-        .args(["+x", check_script_path.to_str().unwrap_or("check_status.sh")])
-        .output()
-        .map_err(|e| format!("Failed to make script executable: {}", e))?;
-    
-    if !chmod_output.status.success() {
-        return Err(format!("Failed to make check script executable"));
+    // Always clean up the temporary script
+    if let Err(e) = fs::remove_file(&check_script_path) {
+        println!("Warning: Failed to remove temporary script {}: {}", check_script_path.display(), e);
     }
     
-    // Execute the script
-    let output = Command::new(check_script_path.to_str().unwrap_or("./check_status.sh"))
-        .output()
-        .map_err(|e| format!("Failed to execute check script: {}", e))?;
-    
-    // Delete the temporary script
-    let _ = fs::remove_file(check_script_path);
+    // Process the result
+    let output = check_result?;
     
     // If we got a container ID, the site is running
     let status = if output.status.success() && !output.stdout.is_empty() {
@@ -1211,65 +1296,70 @@ echo "Backup completed successfully"
     
     // Write the backup script
     let backup_script_path = site.path.join("backup.sh");
-    let mut file = File::create(&backup_script_path)
-        .map_err(|e| format!("Failed to create backup script: {}", e))?;
     
-    file.write_all(backup_script.as_bytes())
-        .map_err(|e| format!("Failed to write backup script: {}", e))?;
-    
-    // Make the script executable
-    let chmod_output = Command::new("chmod")
-        .args(["+x", backup_script_path.to_str().unwrap_or("backup.sh")])
-        .output()
-        .map_err(|e| format!("Failed to make backup script executable: {}", e))?;
-    
-    if !chmod_output.status.success() {
-        let _ = fs::remove_file(&backup_script_path);
-        return Err(format!("Failed to make backup script executable"));
-    }
-    
-    // Execute the backup script and stream stdout for progress
-    let mut child = Command::new("bash")
-        .arg(backup_script_path.to_str().unwrap_or("./backup.sh"))
-        .stdout(Stdio::piped())
-        .spawn()
-        .map_err(|e| { let _ = fs::remove_file(&backup_script_path); format!("Failed to execute backup script: {}", e) })?;
-    // read output lines
-    if let Some(stdout) = child.stdout.take() {
-        let reader = BufReader::new(stdout);
-        for line in reader.lines() {
-            if let Ok(text) = line {
-                let mut pct = 0;
-                let step = if text.contains("Backing up database") {
-                    pct = 25;
-                    "database"
-                } else if text.contains("Backing up Moodle code") {
-                    pct = 50;
-                    "code"
-                } else if text.contains("Backing up Moodle data") {
-                    pct = 75;
-                    "data"
-                } else if text.contains("Backup completed successfully") {
-                    pct = 100;
-                    "done"
-                } else {
-                    continue;
-                };
-                // emit progress event
-                app_handle.emit_all("backup_progress", serde_json::json!({
-                    "site": name,
-                    "percent": pct,
-                    "step": step
-                })).ok();
+    // Create and execute within a block to ensure cleanup
+    let backup_result = (|| -> Result<String, String> {
+        // First prepare the script
+        let mut file = File::create(&backup_script_path)
+            .map_err(|e| format!("Failed to create backup script: {}", e))?;
+        
+        file.write_all(backup_script.as_bytes())
+            .map_err(|e| format!("Failed to write backup script: {}", e))?;
+        
+        // Make the script executable
+        let chmod_output = Command::new("chmod")
+            .args(["+x", backup_script_path.to_str().unwrap_or("backup.sh")])
+            .output()
+            .map_err(|e| format!("Failed to make backup script executable: {}", e))?;
+        
+        if !chmod_output.status.success() {
+            return Err(format!("Failed to make backup script executable"));
+        }
+        
+        // Execute the backup script and stream stdout for progress
+        let mut child = Command::new("bash")
+            .arg(backup_script_path.to_str().unwrap_or("./backup.sh"))
+            .stdout(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("Failed to execute backup script: {}", e))?;
+            
+        // read output lines
+        if let Some(stdout) = child.stdout.take() {
+            let reader = BufReader::new(stdout);
+            for line in reader.lines() {
+                if let Ok(text) = line {
+                    let (pct, step) = if text.contains("Backing up database") {
+                        (25, "database")
+                    } else if text.contains("Backing up Moodle code") {
+                        (50, "code")
+                    } else if text.contains("Backing up Moodle data") {
+                        (75, "data")
+                    } else if text.contains("Backup completed successfully") {
+                        (100, "done")
+                    } else {
+                        continue;
+                    };
+                    // emit progress event
+                    safe_emit(&app_handle, "backup_progress", serde_json::json!({
+                        "site": name,
+                        "percent": pct,
+                        "step": step
+                    }));
+                }
             }
         }
-    }
-    let status = child.wait().map_err(|e| format!("Error waiting for backup script: {}", e))?;
+        let status = child.wait().map_err(|e| format!("Error waiting for backup script: {}", e))?;
+        if !status.success() {
+            return Err(format!("Backup script exited with status {:?}", status.code()));
+        }
+        
+        Ok(format!("Site '{}' backed up successfully to {}", name, backup_dir.to_str().unwrap_or("")))
+    })();
+    
+    // Always clean up the temporary script
     let _ = fs::remove_file(&backup_script_path);
-    if !status.success() {
-        return Err(format!("Backup script exited with status {:?}", status.code()));
-    }
-    Ok(format!("Site '{}' backed up successfully to {}", name, backup_dir.to_str().unwrap_or("")))
+    
+    backup_result
 }
 
 #[command]
