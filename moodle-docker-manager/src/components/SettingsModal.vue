@@ -62,6 +62,27 @@
             </label>
           </div>
         </div>
+        <!-- Preferred Editor Selection -->
+        <div class="setting-group mb-3">
+          <h3 class="text-sm font-medium mb-1">Preferred Code Editor</h3>
+          <p class="setting-description text-xs mb-2">
+            Select your preferred code editor application
+          </p>
+          <div class="directory-selector editor-selector">
+            <input
+              type="text"
+              v-model="editorPath"
+              placeholder="Select editor executable"
+              class="h-7 text-xs"
+              readonly
+            />
+            <button @click="selectEditor" class="browse-button text-xs h-7 py-0.5 px-2">Choose...</button>
+          </div>
+          <div class="current-directory text-xs mt-1 text-gray-500 dark:text-gray-400">
+            <span v-if="editorPath">Current editor: {{ editorPath }}</span>
+            <span v-else>No editor selected</span>
+          </div>
+        </div>
       </div>
       
       <div class="modal-footer">
@@ -97,9 +118,13 @@ export default {
     const sitesDirectory = ref('');
     const darkMode = ref('system');
     const isVisible = ref(false);
+    const editorPath = ref('');
     
     const currentDirectory = computed(() => {
       return settingsStore.sitesRootDirectory || '';
+    });
+    const currentEditor = computed(() => {
+      return settingsStore.editorPath || '';
     });
     
     // Watch for dark mode changes and apply them immediately
@@ -131,12 +156,14 @@ export default {
       await settingsStore.loadSettings();
       sitesDirectory.value = settingsStore.sitesRootDirectory;
       darkMode.value = settingsStore.darkMode;
+      editorPath.value = settingsStore.editorPath;
       
       // Listen for the open-settings event from the menu
       await listen('open-settings', () => {
         // Update values when modal is opened
         sitesDirectory.value = settingsStore.sitesRootDirectory;
         darkMode.value = settingsStore.darkMode;
+        editorPath.value = settingsStore.editorPath;
         isVisible.value = true;
       });
     });
@@ -156,14 +183,28 @@ export default {
         console.error('Error selecting directory:', error);
       }
     };
+    const selectEditor = async () => {
+      try {
+        const selected = await open({
+          directory: false,
+          multiple: false,
+          title: 'Select Preferred Code Editor',
+          // allow picking files
+          file: true
+        });
+        if (selected) {
+          editorPath.value = selected;
+        }
+      } catch (error) {
+        console.error('Error selecting editor:', error);
+      }
+    };
     
     const saveSettings = async () => {
-      // Update both settings in the store
+      // Update all settings in the store
       await settingsStore.setSitesRootDirectory(sitesDirectory.value);
       await settingsStore.setDarkMode(darkMode.value);
-      
-      // Explicitly call saveSettings to ensure persistence to disk
-      await settingsStore.saveSettings();
+      await settingsStore.setEditorPath(editorPath.value);
       
       // Apply the dark mode setting immediately
       if (window.ThemeManager) {
@@ -183,7 +224,8 @@ export default {
       
       console.log('Settings saved with values:', {
         darkMode: darkMode.value,
-        sitesDirectory: sitesDirectory.value
+        sitesDirectory: sitesDirectory.value,
+        editorPath: editorPath.value
       });
       
       closeModal();
@@ -204,9 +246,12 @@ export default {
       settingsStore,
       sitesDirectory,
       darkMode,
+      editorPath,
       currentDirectory,
+      currentEditor,
       isVisible,
       selectDirectory,
+      selectEditor,
       saveSettings,
       closeModal,
       openModal

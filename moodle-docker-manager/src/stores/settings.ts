@@ -6,7 +6,7 @@ import { readTextFile, writeTextFile, createDir, exists } from '@tauri-apps/api/
 // Define a type for the window extension
 declare global {
   interface Window {
-    ThemeManager?: {
+    ThemeManager: {
       applyTheme(mode: string): boolean;
       refreshTheme(): void;
     };
@@ -38,6 +38,8 @@ export const useSettingsStore = defineStore('settings', {
     isLoading: false,
     error: null as string | null,
     darkMode: getFromLocalStorage('theme', 'dark') as 'system' | 'light' | 'dark',
+    // Path to the user's preferred code editor application
+    editorPath: getFromLocalStorage('editorPath', '') as string,
     initialized: false,
   }),
   
@@ -73,9 +75,13 @@ export const useSettingsStore = defineStore('settings', {
           // Update theme mode if available in settings
           if (settings.darkMode) {
             this.darkMode = settings.darkMode;
-            // Sync localStorage with the loaded setting
             setToLocalStorage('theme', settings.darkMode);
-          } 
+          }
+          // Update editor path if available in settings
+          if (settings.editorPath) {
+            this.editorPath = settings.editorPath;
+            setToLocalStorage('editorPath', settings.editorPath);
+          }
         } else {
           console.log('No settings file found, creating one with current values');
           // Create the config directory if it doesn't exist
@@ -83,9 +89,10 @@ export const useSettingsStore = defineStore('settings', {
           
           // Use current state values (which might be from localStorage)
           // and create the initial settings file
-          const initialSettings = { 
+          const initialSettings = {
             sitesRootDirectory: this.sitesRootDirectory,
-            darkMode: this.darkMode
+            darkMode: this.darkMode,
+            editorPath: this.editorPath
           };
           
           // Save initial settings to disk
@@ -147,9 +154,10 @@ export const useSettingsStore = defineStore('settings', {
         }
         
         // Prepare settings object with current values
-        const settings = { 
+        const settings = {
           sitesRootDirectory: this.sitesRootDirectory,
-          darkMode: this.darkMode
+          darkMode: this.darkMode,
+          editorPath: this.editorPath
         };
         
         console.log('Saving settings to disk:', settings);
@@ -157,6 +165,7 @@ export const useSettingsStore = defineStore('settings', {
         // Save to localStorage for quick access
         setToLocalStorage('theme', this.darkMode);
         setToLocalStorage('sitesRootDirectory', this.sitesRootDirectory);
+        setToLocalStorage('editorPath', this.editorPath);
         
         // Write to the config file with pretty formatting (for debugging)
         const settingsPath = `${configDir}/settings.json`;
@@ -209,6 +218,17 @@ export const useSettingsStore = defineStore('settings', {
         this.applyDarkMode(true);
       }
       
+      // Save to persistent storage
+      await this.saveSettings();
+    },
+    
+    /**
+     * Set the preferred code editor application path
+     */
+    async setEditorPath(path: string) {
+      this.editorPath = path;
+      // Update localStorage immediately
+      setToLocalStorage('editorPath', path);
       // Save to persistent storage
       await this.saveSettings();
     },
