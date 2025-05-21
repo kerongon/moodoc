@@ -331,13 +331,19 @@ export default {
   justify-content: center;
   align-items: center;
   z-index: 9999; /* Maximum z-index to ensure it's above all other elements */
+  backdrop-filter: blur(3px); /* Add subtle blur effect to background */
+  transition: all 0.3s ease;
+}
+
+.dark .modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.8); /* Even darker in dark mode */
 }
 
 .modal-content {
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2), 0 6px 10px rgba(0, 0, 0, 0.1);
+  padding: 28px;
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
@@ -345,6 +351,15 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  animation: modal-appear 0.3s ease-out;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark .modal-content {
+  background-color: #1f2937;
+  color: #f3f4f6;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 6px 10px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 h2 {
@@ -353,48 +368,86 @@ h2 {
   padding-bottom: 10px;
 }
 
+.dark h2 {
+  border-bottom: 1px solid #374151;
+  color: #f9fafb;
+}
+
 .progress-container {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  margin-bottom: 5px;
 }
 
 .progress-bar {
   flex-grow: 1;
-  height: 8px;
+  height: 10px;
   background-color: #eee;
-  border-radius: 4px;
+  border-radius: 5px;
   overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dark .progress-bar {
+  background-color: #374151;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .progress-fill {
   height: 100%;
   background-color: #5755d9;
   transition: width 0.5s ease-in-out;
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+  background-size: 1rem 1rem;
+  animation: progress-animation 1s linear infinite;
+}
+
+.dark .progress-fill {
+  background-color: #6366f1; /* Slightly brighter indigo in dark mode */
 }
 
 .progress-text {
-  min-width: 40px;
+  min-width: 50px;
   text-align: right;
   font-weight: bold;
+  font-size: 1.1em;
 }
 
 .time-info {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 13px;
   color: #666;
-  margin-top: 5px;
+  margin-top: 8px;
   margin-bottom: 15px;
+  padding: 0 5px;
+  font-family: monospace;
 }
 
 .time-elapsed {
   color: #5755d9;
-  font-weight: 500;
+  font-weight: 600;
+  background-color: rgba(87, 85, 217, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.dark .time-elapsed {
+  color: #a5b4fc; /* Even brighter indigo for elapsed time in dark mode */
+  background-color: rgba(99, 102, 241, 0.2);
 }
 
 .time-remaining {
   color: #666;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.dark .time-remaining {
+  color: #d1d5db;
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .status-container {
@@ -409,6 +462,10 @@ h2 {
   min-height: 24px;
 }
 
+.dark .status-text {
+  color: #e5e7eb;
+}
+
 .animation-container {
   height: 120px;
   display: flex;
@@ -417,6 +474,14 @@ h2 {
   background-color: #f8f9fa;
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  position: relative;
+  transition: all 0.3s ease-in-out;
+}
+
+.dark .animation-container {
+  background-color: #111827;
+  border: 1px solid #374151;
 }
 
 /* Animation styles */
@@ -500,6 +565,11 @@ h2 {
   background-color: #f8f9fa;
   border: 2px solid #5755d9;
   position: relative;
+}
+
+.dark .installing .code-lines {
+  background-color: #1f2937;
+  border: 2px solid #6366f1;
 }
 
 .installing .code-lines::before,
@@ -595,11 +665,33 @@ h2 {
   50% { width: 70%; }
 }
 
+@keyframes modal-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes progress-animation {
+  0% {
+    background-position: 1rem 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
 /* Log accordion styles */
 .logs-accordion {
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .logs-header {
@@ -610,6 +702,12 @@ h2 {
   align-items: center;
   cursor: pointer;
   user-select: none;
+}
+
+.dark .logs-header {
+  background-color: #1f2937;
+  color: #f9fafb;
+  border-bottom: 1px solid #374151;
 }
 
 .logs-header h3 {
@@ -625,10 +723,18 @@ h2 {
   max-height: 200px;
   overflow-y: auto;
   border: 1px solid #eee;
-  border-radius: 4px;
+  border-radius: 6px;
   padding: 10px;
   margin-top: 5px;
   background-color: #f8f9fa;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.dark .logs-container {
+  background-color: #111827;
+  border-color: #374151;
 }
 
 .empty-logs-message {
@@ -642,7 +748,11 @@ h2 {
   padding: 2px 0;
   display: flex;
   gap: 10px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #ccc;
+}
+
+.dark .log-entry {
+  border-bottom: 1px solid #374151;
 }
 
 .log-time {
@@ -650,8 +760,20 @@ h2 {
   white-space: nowrap;
 }
 
+.dark .log-time {
+  color: #9ca3af;
+}
+
 .log-message {
   word-break: break-word;
+}
+
+.dark .log-message {
+  color: #e5e7eb;
+}
+
+.dark .empty-logs-message {
+  color: #9ca3af;
 }
 
 /* Button styles */
@@ -667,14 +789,30 @@ h2 {
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-transform: uppercase;
+  font-size: 0.9em;
+  letter-spacing: 0.5px;
+}
+
+.dark .cancel-button {
+  background-color: #ef4444;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .cancel-button:hover {
   background-color: #d32f2f;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.dark .cancel-button:hover {
+  background-color: #dc2626;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
 }
 
 .done-button {
@@ -682,13 +820,29 @@ h2 {
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-transform: uppercase;
+  font-size: 0.9em;
+  letter-spacing: 0.5px;
+}
+
+.dark .done-button {
+  background-color: #6366f1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .done-button:hover {
   background-color: #4644b8;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.dark .done-button:hover {
+  background-color: #4f46e5;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
 }
 </style>
