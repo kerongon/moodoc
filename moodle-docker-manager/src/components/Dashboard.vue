@@ -16,7 +16,7 @@
           
           <!-- Header actions -->
           <div class="header-actions">
-            <DockerStatus />
+            <DockerStatus class="docker-status-button" />
             
             <router-link to="/create" class="new-site-button" title="Create New Site">
               <PhPlus class="button-icon" weight="fill" />
@@ -209,6 +209,24 @@ export default {
 
 .dark .settings-button:hover {
   background-color: rgba(255, 255, 255, 0.15);
+}
+
+.docker-status-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  background-color: #F3F4F6;
+  color: #374151;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  min-height: 42px;
+}
+.dark .docker-status-button {
+  background-color: #1F2937;
+  color: #D1D5DB;
 }
 
 @media (max-width: 640px) {
