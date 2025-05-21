@@ -36,6 +36,15 @@
           <tr v-for="site in sites" :key="site.name" :class="{'opacity-50 pointer-events-none': activeActionSite === site.name}">
             <td>
               {{ site.name }}
+              <!-- Link to open site in browser -->
+              <a v-if="site.web_port"
+                 :href="`http://localhost:${site.web_port}`"
+                 :title="`http://localhost:${site.web_port}`"
+                 target="_blank"
+                 rel="noopener"
+                 class="ml-1">
+                <PhLinkSimple class="inline w-4 h-4 text-blue-500 hover:text-blue-700" />
+              </a>
               <!-- Inline status indicator that shows when an action is in progress -->
               <span v-if="activeActionSite === site.name" class="ml-2 text-xs text-blue-500 animate-pulse">
                 processing...
@@ -45,6 +54,14 @@
             <td>{{ site.db_type }}</td>
             <td class="directory-path" :title="site.path">
               {{ formatPath(site.path) }}
+              <!-- Link to open local directory -->
+              <a :href="`file://${site.path}`"
+                 :title="`file://${site.path}`"
+                 target="_blank"
+                 rel="noopener"
+                 class="ml-1">
+                <PhLinkSimple class="inline w-4 h-4 text-blue-500 hover:text-blue-700" />
+              </a>
             </td>
             <td>
               <span class="compact-status-badge" :class="{'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': site.status === 'running', 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': site.status !== 'running'}">
@@ -217,7 +234,7 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
 
 export default {
@@ -229,6 +246,7 @@ export default {
     PhTrash,
     PhTerminal,
     PhRecycle,
+    PhLinkSimple,
     UpdateSite
   },
   emits: ['action-start', 'action-end'],
