@@ -1970,17 +1970,25 @@ pub fn update_moodle_version(app_handle: AppHandle, name: String, new_branch: St
         None => return Err(format!("Site '{}' not found", name)),
     };
     
-    // Stop the site first
+    // Stop the site first with full environment variables
     let stop_script = format!(r#"#!/bin/bash
 cd {}
 export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_DB={}
+export MOODLE_DOCKER_PHP_VERSION={}
+export MOODLE_DOCKER_WEB_PORT={}
+export MOODLE_DOCKER_DB_PORT={}
 
 # Stop containers
 ./bin/moodle-docker-compose down
 "#, 
         site.path.to_str().unwrap_or(""),
-        name
+        name,
+        site.db_type.to_lowercase(),
+        site.php_version,
+        site.web_port.unwrap_or(8000),
+        site.db_port.unwrap_or(3306)
     );
     
     // Write the stop script
@@ -2015,8 +2023,15 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
     let _ = fs::remove_file(stop_script_path);
     
     if !output.status.success() {
-        let error = String::from_utf8_lossy(&output.stderr).to_string();
-        return Err(format!("Failed to stop site for update: {}", error));
+        // Capture stderr or fallback to stdout for error details
+        let stderr_msg = String::from_utf8_lossy(&output.stderr);
+        let stdout_msg = String::from_utf8_lossy(&output.stdout);
+        let details = if !stderr_msg.is_empty() {
+            stderr_msg.to_string()
+        } else {
+            stdout_msg.to_string()
+        };
+        return Err(format!("Failed to stop site for update: {}", details));
     }
     
     // Create update script
