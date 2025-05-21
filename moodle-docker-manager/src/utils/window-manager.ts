@@ -30,7 +30,7 @@ export async function openLogsWindow(siteName: string, initialService: string = 
       return;
     }
     
-    // Create a new window
+    // Create a new window with properly encoded parameters
     const logWindow = new WebviewWindow(label, {
       url: `/#/log-window?siteName=${encodeURIComponent(siteName)}&service=${encodeURIComponent(initialService)}`,
       title: `Logs: ${siteName} - ${initialService}`,
@@ -38,6 +38,11 @@ export async function openLogsWindow(siteName: string, initialService: string = 
       height: 700,
       minWidth: 600,
       minHeight: 400,
+      // Store site name and service in window creation extras
+      additionalArgs: {
+        siteName: siteName,
+        service: initialService
+      }
     });
     
     // Handle window events if needed

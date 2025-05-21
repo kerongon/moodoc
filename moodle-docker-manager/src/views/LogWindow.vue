@@ -88,15 +88,48 @@ let refreshInterval = null;
 
 // Parse URL parameters to get siteName and initial service
 const initParams = () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const siteNameParam = urlParams.get('siteName');
-  if (siteNameParam) {
-    siteName.value = siteNameParam;
-  }
+  console.log('Initializing parameters');
   
-  const serviceParam = urlParams.get('service');
-  if (serviceParam && services.value.includes(serviceParam)) {
-    selectedService.value = serviceParam;
+  // Get the current URL hash part (everything after the #)
+  const hash = window.location.hash; // e.g., "#/log-window?siteName=test&service=webserver"
+  console.log('Current hash:', hash);
+  
+  // Extract the query string part
+  const queryStringMatch = hash.match(/\?(.+)$/);
+  if (queryStringMatch && queryStringMatch[1]) {
+    const urlParams = new URLSearchParams(queryStringMatch[1]);
+    
+    const siteNameParam = urlParams.get('siteName');
+    console.log('Site name from URL:', siteNameParam);
+    if (siteNameParam) {
+      siteName.value = decodeURIComponent(siteNameParam);
+      console.log('Set site name to:', siteName.value);
+    }
+    
+    const serviceParam = urlParams.get('service');
+    console.log('Service from URL:', serviceParam);
+    if (serviceParam && services.value.includes(serviceParam)) {
+      selectedService.value = decodeURIComponent(serviceParam);
+      console.log('Set service to:', selectedService.value);
+    }
+  } else {
+    console.warn('No query params found in URL');
+    
+    // Fallback to window label (the Tauri window label often contains the site name)
+    try {
+      const windowLabel = appWindow.label;
+      console.log('Window label:', windowLabel);
+      if (windowLabel && windowLabel.startsWith('logs-')) {
+        // Extract site name from the window label
+        const extractedName = windowLabel.substring(5).replace(/-/g, ' ');
+        if (extractedName) {
+          siteName.value = extractedName;
+          console.log('Set site name from window label:', siteName.value);
+        }
+      }
+    } catch (err) {
+      console.error('Error getting window label:', err);
+    }
   }
 };
 
@@ -104,14 +137,25 @@ const initParams = () => {
 const fetchLogs = async () => {
   loading.value = true;
   error.value = null;
+  
+  if (!siteName.value) {
+    console.error('Cannot fetch logs: Site name is empty');
+    error.value = 'Site name is missing. Please check the URL parameters.';
+    loading.value = false;
+    return;
+  }
+  
+  console.log(`Fetching logs for site: "${siteName.value}", service: "${selectedService.value}"`);
+  
   try {
     logs.value = await invoke('get_docker_logs', {
       name: siteName.value,
       service: selectedService.value
     });
+    console.log(`Successfully fetched ${logs.value ? logs.value.length : 0} bytes of logs`);
   } catch (err) {
     error.value = `Failed to fetch logs: ${err}`;
-    console.error(err);
+    console.error('Error fetching logs:', err);
   } finally {
     loading.value = false;
   }
@@ -145,17 +189,44 @@ watch(autoRefresh, (val) => {
 
 // Watch for service changes
 watch(selectedService, (newService) => {
-  fetchLogs();
-  appWindow.setTitle(`Logs: ${siteName.value} - ${newService}`);
+  if (siteName.value) {
+    fetchLogs();
+  } else {
+    console.warn('Not fetching logs after service change because site name is missing');
+  }
+  appWindow.setTitle(`Logs: ${siteName.value || 'Unknown'} - ${newService}`);
 });
 
 // Lifecycle hooks
 onMounted(async () => {
+  console.log('LogWindow component mounted');
+  
+  // Initialize parameters from URL
   initParams();
-  await fetchLogs();
+  
+  // Check if we have a site name
+  if (!siteName.value) {
+    // Try to get it from the window URL once more after a short delay
+    console.log('No site name found, trying to get it after a short delay');
+    setTimeout(async () => {
+      initParams();
+      
+      if (siteName.value) {
+        console.log('Successfully got site name after delay:', siteName.value);
+        await fetchLogs();
+        appWindow.setTitle(`Logs: ${siteName.value} - ${selectedService.value}`);
+      } else {
+        console.error('Still no site name after delay');
+        error.value = 'Could not determine which site to show logs for. Please try opening logs again.';
+      }
+    }, 500);
+  } else {
+    // Fetch logs immediately if we have a site name
+    await fetchLogs();
+  }
   
   // Set window title
-  appWindow.setTitle(`Logs: ${siteName.value} - ${selectedService.value}`);
+  appWindow.setTitle(`Logs: ${siteName.value || 'Unknown'} - ${selectedService.value}`);
   
   // Apply theme from localStorage
   const savedTheme = localStorage.getItem('theme') || 'system';
