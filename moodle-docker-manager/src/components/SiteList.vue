@@ -10,6 +10,18 @@
         <p class="text-[10px] text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
       </div>
     </div>
+
+    <!-- search box -->
+    <div class="flex justify-end mb-2">
+      <input
+        type="search"
+        v-model="searchQuery"
+        placeholder="Search…"
+        aria-label="Search sites"
+        class="p-1 border rounded text-sm"
+      />
+    </div>
+
     <div class="site-list flex-1 overflow-x-auto">
       <div v-if="loading" class="loading text-xs">
         Loading sites...
@@ -21,19 +33,53 @@
         <p>No sites have been created yet.</p>
         <router-link to="/create" class="compact-button bg-blue-600 text-white hover:bg-blue-700">Create a Site</router-link>
       </div>
-      <table v-else class="compact-table">
+      <table
+        v-else
+        class="compact-table"
+        role="table"
+        aria-label="Configured Sites"
+      >
         <thead>
           <tr>
-            <th>Site Name</th>
-            <th>PHP Version</th>
-            <th>Database Type</th>
-            <th>Directory</th>
-            <th>Status</th>
+            <th
+              @click="sort('name')"
+              :aria-sort="sortKey==='name'? sortOrder:'none'"
+              tabindex="0"
+            >Site Name</th>
+            <th
+              @click="sort('php_version')"
+              :aria-sort="sortKey==='php_version'? sortOrder:'none'"
+              tabindex="0"
+            >PHP Version</th>
+            <th
+              @click="sort('db_type')"
+              :aria-sort="sortKey==='db_type'? sortOrder:'none'"
+              tabindex="0"
+            >Database Type</th>
+            <th
+              @click="sort('path')"
+              :aria-sort="sortKey==='path'? sortOrder:'none'"
+              tabindex="0"
+            >Directory</th>
+            <th
+              @click="sort('status')"
+              :aria-sort="sortKey==='status'? sortOrder:'none'"
+              tabindex="0"
+            >Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="site in sites" :key="site.name" :class="{'opacity-50 pointer-events-none': activeActionSite === site.name}">
+          <tr
+            v-for="(site, index) in paginatedSites"
+            :key="site.name"
+            :class="[
+              index % 2 === 0
+                ? 'bg-white dark:bg-gray-800'
+                : 'bg-gray-50 dark:bg-gray-700',
+              { 'opacity-50 pointer-events-none': activeActionSite===site.name }
+            ]"
+          >
             <td>
               {{ site.name }}
               <!-- Link to open site in browser -->
@@ -124,6 +170,34 @@
           </tr>
         </tbody>
       </table>
+
+      <!-- pagination -->
+      <div
+        class="mt-3 flex items-center justify-center space-x-1"
+        role="navigation"
+        aria-label="Pagination"
+      >
+        <button
+          @click="currentPage = Math.max(currentPage-1,1)"
+          :disabled="currentPage===1"
+          class="px-2 py-1 border rounded disabled:opacity-50 text-sm"
+        >Previous</button>
+        <button
+          v-for="page in totalPages"
+          :key="page"
+          @click="currentPage = page"
+          :class="[
+            'px-2 py-1 border rounded text-sm',
+            currentPage===page ? 'bg-primary text-white' : ''
+          ]"
+          aria-current="page"
+        >{{ page }}</button>
+        <button
+          @click="currentPage = Math.min(currentPage+1,totalPages)"
+          :disabled="currentPage===totalPages"
+          class="px-2 py-1 border rounded disabled:opacity-50 text-sm"
+        >Next</button>
+      </div>
     </div>
 
     <!-- Error Modal -->
@@ -235,7 +309,7 @@
 
 <script>
 import { invoke } from '@tauri-apps/api/tauri';
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
@@ -267,6 +341,13 @@ export default {
     const showRemoveModal = ref(false);
     const siteToRemove = ref('');
     const removeContainers = ref(true);
+
+    // new for search/sort/pagination
+    const searchQuery = ref('');
+    const sortKey = ref('');
+    const sortOrder = ref('asc');
+    const currentPage = ref(1);
+    const perPage = 10;
 
     // Initial load of site list
     const loadSites = async () => {
@@ -462,6 +543,44 @@ export default {
       }
     };
 
+    // Computed properties and methods for search, sort, and pagination
+    const filteredSites = computed(() =>
+      sites.value.filter(s => {
+        const q = searchQuery.value.toLowerCase();
+        return ['name','php_version','db_type','path','status']
+          .some(k => String(s[k]||'').toLowerCase().includes(q));
+      })
+    );
+
+    const sortedSites = computed(() => {
+      const arr = [...filteredSites.value];
+      if (!sortKey.value) return arr;
+      return arr.sort((a,b) => {
+        const A = String(a[sortKey.value]||'').toLowerCase();
+        const B = String(b[sortKey.value]||'').toLowerCase();
+        return sortOrder.value==='asc' ? A.localeCompare(B) : B.localeCompare(A);
+      });
+    });
+
+    const totalPages = computed(() =>
+      Math.ceil(sortedSites.value.length / perPage)
+    );
+
+    const paginatedSites = computed(() => {
+      const start = (currentPage.value - 1) * perPage;
+      return sortedSites.value.slice(start, start + perPage);
+    });
+
+    function sort(column) {
+      if (sortKey.value === column) {
+        sortOrder.value = sortOrder.value==='asc' ? 'desc' : 'asc';
+      } else {
+        sortKey.value = column;
+        sortOrder.value = 'asc';
+      }
+      currentPage.value = 1;
+    }
+
     let refreshTimer;
     onMounted(() => {
       loadSites();
@@ -498,7 +617,11 @@ export default {
       siteToRemove,
       removeContainers,
       cancelRemove,
-      confirmRemove
+      confirmRemove,
+      // Search, sort, and pagination properties
+      searchQuery,
+      sortKey, sortOrder, sort,
+      currentPage, totalPages, paginatedSites
     };
   }
 };
