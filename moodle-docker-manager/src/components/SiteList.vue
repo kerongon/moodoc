@@ -111,6 +111,15 @@
               >
                 <PhFolder class="w-4 h-4 text-green-500 hover:text-green-700" />
               </button>
+              <!-- Button to open in code editor -->
+              <button
+                @click.prevent="openInEditor(site.path)"
+                :title="`Open in editor`"
+                type="button"
+                class="ml-1 inline-block align-middle"
+              >
+                <PhCode class="w-4 h-4 text-purple-500 hover:text-purple-700" />
+              </button>
             </td>
             <td>
               <span class="compact-status-badge" :class="{'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': site.status === 'running', 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': site.status !== 'running'}">
@@ -311,8 +320,9 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
+import { Command } from '@tauri-apps/api/shell';
 
 export default {
   name: 'SiteList',
@@ -325,6 +335,7 @@ export default {
     PhRecycle,
     PhLinkSimple,
     PhFolder,
+    PhCode,
     UpdateSite
   },
   emits: ['action-start', 'action-end'],
@@ -543,6 +554,26 @@ export default {
       }
     };
 
+    // Open in selected code editor
+    const openInEditor = async (path) => {
+      try {
+        // retrieve editor executable from user settings
+        const editor = await invoke('get_setting', { key: 'editorPath' });
+        if (!editor) {
+          return showError(
+            'No editor configured',
+            'Please set your code editor executable path in the application settings.'
+          );
+        }
+        // spawn the editor with the site path
+        const cmd = new Command(editor, [path]);
+        await cmd.spawn();
+      } catch (e) {
+        console.error('Failed to open in editor:', e);
+        showError('Open in Editor failed', String(e));
+      }
+    };
+
     // Computed properties and methods for search, sort, and pagination
     const filteredSites = computed(() =>
       sites.value.filter(s => {
@@ -607,6 +638,7 @@ export default {
       handleSiteUpdated,
       formatPath,
       openDirectory,
+      openInEditor,
       updateModalVisible,
       selectedSiteName,
       showErrorModal,
