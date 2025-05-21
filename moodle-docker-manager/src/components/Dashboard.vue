@@ -1,26 +1,34 @@
 <template>
   <div>
-    <div class="dashboard-full bg-white dark:bg-gray-800 min-h-screen w-full p-0">
-      <div class="flex items-center justify-between px-8 pt-8 pb-2">
-      <div class="flex items-center gap-3">
-        <PhList class="w-10 h-10 text-blue-500 drop-shadow" weight="fill" />
-        <h1 class="text-4xl font-extrabold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight flex items-center">
-          Moodle Docker Manager
-        </h1>
-      </div>
-      <div class="flex items-center gap-4">
-        <div class="docker-status-top">
-          <DockerStatus />
+    <div class="dashboard-full bg-white dark:bg-gray-900 min-h-screen w-full p-0">
+      <!-- Modern macOS-style header -->
+      <header class="app-header">
+        <div class="header-content">
+          <!-- Logo and app title -->
+          <div class="app-branding">
+            <div class="logo-container">
+              <PhList class="logo-icon" weight="fill" />
+            </div>
+            <div class="title-container">
+              <h1 class="app-title">Moodle Docker Manager</h1>
+            </div>
+          </div>
+          
+          <!-- Header actions -->
+          <div class="header-actions">
+            <DockerStatus />
+            
+            <router-link to="/create" class="new-site-button" title="Create New Site">
+              <PhPlus class="button-icon" weight="fill" />
+              <span>New Site</span>
+            </router-link>
+            
+            <button @click="openSettings" class="settings-button" title="Settings">
+              <PhGear class="button-icon" />
+            </button>
+          </div>
         </div>
-        <router-link to="/create" class="create-site-btn flex items-center gap-2 text-white font-semibold rounded-lg px-4 py-2 text-base shadow transition-all duration-150" title="Create New Site">
-          <PhPlus class="w-5 h-5" weight="fill" />
-          <span class="sm:inline">New Site</span>
-        </router-link>
-        <button @click="openSettings" class="settings-btn flex items-center justify-center bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-full p-2 transition-all duration-150" title="Settings">
-          <PhGear class="w-5 h-5" />
-        </button>
-      </div>
-      </div>
+      </header>
       <div class="px-8 pb-8">
         <SiteList ref="siteList" />
       </div>
@@ -82,23 +90,152 @@ export default {
   padding: 0;
 }
 
-.docker-status-top {
-  min-width: 120px;
+/* Modern macOS-style header */
+.app-header {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 1rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.dark .app-header {
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.header-content {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.create-site-btn {
-  min-width: 44px;
-  min-height: 44px;
-  font-size: 1rem;
-  background-color: #2563eb;
+.app-branding {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3);
+}
+
+.logo-icon {
   color: white;
+  width: 22px;
+  height: 22px;
 }
 
-.settings-btn {
-  min-width: 44px;
-  min-height: 44px;
+.title-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(90deg, #4f46e5, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.02em;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.new-site-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #4f46e5;
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3);
+}
+
+.new-site-button:hover {
+  background-color: #4338ca;
+  transform: translateY(-1px);
+}
+
+.button-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  color: #4b5563;
+}
+
+.dark .settings-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #d1d5db;
+}
+
+.settings-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: rotate(15deg);
+}
+
+.dark .settings-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .app-title {
+    font-size: 1.25rem;
+  }
+  
+  .new-site-button span {
+    display: none;
+  }
+  
+  .new-site-button {
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  
+  .header-actions {
+    gap: 0.75rem;
+  }
 }
 </style>
