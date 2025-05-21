@@ -46,13 +46,35 @@ pub fn check_docker_running() -> bool {
 }
 
 #[command]
-pub fn create_site(
+pub async fn create_site(
     app_handle: AppHandle,
     name: String, 
     php_version: String, 
     db_type: String, 
     moodle_branch: String, 
     db_port: Option<u16>, 
+    web_port: Option<u16>,
+    directory: Option<String>
+)->Result<String, String> {
+    // run create_site logic in background thread
+    let app = app_handle.clone();
+    let res = tauri::async_runtime::spawn_blocking(move || {
+        // synchronous creation code
+        let mut result = create_site_blocking(app, name, php_version, db_type, moodle_branch, db_port, web_port, directory);
+        result
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+    res
+}
+// internal synchronous helper
+fn create_site_blocking(
+    app_handle: AppHandle,
+    name: String,
+    php_version: String,
+    db_type: String,
+    moodle_branch: String,
+    db_port: Option<u16>,
     web_port: Option<u16>,
     directory: Option<String>
 ) -> Result<String, String> {
@@ -63,6 +85,7 @@ pub fn create_site(
         "postgres" | "postgresql" | "pgsql" => "pgsql".to_string(),
         other => other.to_string(),
     };
+    // Continue with the rest of the original create_site body
     
     // Determine the site directory path based on user preferences
     let site_dir = if let Some(dir) = directory {
