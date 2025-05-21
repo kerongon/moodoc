@@ -58,6 +58,11 @@ pub fn create_site(
 ) -> Result<String, String> {
     // First validate the environment to ensure everything is set up correctly
     validate_environment(app_handle.clone())?;
+    // Normalize db_type for docker compose file naming (use 'pgsql' for PostgreSQL)
+    let db_env = match db_type.to_lowercase().as_str() {
+        "postgres" | "postgresql" | "pgsql" => "pgsql".to_string(),
+        other => other.to_string(),
+    };
     
     // Determine the site directory path based on user preferences
     let site_dir = if let Some(dir) = directory {
@@ -176,7 +181,7 @@ export MOODLE_DOCKER_DB_PORT={}
 echo "Moodle is now available at http://localhost:{}"
 echo "Admin username: admin"
 echo "Admin password: test"
-"#, name, db_type.to_lowercase(), web_port_str, php_version, db_port_str, web_port_str);
+"#, name, db_env, web_port_str, php_version, db_port_str, web_port_str);
 
     let setup_script_path = moodle_docker_dir.join("setup.sh");
     let mut file = File::create(&setup_script_path)
@@ -201,6 +206,20 @@ echo "Admin password: test"
     // Instead of directly executing the setup.sh script, we'll run the docker compose commands one by one
     // to better handle potential hanging/freezing issues
     
+    // Write .env file so docker-compose picks up our environment settings
+    let env_file_path = moodle_docker_dir.join(".env");
+    let moodle_www_root = moodle_docker_dir.join("moodle");
+    let env_content = format!(
+        "COMPOSE_PROJECT_NAME={}\nMOODLE_DOCKER_WWWROOT={}\nMOODLE_DOCKER_DB={}\nMOODLE_DOCKER_WEB_PORT={}\nMOODLE_DOCKER_PHP_VERSION={}\nMOODLE_DOCKER_DB_PORT={}\n",
+        name,
+        moodle_www_root.to_str().unwrap_or(""),
+        db_env,
+        web_port_str,
+        php_version,
+        db_port_str
+    );
+    fs::write(&env_file_path, env_content)
+        .map_err(|e| format!("Failed to write .env file: {}", e))?;
     // First, start the containers
     println!("Attempting to start Docker containers for site: {}", name);
     app_handle.emit_all("site_creation_progress", format!("Starting Docker containers for {}", name)).unwrap_or_default();
@@ -208,7 +227,7 @@ echo "Admin password: test"
     let start_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_WEB_PORT={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose up -d"#,
         moodle_docker_dir.to_str().unwrap_or(""),
         name,
-        db_type.to_lowercase(),
+        db_env,
         web_port.map_or("8000".to_string(), |p| p.to_string()),
         php_version,
         db_port.map_or("3306".to_string(), |p| p.to_string())
@@ -235,7 +254,7 @@ echo "Admin password: test"
     let wait_db_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-wait-for-db"#,
         moodle_docker_dir.to_str().unwrap_or(""),
         name,
-        db_type.to_lowercase(),
+        db_env,
         php_version,
         db_port.map_or("3306".to_string(), |p| p.to_string())
     );
@@ -281,10 +300,11 @@ echo "Admin password: test"
     // Install Moodle
     println!("Attempting to install Moodle for site: {}", name);
     app_handle.emit_all("site_creation_progress", format!("Installing Moodle for {}. This may take several minutes...", name)).unwrap_or_default();
-    let install_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname="Docker Moodle" --shortname="docker_moodle" --summary="Docker Moodle site" --adminpass="test" --adminemail="admin@example.com""#,
+    // Use single quotes to properly quote arguments in bash
+    let install_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname='Docker Moodle' --shortname='docker_moodle' --summary='Docker Moodle site' --adminpass='test' --adminemail='admin@example.com'"#,
         moodle_docker_dir.to_str().unwrap_or(""),
         name,
-        db_type.to_lowercase(),
+        db_env,
         php_version,
         db_port.map_or("3306".to_string(), |p| p.to_string())
     );
