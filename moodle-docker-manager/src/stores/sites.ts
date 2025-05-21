@@ -44,6 +44,12 @@ export const useSitesStore = defineStore('sites', {
       if (site) {
         site.status = 'stopped';
       }
+    },
+    /**
+     * Return the current list of all sites
+     */
+    getSites(): Site[] {
+      return this.sites;
     }
   }
 });

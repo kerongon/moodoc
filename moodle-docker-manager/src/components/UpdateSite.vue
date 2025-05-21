@@ -180,8 +180,8 @@ export default {
       this.error = null;
       
       try {
-        // Get site information from store
-        const sites = await this.siteStore.getSites();
+        // Fetch site information from backend
+        const sites = await invoke('list_sites');
         const site = sites.find(s => s.name === this.siteName);
         
         if (!site) {
