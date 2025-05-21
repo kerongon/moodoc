@@ -55,11 +55,15 @@
     },
     "windows": [
       {
-        "fullscreen": false,
-        "height": 600,
-        "resizable": true,
         "title": "Moodle Docker Manager",
-        "width": 800
+        "width": 1100,
+        "height": 850,
+        "minWidth": 1100,
+        "minHeight": 850,
+        "resizable": true,
+        "minimizable": false,
+        "maximizable": true,
+        "fullscreen": false
       }
     ]
   }
