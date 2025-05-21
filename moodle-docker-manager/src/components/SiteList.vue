@@ -33,8 +33,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="site in sites" :key="site.name">
-            <td>{{ site.name }}</td>
+          <tr v-for="site in sites" :key="site.name" :class="{'opacity-50 pointer-events-none': activeActionSite === site.name}">
+            <td>
+              {{ site.name }}
+              <!-- Inline status indicator that shows when an action is in progress -->
+              <span v-if="activeActionSite === site.name" class="ml-2 text-xs text-blue-500 animate-pulse">
+                processing...
+              </span>
+            </td>
             <td>{{ site.php_version }}</td>
             <td>{{ site.db_type }}</td>
             <td class="directory-path" :title="site.path">
@@ -46,12 +52,41 @@
                 {{ site.status }}
               </span>
             </td>
-            <td class="actions">
-              <button v-if="site.status !== 'running'" @click="startSite(site.name)" class="icon-action-btn bg-green-500 hover:bg-green-600" title="Start">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg>
+            <td class="actions flex items-center space-x-2">
+              <!-- Start button with prominent spinner -->
+              <button v-if="site.status !== 'running'" 
+                     @click="startSite(site.name)" 
+                     class="icon-action-btn" 
+                     :class="{
+                        'bg-green-500 hover:bg-green-600': activeActionSite !== site.name, 
+                        'bg-blue-600 spinner-container': activeActionSite === site.name
+                     }"
+                     :disabled="activeActionSite === site.name"
+                     title="Start">
+                <template v-if="activeActionSite === site.name">
+                  <div class="custom-spinner"></div>
+                </template>
+                <template v-else>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg>
+                </template>
               </button>
-              <button v-else @click="stopSite(site.name)" class="icon-action-btn bg-red-500 hover:bg-red-600" title="Stop">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+              
+              <!-- Stop button with prominent spinner -->
+              <button v-else 
+                     @click="stopSite(site.name)" 
+                     class="icon-action-btn" 
+                     :class="{
+                        'bg-red-500 hover:bg-red-600': activeActionSite !== site.name, 
+                        'bg-blue-600 spinner-container': activeActionSite === site.name
+                     }"
+                     :disabled="activeActionSite === site.name"
+                     title="Stop">
+                <template v-if="activeActionSite === site.name">
+                  <div class="custom-spinner"></div>
+                </template>
+                <template v-else>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                </template>
               </button>
               <button @click="viewLogs(site.name)" class="icon-action-btn bg-blue-500 hover:bg-blue-600" title="Logs">
                 <PhFileText class="w-5 h-5" weight="fill" />
@@ -196,9 +231,11 @@ export default {
     PhRecycle,
     UpdateSite
   },
-  setup(props, { expose }) {
+  emits: ['action-start', 'action-end'],
+  setup(props, { expose, emit }) {
     const sites = ref([]);
     const loading = ref(true);
+    const activeActionSite = ref(null);
     const error = ref(null);
     const router = useRouter();
     const updateModalVisible = ref(false);
@@ -257,30 +294,65 @@ export default {
     };
     // Start a site
     const startSite = async (name) => {
+      // Set active action and emit event
+      activeActionSite.value = name;
+      emit('action-start', name);
+      
+      // Minimum time to show spinner (for visual feedback)
+      const minSpinnerTime = Date.now() + 1000; // At least 1 second
+      
       try {
-        loading.value = true;
+        // invoke backend to start
         await invoke('start_site', { name });
-        await loadSites(); // Refresh site list
+        // Poll status until running or timeout
+        for (let i = 0; i < 20; i++) {
+          await refreshStatuses();
+          const siteObj = sites.value.find(s => s.name === name);
+          if (siteObj && siteObj.status === 'running') break;
+          await new Promise(r => setTimeout(r, 500));
+        }
       } catch (err) {
         console.error(`Failed to start site ${name}:`, err);
         showError(`Failed to start site: ${name}`, String(err));
       } finally {
-        loading.value = false;
+        // Ensure spinner shows for minimum time for better UX
+        const remainingTime = minSpinnerTime - Date.now();
+        if (remainingTime > 0) {
+          await new Promise(r => setTimeout(r, remainingTime));
+        }
+        emit('action-end', name);
+        activeActionSite.value = null;
       }
     };
 
     // Stop a site
     const stopSite = async (name) => {
+      activeActionSite.value = name;
+      emit('action-start', name);
+      
+      // Minimum time to show spinner (for visual feedback)
+      const minSpinnerTime = Date.now() + 1000; // At least 1 second
+      
       try {
-        loading.value = true;
-        const result = await invoke('stop_site', { name });
-        console.log(`Stop site result: ${result}`);
-        await loadSites(); // Refresh site list
+        await invoke('stop_site', { name });
+        // Poll status until stopped or timeout
+        for (let i = 0; i < 20; i++) {
+          await refreshStatuses();
+          const siteObj = sites.value.find(s => s.name === name);
+          if (siteObj && siteObj.status !== 'running') break;
+          await new Promise(r => setTimeout(r, 500));
+        }
       } catch (err) {
         console.error(`Failed to stop site ${name}:`, err);
         showError(`Failed to stop site: ${name}`, String(err));
       } finally {
-        loading.value = false;
+        // Ensure spinner shows for minimum time for better UX
+        const remainingTime = minSpinnerTime - Date.now();
+        if (remainingTime > 0) {
+          await new Promise(r => setTimeout(r, remainingTime));
+        }
+        emit('action-end', name);
+        activeActionSite.value = null;
       }
     };
 
@@ -373,6 +445,7 @@ export default {
     return {
       sites,
       loading,
+      activeActionSite,
       error,
       startSite,
       stopSite,
@@ -400,6 +473,36 @@ export default {
 </script>
 
 <style scoped>
+/* Custom spinner for buttons - more prominent version */
+.custom-spinner {
+  width: 20px;
+  height: 20px;
+  border: 4px solid rgba(255, 255, 255, 0.8);
+  border-bottom-color: transparent;
+  border-left-color: rgba(255, 255, 255, 0.5);
+  border-right-color: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  box-sizing: border-box;
+  animation: spinner-rotation 1s linear infinite;
+  display: inline-flex;
+  align-self: center;
+}
+
+.spinner-container {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+@keyframes spinner-rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .icon-action-btn {
   display: inline-flex;
   align-items: center;
