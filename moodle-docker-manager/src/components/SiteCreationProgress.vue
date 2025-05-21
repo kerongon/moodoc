@@ -51,6 +51,7 @@ export default {
     const error = ref(null);
     const showLogs = ref(true);
     const creationSuccess = ref(false);
+    const copySuccess = ref(false);
 
     // Time-based progress tracking
     const startTime = ref(Date.now());
@@ -182,6 +183,27 @@ export default {
     const toggleLogs = () => {
       showLogs.value = !showLogs.value;
     };
+    
+    const copyLogs = (event) => {
+      event.stopPropagation(); // Prevent toggling logs when clicking copy button
+      
+      if (logs.value.length === 0) return;
+      
+      // Format logs for clipboard
+      const logText = logs.value.map(log => `[${log.time}] ${log.message}`).join('\n');
+      
+      // Use Clipboard API to copy text
+      navigator.clipboard.writeText(logText)
+        .then(() => {
+          copySuccess.value = true;
+          setTimeout(() => {
+            copySuccess.value = false;
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy logs: ', err);
+        });
+    };
 
     // Prevent accidental closing when clicking backdrop
     const handleBackdropClick = (event) => {
@@ -248,7 +270,9 @@ export default {
       toggleLogs,
       handleBackdropClick,
       handleCancel,
-      goToDashboard
+      goToDashboard,
+      copyLogs,
+      copySuccess
     };
   }
 };
@@ -303,7 +327,18 @@ export default {
       <div class="logs-accordion">
         <div class="logs-header" @click="toggleLogs">
           <h3>Installation logs</h3>
-          <span class="toggle-icon">{{ showLogs ? '▼' : '▶' }}</span>
+          <div class="logs-controls">
+            <button 
+              class="copy-logs-btn" 
+              @click.stop="copyLogs" 
+              title="Copy logs to clipboard"
+              :disabled="logs.length === 0"
+            >
+              <span class="copy-icon">📋</span>
+              <span v-if="copySuccess" class="copy-success">Copied!</span>
+            </button>
+            <span class="toggle-icon">{{ showLogs ? '▼' : '▶' }}</span>
+          </div>
         </div>
         <div class="logs-container" v-if="showLogs">
           <div v-for="(log, index) in logs" :key="index" class="log-entry">
@@ -702,9 +737,65 @@ export default {
   font-weight: 500;
 }
 
-.toggle-icon {
-  font-size: 0.8rem;
-  transition: transform 0.2s ease;
+.logs-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.copy-logs-btn {
+  display: inline-flex;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #5755d9;
+  padding: 2px 8px;
+  border-radius: 4px;
+  position: relative;
+}
+
+.copy-logs-btn:hover {
+  background-color: rgba(87, 85, 217, 0.1);
+}
+
+.copy-logs-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dark .copy-logs-btn {
+  color: #818cf8;
+}
+
+.dark .copy-logs-btn:hover {
+  background-color: rgba(129, 140, 248, 0.2);
+}
+
+.copy-icon {
+  font-size: 1rem;
+}
+
+.copy-success {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #10b981;
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  animation: fadeInOut 2s ease forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 .logs-container {
