@@ -102,16 +102,16 @@
               </div>
               
               <div class="flex justify-end space-x-2">
-                <button 
+                <button
                   type="button"
-                  @click="closeModal" 
-                  class="compact-action-button bg-gray-300 text-gray-700 hover:bg-gray-400">
+                  @click="closeModal"
+                  class="compact-action-button bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-400 dark:hover:bg-gray-600">
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
-                  :disabled="!newMoodleBranch || isProcessing" 
-                  class="compact-action-button bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                <button
+                  type="submit"
+                  :disabled="!newMoodleBranch || isProcessing"
+                  class="compact-action-button bg-orange-500 dark:bg-orange-600 text-white hover:bg-orange-600 dark:hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed">
                   Update Moodle
                 </button>
               </div>
@@ -149,12 +149,18 @@ export default {
   data() {
     return {
       moodleBranches: [
+        // Newer stable branches
+        'MOODLE_405_STABLE',
+        'MOODLE_404_STABLE',
+        'MOODLE_403_STABLE',
+        // Existing stable branches
         'MOODLE_402_STABLE',
         'MOODLE_401_STABLE',
         'MOODLE_400_STABLE',
         'MOODLE_311_STABLE',
         'MOODLE_310_STABLE',
         'MOODLE_39_STABLE',
+        // Primary development branch
         'master'
       ],
       phpVersions: ['8.2', '8.1', '8.0', '7.4', '7.3', '7.2', '7.1'],
