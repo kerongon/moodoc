@@ -56,6 +56,7 @@ fn main() {
             }
         })
         .manage(docker::SiteState(Mutex::new(HashMap::new())))
+        .manage(docker::RunningUpdates::default())
         .setup(|app| {
             // Load any existing site configurations
             if let Err(err) = docker::load_site_configs(app) {
@@ -82,6 +83,7 @@ fn main() {
             docker::open_backup_location,
             docker::update_moodle_version,
             docker::open_site_folder,
+            docker::cancel_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

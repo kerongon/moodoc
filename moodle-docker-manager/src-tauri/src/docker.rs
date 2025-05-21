@@ -66,6 +66,15 @@ pub struct Site {
 // State management for sites
 pub struct SiteState(pub Mutex<HashMap<String, Site>>);
 
+// Struct to track update operations in progress
+pub struct RunningUpdates(pub Mutex<HashMap<String, bool>>);
+
+impl Default for RunningUpdates {
+    fn default() -> Self {
+        RunningUpdates(Mutex::new(HashMap::new()))
+    }
+}
+
 #[command]
 pub fn check_docker_installed() -> bool {
     Command::new("which")
@@ -886,6 +895,7 @@ export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT={}
 export MOODLE_DOCKER_DB={}
 export MOODLE_DOCKER_WEB_PORT={}
+export MOODLE_DOCKER_PHP_VERSION={}
 export MOODLE_DOCKER_DB_PORT={}
 
 # Echo environment for debugging
@@ -903,6 +913,7 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
     abs_moodle_path.to_str().unwrap_or(""),
     site.db_type.to_lowercase(),
     site.web_port.unwrap_or(8000),
+    site.php_version,
     site.db_port.unwrap_or(3306)
     );
     
@@ -1927,9 +1938,44 @@ pub fn open_backup_location(app_handle: AppHandle, name: String, backup_timestam
 }
 
 #[command]
-pub fn update_moodle_version(app_handle: AppHandle, name: String, new_branch: String, new_php_version: Option<String>) -> Result<String, String> {
+pub async fn update_moodle_version(app_handle: AppHandle, name: String, new_branch: String, new_php_version: Option<String>) -> Result<String, String> {
+    // This will now run in a separate thread and emit progress events
+    let app_handle_clone = app_handle.clone();
+    let name_clone = name.clone();
+    let new_branch_clone = new_branch.clone();
+    let new_php_version_clone = new_php_version.clone();
+    
+    // Initialize the update tracking
+    let state = app_handle.state::<RunningUpdates>();
+    if let Ok(mut updates) = state.0.lock() {
+        updates.insert(name.clone(), false); // Not cancelled by default
+    }
+    
+    // Start the update in a separate thread
+    std::thread::spawn(move || {
+        let result = update_moodle_version_impl(app_handle_clone, name_clone, new_branch_clone, new_php_version_clone);
+        if let Err(e) = &result {
+            println!("Update failed: {}", e);
+        } else {
+            println!("Update completed successfully");
+        }
+    });
+    
+    // Return immediately, updates will be communicated via events
+    Ok("Update started. Progress updates will be shown.".to_string())
+}
+
+fn update_moodle_version_impl(app_handle: AppHandle, name: String, new_branch: String, new_php_version: Option<String>) -> Result<String, String> {
     // First backup the site
     println!("Creating backup before updating site '{}'...", name);
+    
+    // Emit first progress event - backup started
+    safe_emit(&app_handle, "update-progress", serde_json::json!({
+        "siteName": name,
+        "progress": 5,
+        "status": "Creating backup of the site...",
+        "step": "backup"
+    }));
     
     // We'll directly create a backup here rather than calling backup_site to avoid issues
     // with command functions calling each other
@@ -1960,6 +2006,23 @@ pub fn update_moodle_version(app_handle: AppHandle, name: String, new_branch: St
     
     println!("Backup directory created at: {}", backup_dir.display());
     drop(sites); // Release the lock before continuing
+    
+    // Check if update was cancelled
+    if is_update_cancelled(&app_handle, &name) {
+        safe_emit(&app_handle, "update-cancelled", serde_json::json!({
+            "siteName": name,
+            "message": "Update cancelled after backup creation"
+        }));
+        return Ok(format!("Update cancelled after backup creation"));
+    }
+    
+    // Emit progress event
+    safe_emit(&app_handle, "update-progress", serde_json::json!({
+        "siteName": name,
+        "progress": 15,
+        "status": "Stopping the current site...",
+        "step": "stopping"
+    }));
     
     let state = app_handle.state::<SiteState>();
     let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
@@ -2031,8 +2094,33 @@ export MOODLE_DOCKER_DB_PORT={}
         } else {
             stdout_msg.to_string()
         };
+        
+        // Emit error event
+        safe_emit(&app_handle, "update-complete", serde_json::json!({
+            "siteName": name,
+            "success": false,
+            "message": format!("Failed to stop site for update: {}", details)
+        }));
+        
         return Err(format!("Failed to stop site for update: {}", details));
     }
+    
+    // Check if update was cancelled
+    if is_update_cancelled(&app_handle, &name) {
+        safe_emit(&app_handle, "update-cancelled", serde_json::json!({
+            "siteName": name,
+            "message": "Update cancelled after stopping site"
+        }));
+        return Ok(format!("Update cancelled after stopping site"));
+    }
+    
+    // Emit progress event
+    safe_emit(&app_handle, "update-progress", serde_json::json!({
+        "siteName": name,
+        "progress": 30,
+        "status": "Updating Moodle codebase...",
+        "step": "updating_code"
+    }));
     
     // Create update script
     let update_script = format!(r#"#!/bin/bash
@@ -2135,8 +2223,33 @@ echo "Successfully updated Moodle codebase to branch {}"
     
     if !output.status.success() {
         let error = String::from_utf8_lossy(&output.stderr).to_string();
+        
+        // Emit error event
+        safe_emit(&app_handle, "update-complete", serde_json::json!({
+            "siteName": name,
+            "success": false,
+            "message": format!("Failed to update Moodle version: {}", error)
+        }));
+        
         return Err(format!("Failed to update Moodle version: {}", error));
     }
+    
+    // Check if update was cancelled
+    if is_update_cancelled(&app_handle, &name) {
+        safe_emit(&app_handle, "update-cancelled", serde_json::json!({
+            "siteName": name,
+            "message": "Update cancelled after updating code"
+        }));
+        return Ok(format!("Update cancelled after updating code"));
+    }
+    
+    // Emit progress event
+    safe_emit(&app_handle, "update-progress", serde_json::json!({
+        "siteName": name,
+        "progress": 60,
+        "status": "Starting updated Moodle site...",
+        "step": "starting"
+    }));
     
     // Use the new PHP version or keep the existing one
     let php_version = new_php_version.unwrap_or(site.php_version.clone());
@@ -2201,7 +2314,7 @@ echo "Moodle site updated and started successfully"
     // Update site in state
     let mut updated_site = site.clone();
     updated_site.moodle_branch = new_branch.clone();
-    updated_site.php_version = php_version;
+    updated_site.php_version = php_version.clone(); // Clone to avoid move
     updated_site.status = "running".to_string();
     
     sites.insert(name.clone(), updated_site.clone());
@@ -2210,10 +2323,64 @@ echo "Moodle site updated and started successfully"
     drop(sites); // Release the lock before calling save_site_config
     save_site_config(app_handle.clone(), updated_site)?;
     
+    // Check if update was cancelled during start
+    if is_update_cancelled(&app_handle, &name) {
+        safe_emit(&app_handle, "update-cancelled", serde_json::json!({
+            "siteName": name,
+            "message": "Update cancelled during site startup"
+        }));
+        return Ok(format!("Update cancelled during site startup"));
+    }
+    
+    // Emit completion event
+    safe_emit(&app_handle, "update-progress", serde_json::json!({
+        "siteName": name,
+        "progress": 90,
+        "status": "Running Moodle upgrade script...",
+        "step": "upgrading"
+    }));
+    
+    // We need to get the lock again since we dropped it earlier
+    let state = app_handle.state::<SiteState>();
+    let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Update site in state again (with the most up-to-date information)
+    let mut updated_site = site.clone();
+    updated_site.moodle_branch = new_branch.clone();
+    updated_site.php_version = php_version; // This is the last use, so no need to clone
+    updated_site.status = "running".to_string();
+    
+    // Save the updated configuration
+    drop(sites); // Release the lock before calling save_site_config
+    save_site_config(app_handle.clone(), updated_site)?;
+    
     if !output.status.success() {
         let error = String::from_utf8_lossy(&output.stderr).to_string();
+        
+        // Emit error completion event
+        safe_emit(&app_handle, "update-complete", serde_json::json!({
+            "siteName": name,
+            "success": false,
+            "message": format!("Failed to start updated site: {}", error)
+        }));
+        
         return Err(format!("Failed to start updated site: {}. A backup was created before the update attempt.", error));
     }
+    
+    // Emit final success event
+    safe_emit(&app_handle, "update-progress", serde_json::json!({
+        "siteName": name,
+        "progress": 100,
+        "status": "Update completed successfully!",
+        "step": "completed"
+    }));
+    
+    // Final completion event
+    safe_emit(&app_handle, "update-complete", serde_json::json!({
+        "siteName": name,
+        "success": true,
+        "message": format!("Site '{}' successfully updated to Moodle {}", name, new_branch)
+    }));
     
     Ok(format!("Site '{}' successfully updated to Moodle {}", name, new_branch))
 }
@@ -2307,4 +2474,31 @@ pub fn open_site_folder(path: String) -> Result<String, String> {
     }
     
     Ok(format!("Opened Moodle code folder: {}", target_path_str))
+}
+
+#[command]
+pub fn cancel_update(app_handle: AppHandle, site_name: String) -> Result<String, String> {
+    // Get the running updates state
+    let state = app_handle.state::<RunningUpdates>();
+    let mut updates = state.0.lock().map_err(|_| "Failed to lock updates state".to_string())?;
+    
+    // Mark this update as cancelled
+    updates.insert(site_name.clone(), true);
+    
+    // Emit cancellation event
+    safe_emit(&app_handle, "update-cancelled", serde_json::json!({
+        "siteName": site_name,
+        "message": "Update cancelled by user"
+    }));
+    
+    Ok(format!("Cancellation request for site '{}' has been registered", site_name))
+}
+
+// Helper function to check if an update has been cancelled
+fn is_update_cancelled(app_handle: &AppHandle, site_name: &str) -> bool {
+    let state = app_handle.state::<RunningUpdates>();
+    if let Ok(updates) = state.0.lock() {
+        return updates.get(site_name).cloned().unwrap_or(false);
+    }
+    false
 }

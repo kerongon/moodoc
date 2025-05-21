@@ -35,6 +35,24 @@
           <div v-else-if="error">
             <p class="error text-xs text-red-500">{{ error }}</p>
           </div>
+          <!-- Progress bar when updating -->
+          <div v-if="isProcessing" class="mb-4">
+            <div class="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full">
+              <div 
+                class="h-2 bg-orange-500 dark:bg-orange-600 rounded-full transition-all duration-300"
+                :style="{ width: `${progress}%` }">
+              </div>
+            </div>
+            <p class="text-xs text-center mt-1 text-gray-600 dark:text-gray-400">{{ updateStatus }}</p>
+            <div class="mt-2 flex justify-center">
+              <button 
+                @click.prevent="cancelUpdate" 
+                type="button"
+                class="text-xs text-red-600 dark:text-red-400 hover:underline focus:outline-none">
+                Cancel Update
+              </button>
+            </div>
+          </div>
           <div v-else>
             <!-- Current Site Info -->
             <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md mb-4">
@@ -58,7 +76,26 @@
             <!-- Update Form -->
             <form @submit.prevent="updateSite" class="space-y-4">
               <div class="p-3 border border-gray-200 dark:border-gray-700 rounded-md">
-                <div class="mb-3">
+                <!-- Progress bar (shown during update process) -->
+                <div v-if="isProcessing" class="mb-4">
+                  <div class="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full">
+                    <div 
+                      class="h-2 bg-orange-500 dark:bg-orange-600 rounded-full transition-all duration-300"
+                      :style="{ width: `${progress}%` }">
+                    </div>
+                  </div>
+                  <p class="text-xs text-center mt-1 text-gray-600 dark:text-gray-400">{{ updateStatus }}</p>
+                  <div class="mt-2 flex justify-center">
+                    <button 
+                      @click.prevent="cancelUpdate" 
+                      type="button"
+                      class="text-xs text-red-600 dark:text-red-400 hover:underline focus:outline-none">
+                      Cancel Update
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="!isProcessing" class="mb-3">
                   <label for="moodleBranch" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     New Moodle Version
                   </label>
@@ -74,7 +111,7 @@
                   </select>
                 </div>
                 
-                <div class="mb-3">
+                <div v-if="!isProcessing" class="mb-3">
                   <label for="phpVersion" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     PHP Version
                   </label>
@@ -90,7 +127,7 @@
                   </p>
                 </div>
                 
-                <div class="text-xs text-amber-500 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-md">
+                <div v-if="!isProcessing" class="text-xs text-amber-500 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-md">
                   <p class="font-medium">⚠️ Important Notes:</p>
                   <ul class="list-disc list-inside mt-1 space-y-0.5">
                     <li>A backup will be created automatically before updating</li>
@@ -104,9 +141,18 @@
               <div class="flex justify-end space-x-2">
                 <button
                   type="button"
+                  v-if="!isProcessing"
                   @click="closeModal"
                   class="compact-action-button bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-400 dark:hover:bg-gray-600">
                   Cancel
+                </button>
+                <button
+                  type="button"
+                  v-else
+                  @click="cancelUpdate"
+                  :disabled="cancelRequested"
+                  class="compact-action-button bg-red-500 dark:bg-red-600 text-white hover:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-400 dark:disabled:bg-gray-600">
+                  Cancel Update
                 </button>
                 <button
                   type="submit"
@@ -125,6 +171,7 @@
 
 <script>
 import { invoke } from '@tauri-apps/api/tauri';
+import { listen } from '@tauri-apps/api/event';
 import { PhArrowClockwise, PhX, PhRecycle } from '@phosphor-icons/vue';
 import { useSitesStore } from '../stores/sites';
 
@@ -172,6 +219,12 @@ export default {
       recommendedPhpVersion: '',
       loading: false,
       isProcessing: false,
+      progress: 0,
+      updateStatus: 'Preparing update...',
+      cancelRequested: false,
+      progressUnlistener: null,
+      completeUnlistener: null,
+      cancelledUnlistener: null,
       error: null,
       loadingMessage: 'Loading site information...',
       siteStore: useSitesStore()
@@ -234,11 +287,12 @@ export default {
       }
       
       this.isProcessing = true;
-      this.loading = true;
-      this.loadingMessage = 'Updating Moodle site...';
+      this.progress = 5;
+      this.updateStatus = 'Starting update process...';
       this.error = null;
       
       try {
+        // Trigger update and listen for progress events
         const result = await invoke('update_moodle_version', { 
           name: this.siteName,
           newBranch: this.newMoodleBranch,
@@ -246,14 +300,64 @@ export default {
         });
         
         console.log(result);
-        this.$emit('updated');
-        this.closeModal();
+        // The modal will be closed on completion, which happens via event
       } catch (err) {
         this.error = `Failed to update site: ${err}`;
         console.error(err);
-        this.loading = false;
       } finally {
-        this.isProcessing = false;
+        // Reset only if there was an error
+        // Otherwise keep the progress bar until process completes
+        if (this.error) {
+          this.isProcessing = false;
+        }
+      }
+    },
+    
+    getStepMessage(step) {
+      const stepMessages = {
+        'backup': 'Creating backup of your site...',
+        'stopping': 'Stopping current site...',
+        'updating_code': 'Updating Moodle code...',
+        'starting': 'Starting updated Moodle site...',
+        'upgrading': 'Running Moodle upgrade script...',
+        'completed': 'Update completed successfully!'
+      };
+      return stepMessages[step] || 'Processing update...';
+    },
+    
+    async cancelUpdate() {
+      if (!this.isProcessing) return;
+      
+      try {
+        this.updateStatus = 'Cancelling update...';
+        await invoke('cancel_update', { siteName: this.siteName });
+        // The actual reset will happen when we receive the update-cancelled event
+      } catch (err) {
+        console.error('Failed to cancel update:', err);
+        this.error = `Failed to cancel update: ${err}`;
+      }
+    },
+    
+    onUpdateComplete(success = true, message = '') {
+      this.isProcessing = false;
+      this.progress = 100;
+      
+      if (success) {
+        // Notify parent that update was successful
+        this.$emit('updated');
+        this.closeModal();
+      } else if (message) {
+        this.error = message;
+      }
+    },
+    
+    onUpdateCancelled(message = '') {
+      this.isProcessing = false;
+      this.progress = 0;
+      this.updateStatus = message || 'Update cancelled';
+      
+      if (message) {
+        this.error = message;
       }
     }
   },
@@ -264,11 +368,57 @@ export default {
       }
     }
   },
-  mounted() {
+  async mounted() {
     // Only load site info if modal is shown initially
     if (this.show) {
       this.loadSiteInfo();
     }
+    
+    // Listen for update progress events using Tauri API
+    this.progressUnlistener = await listen('update-progress', (event) => {
+      console.log('Update progress:', event.payload);
+      if (this.isProcessing) {
+        const { progress, status, siteName } = event.payload;
+        // Ensure this event is for our site
+        if (siteName === this.siteName) {
+          this.progress = progress;
+          this.updateStatus = status;
+          
+          // If progress is 100%, consider it complete
+          if (progress >= 100) {
+            this.onUpdateComplete();
+          }
+        }
+      }
+    });
+    
+    // Listen for update completion event
+    this.completeUnlistener = await listen('update-complete', (event) => {
+      if (this.isProcessing) {
+        const { siteName, success, message } = event.payload;
+        // Ensure this event is for our site
+        if (siteName === this.siteName) {
+          this.onUpdateComplete(success, message);
+        }
+      }
+    });
+    
+    // Listen for update cancelled event
+    this.cancelledUnlistener = await listen('update-cancelled', (event) => {
+      if (this.isProcessing) {
+        const { siteName, message } = event.payload;
+        // Ensure this event is for our site
+        if (siteName === this.siteName) {
+          this.onUpdateCancelled(message);
+        }
+      }
+    });
+  },
+  beforeUnmount() {
+    // Clean up event listeners properly
+    if (this.progressUnlistener) this.progressUnlistener();
+    if (this.completeUnlistener) this.completeUnlistener();
+    if (this.cancelledUnlistener) this.cancelledUnlistener();
   }
 };
 </script>
