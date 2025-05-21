@@ -148,7 +148,7 @@ export default {
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
-  background: linear-gradient(90deg, #4f46e5, #8b5cf6);
+  background: linear-gradient(90deg, #6366F1, #D946EF, #EC4899);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
