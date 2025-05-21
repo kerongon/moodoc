@@ -2211,12 +2211,48 @@ pub fn open_site_folder(path: String) -> Result<String, String> {
         return Err(format!("Path does not exist: {}", path));
     }
     
+    // First, try to find the Moodle code directory
+    let moodle_dir = path_buf.join("moodle");
+    
+    // If the standard "moodle" directory exists, use it
+    let target_path = if moodle_dir.exists() && moodle_dir.is_dir() {
+        moodle_dir
+    } else {
+        // Try to find any directory that might contain Moodle code
+        // Look for index.php or version.php which are core Moodle files
+        let mut found_dir = None;
+        
+        // Try to read directory entries in the path
+        if let Ok(entries) = fs::read_dir(&path_buf) {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let entry_path = entry.path();
+                    if entry_path.is_dir() {
+                        // Check for index.php or version.php in this directory
+                        let index_php = entry_path.join("index.php");
+                        let version_php = entry_path.join("version.php");
+                        
+                        if index_php.exists() && version_php.exists() {
+                            found_dir = Some(entry_path);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // If we found a directory with Moodle files, use it; otherwise use the original path
+        found_dir.unwrap_or_else(|| path_buf.clone())
+    };
+    
+    let target_path_str = target_path.to_str().unwrap_or(&path);
+    
     // Open the folder in the system's default file explorer
     #[cfg(target_os = "macos")]
     {
         // On macOS, use "open" command
         let output = Command::new("open")
-            .arg(&path)
+            .arg(target_path_str)
             .output()
             .map_err(|e| format!("Failed to open folder: {}", e))?;
             
@@ -2229,9 +2265,9 @@ pub fn open_site_folder(path: String) -> Result<String, String> {
     #[cfg(target_os = "windows")]
     {
         // On Windows, use "explorer" command
-        let path = path.replace("/", "\\"); // Replace forward slashes with backslashes
+        let windows_path = target_path_str.replace("/", "\\"); // Replace forward slashes with backslashes
         let output = Command::new("explorer")
-            .arg(&path)
+            .arg(&windows_path)
             .output()
             .map_err(|e| format!("Failed to open folder: {}", e))?;
             
@@ -2245,7 +2281,7 @@ pub fn open_site_folder(path: String) -> Result<String, String> {
     {
         // On Linux, try xdg-open
         let output = Command::new("xdg-open")
-            .arg(&path)
+            .arg(target_path_str)
             .output()
             .map_err(|e| format!("Failed to open folder: {}", e))?;
             
@@ -2255,5 +2291,5 @@ pub fn open_site_folder(path: String) -> Result<String, String> {
         }
     }
     
-    Ok(format!("Opened folder: {}", path))
+    Ok(format!("Opened Moodle code folder: {}", target_path_str))
 }
