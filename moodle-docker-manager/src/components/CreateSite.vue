@@ -682,7 +682,7 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Creating...
+            Starting creation...
           </span>
         </button>
       </div>
@@ -762,6 +762,7 @@ import { open } from '@tauri-apps/api/dialog';
 import { useSettingsStore } from '../stores/settings';
 import { computed } from 'vue';
 import { PhSquare } from '@phosphor-icons/vue';
+import { eventBus } from '../utils/event-bus';
 
 export default {
   components: {
@@ -1095,40 +1096,46 @@ export default {
     },
     
     async createSite() {
+      // Start the creation process UI
+      this.createSiteInProgress = true;
+      this.addLogMessage(`Starting creation of site: ${this.siteName}...`);
+      
       if (!this.dockerInstalled) {
         this.addLogMessage('Cannot create site: Docker is not installed or not running.');
+        this.createSiteInProgress = false;
         return;
       }
 
       if (!this.siteName) {
         this.addLogMessage('Please enter a site name');
+        this.createSiteInProgress = false;
         return;
       }
 
       if (!this.siteDirectory && !this.useDefaultDirectory) {
         this.addLogMessage('Please select a directory for the site');
+        this.createSiteInProgress = false;
         return;
       }
 
       if (!this.moodleBranch && this.activeTab === 'standard') {
         this.addLogMessage('Please select a Moodle version');
+        this.createSiteInProgress = false;
         return;
       }
 
       // Validate ports if specified
       if (this.webPort && !this.isWebPortInRange) {
         this.addLogMessage(`Web port ${this.webPort} is outside the recommended range (${this.currentWebPortRange})`);
+        this.createSiteInProgress = false;
         return;
       }
       
       if (this.dbPort && !this.isDbPortInRange) {
         this.addLogMessage(`DB port ${this.dbPort} is outside the recommended range for ${this.dbType} (${this.currentDbPortRange})`);
+        this.createSiteInProgress = false;
         return;
       }
-
-      // Start the creation process
-      this.createSiteInProgress = true;
-      this.addLogMessage(`Creating site ${this.siteName}...`);
 
       try {
         // First validate the environment
@@ -1163,30 +1170,31 @@ export default {
           // Reset custom branch
           siteConfig.customBranch = null;
         }
-
-        this.addLogMessage('Site configuration prepared, starting Docker containers...');
         
-        // Call the Tauri backend to create the site
-        const result = await invoke('create_site', {
-          name: siteConfig.name,
+        this.addLogMessage('Site configuration prepared, starting creation process...');
+        
+        // Emit a custom event to show the creation modal
+        const params = {
+          siteName: this.siteName,
           phpVersion: siteConfig.phpVersion,
-          dbType: siteConfig.dbType.toLowerCase(), // Convert to lowercase to match backend expectations
+          dbType: siteConfig.dbType.toLowerCase(),
           moodleBranch: siteConfig.moodleBranch || siteConfig.customBranch || 'MOODLE_400_STABLE',
-          dbPort: siteConfig.dbPort,
           webPort: siteConfig.webPort,
-          directory: siteConfig.directory
-        });
+          dbPort: siteConfig.dbPort,
+          directory: siteConfig.directory,
+        };
         
-        this.addLogMessage(`Result: ${result}`);
-        this.addLogMessage('Site created successfully!');
-        // Add additional logging about the site being created
-        this.addLogMessage(`Site URL: http://localhost:${siteConfig.webPort}`);
+        // Show the site creation modal immediately and do not navigate away
+        // This allows the user to see the creation process from the start
+        eventBus.emitShowSiteCreation(params);
         
-        // Reset the form
-        this.resetForm();
+        // Do not navigate away automatically
+        // The user will be able to return to the dashboard using the buttons in the modal
+        // This ensures the modal stays visible through the entire process
+        
+        // Don't reset the form here - let the user return to it if they cancel
       } catch (error) {
         this.addLogMessage(`Error creating site: ${error}`);
-      } finally {
         this.createSiteInProgress = false;
       }
     },

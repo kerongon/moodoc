@@ -24,3 +24,6 @@
 - View all sites and their statuses
 - Start, stop, and remove sites
 - View site logs
+
+
+cd /Users/kerongonzales/code/moodoc/moodle-docker-manager && npm run

@@ -5,6 +5,7 @@ import SiteLogs from '../components/SiteLogs.vue';
 import SiteBackups from '../components/SiteBackups.vue';
 import UpdateSite from '../components/UpdateSite.vue';
 import SettingsView from '../views/SettingsView.vue';
+import SiteCreationProgress from '../components/SiteCreationProgress.vue';
 
 const routes = [
   {
@@ -16,6 +17,12 @@ const routes = [
     path: '/create',
     name: 'CreateSite',
     component: CreateSite
+  },
+  {
+    path: '/site-creation-progress',
+    name: 'SiteCreationProgress',
+    component: SiteCreationProgress,
+    props: true
   },
   {
     path: '/logs/:siteName',
