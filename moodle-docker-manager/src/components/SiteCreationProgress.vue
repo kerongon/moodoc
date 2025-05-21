@@ -313,7 +313,7 @@ export default {
       <!-- Action buttons -->
       <div class="button-container">
         <button v-if="isCreating" class="cancel-button" @click="handleCancel">Cancel</button>
-        <button v-else class="done-button" @click="goToDashboard">Back to Dashboard</button>
+        <button v-else class="done-button" @click="goToDashboard">BACK TO DASHBOARD</button>
       </div>
     </div>
   </div>
@@ -779,9 +779,10 @@ h2 {
 /* Button styles */
 .button-container {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center; /* Center buttons */
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 20px;
+  width: 100%;
 }
 
 .cancel-button {
@@ -819,20 +820,37 @@ h2 {
   background-color: #5755d9;
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 30px;
   border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 500; /* Slightly lighter weight */
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-transform: uppercase;
-  font-size: 0.9em;
+  text-transform: uppercase; /* Removed for dashboard button */
+  font-size: 1rem; /* Larger font size */
   letter-spacing: 0.5px;
+  width: 60%; /* Make button wider but not full width */
+  text-align: center;
 }
 
 .dark .done-button {
-  background-color: #6366f1;
+  background-color: #5755d9; /* Match the color from the screenshot */
+  color: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 15px 30px 15px; /* Equal padding top and bottom */
+  font-size: 1rem;
+  letter-spacing: 0.7px;
+  font-weight: 600;
+  text-transform: uppercase;
+  width: auto; 
+  min-width: 250px;
+  text-align: center;
+  justify-content: center;
+  line-height: 1.2; /* Slightly increased line height */
+  display: flex;
+  align-items: center;
+  height: 50px; /* Fixed height to ensure proper centering */
 }
 
 .done-button:hover {
@@ -844,5 +862,7 @@ h2 {
 .dark .done-button:hover {
   background-color: #4f46e5;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  padding: 15px 30px 15px; /* Maintain the same padding on hover */
+  height: 50px; /* Maintain the same height on hover */
 }
 </style>
