@@ -507,7 +507,10 @@ export default {
 
     // View logs for a site
     const viewLogs = (name) => {
-      router.push({ name: 'SiteLogs', params: { siteName: name } });
+      // Open logs directly in a new window using the window manager
+      import('../utils/window-manager').then(({ openLogsWindow }) => {
+        openLogsWindow(name, 'webserver');
+      });
     };
     
     // View backups for a site

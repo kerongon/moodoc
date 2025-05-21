@@ -31,39 +31,48 @@
           </nav>
           
           <!-- Header - macOS style (more compact) -->
-          <div class="flex items-center mb-5">
-            <div class="bg-blue-600 rounded-lg p-1.5 mr-3 shadow-sm">
-              <PhTerminal class="text-white w-6 h-6" weight="fill" />
+          <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center">
+              <div class="bg-blue-600 rounded-lg p-1.5 mr-3 shadow-sm">
+                <PhTerminal class="text-white w-6 h-6" weight="fill" />
+              </div>
+              <div>
+                <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Site Logs: {{ siteName }}</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400">View and monitor the container logs for this site</p>
+              </div>
             </div>
-            <div>
-              <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Site Logs: {{ siteName }}</h2>
-              <p class="text-xs text-gray-500 dark:text-gray-400">View and monitor the container logs for this site</p>
+            
+            <!-- Open in New Window button -->
+            <button @click="openLogsInNewWindow" class="open-in-window-btn flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm">
+              <PhSquaresFour class="w-4 h-4" weight="fill" />
+              <span>Open in New Window</span>
+            </button>
+          </div>
+          
+          <!-- Services tabs -->
+          <div class="mb-4">
+            <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Available Services:</div>
+            <div class="flex flex-wrap gap-2">
+              <button 
+                v-for="service in services" 
+                :key="service"
+                @click="openLogsInNewWindow(service)"
+                class="service-btn flex items-center gap-1 px-3 py-1.5 rounded-md text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <span class="service-icon w-3 h-3 rounded-full" :class="getServiceColor(service)"></span>
+                {{ service }}
+              </button>
             </div>
           </div>
           
-          <!-- Service selector -->
-          <div class="mb-4 flex items-center space-x-2">
-            <label for="service-select" class="text-sm text-gray-700 dark:text-gray-300">Service:</label>
-            <select id="service-select" v-model="selectedService" @change="fetchLogs"
-              class="text-xs p-1 border rounded bg-white dark:bg-gray-700 dark:border-gray-600">
-              <option v-for="svc in services" :key="svc" :value="svc">{{ svc }}</option>
-            </select>
+          <div class="service-description p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-4">
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+              <span class="font-semibold">Logs are now displayed in a separate window</span> for improved performance. 
+              Click on any service above to view its logs or click the "Open in New Window" button to see all logs.
+            </p>
           </div>
-
-          <div v-if="loading" class="loading text-xs">
-            <p>Loading logs...</p>
-          </div>
-          <div v-else-if="error">
-            <p class="error text-xs">{{ error }}</p>
-          </div>
-          <div v-else-if="!logs">
-            <p class="text-xs">No logs available for this site.</p>
-          </div>
-          <div v-else>
-            <pre class="logs-container text-xs">{{ logs }}</pre>
-          </div>
+          
           <div class="actions mt-3 flex gap-2">
-            <button @click="fetchLogs" class="compact-action-button bg-blue-500 text-white hover:bg-blue-600">Refresh Logs</button>
             <button @click="$router.push({ name: 'Dashboard' })" class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">Back to Dashboard</button>
           </div>
         </div>
@@ -74,8 +83,9 @@
 
 <script>
 import { invoke } from '@tauri-apps/api/tauri';
-import { PhTerminal, PhList, PhPlus, PhGear } from '@phosphor-icons/vue';
+import { PhTerminal, PhList, PhPlus, PhGear, PhSquaresFour } from '@phosphor-icons/vue';
 import DockerStatus from './DockerStatus.vue';
+import { openLogsWindow } from '../utils/window-manager';
 
 export default {
   name: 'SiteLogs',
@@ -84,6 +94,7 @@ export default {
     PhList,
     PhPlus,
     PhGear,
+    PhSquaresFour,
     DockerStatus,
   },
   props: {
@@ -94,41 +105,36 @@ export default {
   },
   data() {
     return {
-      logs: null,
-      loading: false,
-      error: null,
       services: ['db', 'webserver', 'mailpit', 'selenium', 'exttests'],
       selectedService: 'webserver'
     };
   },
   methods: {
-    async fetchLogs() {
-      this.loading = true;
-      this.error = null;
-      try {
-        // Use selected service from dropdown
-        const service = this.selectedService;
-        // Call the Rust function to get logs
-        this.logs = await invoke('get_docker_logs', {
-          name: this.siteName,
-          service: service
-        });
-      } catch (err) {
-        this.error = `Failed to fetch logs: ${err}`;
-        console.error(err);
-      } finally {
-        this.loading = false;
+    openLogsInNewWindow(service = this.selectedService) {
+      // Use the utility function to open logs in a new window
+      openLogsWindow(this.siteName, service);
+    },
+    getServiceColor(service) {
+      // Return a different color class for each service
+      switch(service) {
+        case 'db': return 'bg-green-500';
+        case 'webserver': return 'bg-blue-500';
+        case 'mailpit': return 'bg-purple-500';
+        case 'selenium': return 'bg-orange-500';
+        case 'exttests': return 'bg-red-500';
+        default: return 'bg-gray-500';
       }
     }
   },
   mounted() {
-    this.fetchLogs();
+    // Automatically open logs in a new window when component is mounted
+    this.openLogsInNewWindow('webserver');
   }
 };
 </script>
 
 <style scoped>
- .site-logs {
+.site-logs {
   width: 100%;
   max-height: 100vh;
   margin: 0 auto;
@@ -138,47 +144,47 @@ export default {
   overflow: hidden;
 }
 
- .logs-container {
-  background-color: #f9fafb;
+.service-btn {
+  transition: all 0.2s ease;
   border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  padding: 10px;
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: 50vh;
-  overflow: auto;
-  white-space: pre;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 0.7rem;
-  line-height: 1.3;
 }
 
-.dark .logs-container {
-  background-color: #1f2937;
-  border-color: #374151;
+.dark .service-btn {
+  border-color: #4b5563;
 }
 
-.loading {
-  background-color: #e3f2fd;
-  padding: 8px;
-  border-radius: 4px;
+.service-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.dark .loading {
+.dark .service-btn:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.service-icon {
+  display: inline-block;
+}
+
+.open-in-window-btn {
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.open-in-window-btn:hover {
   background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
-.error {
-  color: #dc3545;
-  font-weight: 500;
-  background-color: #fee2e2;
-  padding: 8px;
-  border-radius: 4px;
+.dark .open-in-window-btn:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
-.dark .error {
-  background-color: rgba(185, 28, 28, 0.2);
-  color: #fca5a5;
+.service-description {
+  font-style: italic;
 }
 
 .actions {
@@ -186,8 +192,8 @@ export default {
   gap: 8px;
 }
 
-button {
-  background-color: #4CAF50;
+button.compact-action-button {
+  background-color: #6c757d;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -196,17 +202,10 @@ button {
   font-size: 14px;
 }
 
-button:hover {
-  background-color: #45a049;
-}
-
-button:last-child {
-  background-color: #6c757d;
-}
-
-button:last-child:hover {
+button.compact-action-button:hover {
   background-color: #5a6268;
 }
+
 .site-logs li {
   margin: 5px 0;
 }

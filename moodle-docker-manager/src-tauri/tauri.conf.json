@@ -55,6 +55,7 @@
     },
     "windows": [
       {
+        "label": "main",
         "title": "Moodle Docker Manager",
         "width": 1100,
         "height": 850,

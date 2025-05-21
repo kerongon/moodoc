@@ -6,6 +6,7 @@ import SiteBackups from '../components/SiteBackups.vue';
 import UpdateSite from '../components/UpdateSite.vue';
 import SettingsView from '../views/SettingsView.vue';
 import SiteCreationProgress from '../components/SiteCreationProgress.vue';
+import LogWindow from '../views/LogWindow.vue';
 
 const routes = [
   {
@@ -46,8 +47,12 @@ const routes = [
     path: '/settings',
     name: 'Settings',
     component: SettingsView
+  },
+  {
+    path: '/log-window',
+    name: 'LogWindow',
+    component: LogWindow
   }
-  ,
 ];
 
 const router = createRouter({

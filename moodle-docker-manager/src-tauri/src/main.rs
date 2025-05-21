@@ -5,9 +5,44 @@
 
 mod docker;
 
-use tauri::{generate_handler, CustomMenuItem, Menu, MenuItem, Submenu};
+use tauri::{generate_handler, CustomMenuItem, Menu, MenuItem, Submenu, WindowUrl, WindowBuilder};
+use tauri::Manager;
 use std::collections::HashMap;
 use std::sync::Mutex;
+
+// Function to open a logs window from Rust
+#[tauri::command]
+async fn open_logs_window(window: tauri::Window, site_name: String, service: String) -> Result<(), String> {
+    // Create a unique label for the window
+    let label = format!("logs-{}", site_name.replace(" ", "-"));
+    
+    // Get the app handle
+    let app_handle = window.app_handle();
+    
+    // Check if the window already exists
+    if let Some(existing_window) = app_handle.get_window(&label) {
+        existing_window.set_focus().map_err(|e| e.to_string())?;
+        return Ok(());
+    }
+    
+    // Create the window URL with query parameters
+    let url = WindowUrl::App(format!("/#/log-window?siteName={}&service={}", 
+                                     urlencoding::encode(&site_name), 
+                                     urlencoding::encode(&service)).into());
+    
+    // Build new window
+    WindowBuilder::new(&app_handle, label, url)
+        .title(format!("Logs: {} - {}", site_name, service))
+        .inner_size(900.0, 700.0)
+        .min_inner_size(600.0, 400.0)
+        .resizable(true)
+        .decorations(true)
+        .fullscreen(false)
+        .build()
+        .map_err(|e| e.to_string())?;
+    
+    Ok(())
+}
 
 fn main() {
     // Create the application menu (macOS style)
@@ -84,6 +119,7 @@ fn main() {
             docker::update_moodle_version,
             docker::open_site_folder,
             docker::cancel_update,
+            open_logs_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

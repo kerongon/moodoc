@@ -1,31 +1,41 @@
 <template>
   <div id="app">
-    <router-view />
-    <SettingsModal />
-    <!-- Global modals that persist across route changes -->
-    <div id="global-modals">
-      <SiteCreationProgress 
-        v-if="showCreationProgress"
-        :siteName="creationParams.siteName"
-        :phpVersion="creationParams.phpVersion"
-        :dbType="creationParams.dbType"
-        :moodleBranch="creationParams.moodleBranch"
-        :webPort="creationParams.webPort"
-        :dbPort="creationParams.dbPort"
-        :directory="creationParams.directory"
-        @close="hideSiteCreation"
-      />
-    </div>
+    <!-- Determine the app layout based on the current window type -->
+    <template v-if="isLogWindow">
+      <!-- Simplified layout for log windows -->
+      <router-view />
+    </template>
+    <template v-else>
+      <!-- Main app layout -->
+      <router-view />
+      <SettingsModal />
+      <!-- Global modals that persist across route changes -->
+      <div id="global-modals">
+        <SiteCreationProgress 
+          v-if="showCreationProgress"
+          :siteName="creationParams.siteName"
+          :phpVersion="creationParams.phpVersion"
+          :dbType="creationParams.dbType"
+          :moodleBranch="creationParams.moodleBranch"
+          :webPort="creationParams.webPort"
+          :dbPort="creationParams.dbPort"
+          :directory="creationParams.directory"
+          @close="hideSiteCreation"
+        />
+      </div>
+    </template>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, onBeforeUnmount, ref, provide } from 'vue';
+import { defineComponent, onMounted, onBeforeUnmount, ref, provide, computed } from 'vue';
 import { listen } from '@tauri-apps/api/event';
+import { appWindow } from '@tauri-apps/api/window';
 import SettingsModal from './components/SettingsModal.vue';
 import SiteCreationProgress from './components/SiteCreationProgress.vue';
 import { useSettingsStore } from './stores/settings';
 import { eventBus } from './utils/event-bus';
+import { useRoute } from 'vue-router';
 
 export default defineComponent({
   name: 'App',
@@ -35,7 +45,13 @@ export default defineComponent({
   },
   setup() {
     const settingsStore = useSettingsStore();
+    const route = useRoute();
     const showCreationProgress = ref(false);
+    
+    // Check if this is a log window based on the route path
+    const isLogWindow = computed(() => {
+      return route.path === '/log-window';
+    });
     
     // Define interface for creation parameters
     interface CreationParams {
@@ -106,7 +122,8 @@ export default defineComponent({
       showCreationProgress,
       creationParams,
       hideSiteCreation,
-      startSiteCreation
+      startSiteCreation,
+      isLogWindow
     };
   }
 });
