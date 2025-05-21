@@ -8,16 +8,37 @@ declare global {
   interface Window {
     ThemeManager?: {
       applyTheme(mode: string): boolean;
+      refreshTheme(): void;
     };
   }
 }
 
+// Helper function to safely access localStorage (may not exist in some contexts)
+const getFromLocalStorage = (key: string, defaultValue: string): string => {
+  try {
+    const value = localStorage.getItem(key);
+    return value !== null ? value : defaultValue;
+  } catch (e) {
+    return defaultValue;
+  }
+};
+
+// Helper function to safely set localStorage (may not exist in some contexts)
+const setToLocalStorage = (key: string, value: string): void => {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    console.error('Failed to save to localStorage:', e);
+  }
+};
+
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
-    sitesRootDirectory: '',
+    sitesRootDirectory: getFromLocalStorage('sitesRootDirectory', ''),
     isLoading: false,
     error: null as string | null,
-    darkMode: 'dark' as 'system' | 'light' | 'dark',
+    darkMode: getFromLocalStorage('theme', 'dark') as 'system' | 'light' | 'dark',
+    initialized: false,
   }),
   
   actions: {
@@ -26,6 +47,8 @@ export const useSettingsStore = defineStore('settings', {
       this.error = null;
       
       try {
+        console.log('Loading settings from disk and localStorage...');
+        
         // Get the app config directory from Tauri
         const configDir = await appConfigDir();
         const settingsPath = `${configDir}/settings.json`;
@@ -37,22 +60,72 @@ export const useSettingsStore = defineStore('settings', {
           // Read the settings file
           const settingsContent = await readTextFile(settingsPath);
           const settings = JSON.parse(settingsContent);
-          this.sitesRootDirectory = settings.sitesRootDirectory || '';
-          this.darkMode = settings.darkMode || 'system';
+          
+          console.log('Loaded settings from disk:', settings);
+          
+          // Update state from the saved settings
+          if (settings.sitesRootDirectory) {
+            this.sitesRootDirectory = settings.sitesRootDirectory;
+            // Sync localStorage with the loaded setting
+            setToLocalStorage('sitesRootDirectory', settings.sitesRootDirectory);
+          }
+          
+          // Update theme mode if available in settings
+          if (settings.darkMode) {
+            this.darkMode = settings.darkMode;
+            // Sync localStorage with the loaded setting
+            setToLocalStorage('theme', settings.darkMode);
+          } 
         } else {
+          console.log('No settings file found, creating one with current values');
           // Create the config directory if it doesn't exist
           await createDir(configDir, { recursive: true });
           
-          // Create default settings with dark mode as default
-          const defaultSettings = { 
-            sitesRootDirectory: '',
-            darkMode: 'dark'
+          // Use current state values (which might be from localStorage)
+          // and create the initial settings file
+          const initialSettings = { 
+            sitesRootDirectory: this.sitesRootDirectory,
+            darkMode: this.darkMode
           };
-          await writeTextFile(settingsPath, JSON.stringify(defaultSettings));
+          
+          // Save initial settings to disk
+          await writeTextFile(settingsPath, JSON.stringify(initialSettings, null, 2));
+          console.log('Created initial settings file with:', initialSettings);
         }
+        
+        // Apply the theme from our settings
+        if (window.ThemeManager) {
+          window.ThemeManager.applyTheme(this.darkMode);
+        } else {
+          this.applyDarkMode(true);
+        }
+        
+        // Mark as initialized to prevent redundant loading
+        this.initialized = true;
       } catch (error: any) {
         console.error('Failed to load settings:', error);
         this.error = `Failed to load settings: ${error}`;
+        
+        // Even if there was an error, try to use localStorage values as fallback
+        try {
+          const localTheme = getFromLocalStorage('theme', 'dark');
+          const localSitesDir = getFromLocalStorage('sitesRootDirectory', '');
+          
+          this.darkMode = localTheme as 'system' | 'light' | 'dark';
+          this.sitesRootDirectory = localSitesDir;
+          
+          console.log('Using localStorage fallback values:', { 
+            darkMode: this.darkMode, 
+            sitesRootDirectory: this.sitesRootDirectory 
+          });
+          
+          // Apply theme from localStorage
+          if (window.ThemeManager) {
+            window.ThemeManager.applyTheme(this.darkMode);
+          }
+        } catch (e) {
+          console.error('Failed to use localStorage fallback:', e);
+        }
       } finally {
         this.isLoading = false;
       }
@@ -63,17 +136,50 @@ export const useSettingsStore = defineStore('settings', {
       this.error = null;
       
       try {
+        // Make sure the config directory exists
         const configDir = await appConfigDir();
+        
+        // Create the directory if it doesn't exist yet
+        const dirExists = await exists(configDir);
+        if (!dirExists) {
+          console.log(`Creating config directory: ${configDir}`);
+          await createDir(configDir, { recursive: true });
+        }
+        
+        // Prepare settings object with current values
+        const settings = { 
+          sitesRootDirectory: this.sitesRootDirectory,
+          darkMode: this.darkMode
+        };
+        
+        console.log('Saving settings to disk:', settings);
+        
+        // Save to localStorage for quick access
+        setToLocalStorage('theme', this.darkMode);
+        setToLocalStorage('sitesRootDirectory', this.sitesRootDirectory);
+        
+        // Write to the config file with pretty formatting (for debugging)
+        const settingsPath = `${configDir}/settings.json`;
         await writeTextFile(
-          `${configDir}/settings.json`, 
-          JSON.stringify({ 
-            sitesRootDirectory: this.sitesRootDirectory,
-            darkMode: this.darkMode
-          })
+          settingsPath, 
+          JSON.stringify(settings, null, 2)
         );
+        
+        // Verify the file was written successfully
+        const fileExists = await exists(settingsPath);
+        if (!fileExists) {
+          throw new Error('Settings file was not created successfully');
+        }
+        
+        console.log('Settings saved successfully to:', settingsPath);
+        this.initialized = true;
       } catch (error: any) {
         console.error('Failed to save settings:', error);
         this.error = `Failed to save settings: ${error}`;
+        
+        // At least try to save to localStorage as fallback
+        setToLocalStorage('theme', this.darkMode);
+        setToLocalStorage('sitesRootDirectory', this.sitesRootDirectory);
       } finally {
         this.isLoading = false;
       }
@@ -81,12 +187,19 @@ export const useSettingsStore = defineStore('settings', {
     
     async setSitesRootDirectory(directory: string) {
       this.sitesRootDirectory = directory;
+      
+      // Update localStorage immediately for fast access on reload
+      setToLocalStorage('sitesRootDirectory', directory);
+      
+      // Save to persistent storage
       await this.saveSettings();
     },
     
     async setDarkMode(mode: 'system' | 'light' | 'dark') {
       this.darkMode = mode;
-      await this.saveSettings();
+      
+      // Update localStorage immediately for fast access on reload
+      setToLocalStorage('theme', mode);
       
       // Use the ThemeManager to apply the theme if available
       if (window.ThemeManager) {
@@ -95,6 +208,9 @@ export const useSettingsStore = defineStore('settings', {
         // Fall back to the old method if ThemeManager is not available
         this.applyDarkMode(true);
       }
+      
+      // Save to persistent storage
+      await this.saveSettings();
     },
     
     applyDarkMode(force = false) {

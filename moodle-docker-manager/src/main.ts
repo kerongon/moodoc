@@ -163,9 +163,35 @@ app.mount('#app');
 
 // Initialize settings
 const settingsStore = useSettingsStore();
+
+// Log any existing localStorage values for debugging
+console.log('Initial localStorage values:', {
+  theme: localStorage.getItem('theme'),
+  sitesRootDirectory: localStorage.getItem('sitesRootDirectory')
+});
+
+// Load settings from disk and ensure the theme is applied
 settingsStore.loadSettings().then(() => {
-  // Apply theme again after settings load (in case settings differ from localStorage)
+  console.log('Settings loaded from disk:', {
+    darkMode: settingsStore.darkMode,
+    sitesRootDirectory: settingsStore.sitesRootDirectory
+  });
+  
+  // Apply theme again after settings load (in case disk settings differ from localStorage)
   window.ThemeManager.applyTheme(settingsStore.darkMode);
+  
+  // Store the loaded values in localStorage as well for redundancy
+  try {
+    localStorage.setItem('theme', settingsStore.darkMode);
+    localStorage.setItem('sitesRootDirectory', settingsStore.sitesRootDirectory || '');
+  } catch (e) {
+    console.warn('Could not save to localStorage:', e);
+  }
+  
+  // Force save settings at startup to ensure persistence on next launch
+  settingsStore.saveSettings().then(() => {
+    console.log('Settings saved at startup for persistence');
+  });
 
   // Set up a system preference change listener
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');

@@ -158,8 +158,34 @@ export default {
     };
     
     const saveSettings = async () => {
+      // Update both settings in the store
       await settingsStore.setSitesRootDirectory(sitesDirectory.value);
       await settingsStore.setDarkMode(darkMode.value);
+      
+      // Explicitly call saveSettings to ensure persistence to disk
+      await settingsStore.saveSettings();
+      
+      // Apply the dark mode setting immediately
+      if (window.ThemeManager) {
+        window.ThemeManager.applyTheme(darkMode.value);
+      } else {
+        settingsStore.applyDarkMode(true);
+      }
+      
+      // Verify settings were saved to localStorage as well
+      try {
+        localStorage.setItem('theme', darkMode.value);
+        localStorage.setItem('sitesRootDirectory', sitesDirectory.value);
+        console.log('Settings also saved to localStorage');
+      } catch (e) {
+        console.warn('Could not save to localStorage:', e);
+      }
+      
+      console.log('Settings saved with values:', {
+        darkMode: darkMode.value,
+        sitesDirectory: sitesDirectory.value
+      });
+      
       closeModal();
     };
     
