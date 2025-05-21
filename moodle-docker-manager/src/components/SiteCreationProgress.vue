@@ -123,6 +123,9 @@ export default {
       
       // Update time every second
       timeInterval.value = setInterval(() => {
+        // Stop updating time if creation is complete or has error
+        if (progress.value >= 100 || !isCreating.value) return;
+        
         currentTime.value = Date.now();
         
         // Calculate progress based on time if no explicit progress updates
@@ -258,7 +261,10 @@ export default {
       
       <div class="progress-container">
         <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: `${progress}%` }"></div>
+          <div class="progress-fill" 
+               :style="{ width: `${progress}%` }" 
+               :class="{ 'complete': progress >= 100 && !error, 'has-error': error }">
+          </div>
         </div>
         <div class="progress-text">{{ progress }}%</div>
       </div>
@@ -299,7 +305,7 @@ export default {
           <h3>Installation logs</h3>
           <span class="toggle-icon">{{ showLogs ? '▼' : '▶' }}</span>
         </div>
-        <div class="logs-container" v-if="showLogs" style="max-height: 200px; overflow-y: auto;">
+        <div class="logs-container" v-if="showLogs">
           <div v-for="(log, index) in logs" :key="index" class="log-entry">
             <span class="log-time">{{ log.time }}</span>
             <span class="log-message">{{ log.message }}</span>
@@ -326,17 +332,14 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7); /* Darker background for better visibility */
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999; /* Maximum z-index to ensure it's above all other elements */
-  backdrop-filter: blur(3px); /* Add subtle blur effect to background */
-  transition: all 0.3s ease;
-}
-
-.dark .modal-backdrop {
-  background-color: rgba(0, 0, 0, 0.8); /* Even darker in dark mode */
+  z-index: 9999;
+  backdrop-filter: blur(3px);
 }
 
 .modal-content {
@@ -362,36 +365,40 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-h2 {
-  margin-top: 0;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
+.modal-header {
+  margin-bottom: 20px;
+  text-align: center;
 }
 
-.dark h2 {
-  border-bottom: 1px solid #374151;
-  color: #f9fafb;
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.dark .modal-header h2 {
+  color: #e5e7eb;
 }
 
 .progress-container {
+  margin-bottom: 20px;
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 5px;
 }
 
 .progress-bar {
-  flex-grow: 1;
-  height: 10px;
-  background-color: #eee;
-  border-radius: 5px;
+  height: 20px;
+  background-color: #e2e8f0;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  flex-grow: 1;
+  margin-right: 10px;
 }
 
 .dark .progress-bar {
-  background-color: #374151;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  background-color: #4b5563;
 }
 
 .progress-fill {
@@ -403,266 +410,35 @@ h2 {
   animation: progress-animation 1s linear infinite;
 }
 
+.progress-fill.complete {
+  background-color: #10b981;
+  animation: none;
+}
+
+.progress-fill.has-error {
+  background-color: #ef4444;
+  animation: none;
+}
+
 .dark .progress-fill {
-  background-color: #6366f1; /* Slightly brighter indigo in dark mode */
+  background-color: #6366f1;
 }
 
-.progress-text {
-  min-width: 50px;
-  text-align: right;
-  font-weight: bold;
-  font-size: 1.1em;
+.dark .progress-fill.complete {
+  background-color: #10b981;
 }
 
-.time-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: #666;
-  margin-top: 8px;
-  margin-bottom: 15px;
-  padding: 0 5px;
-  font-family: monospace;
+.dark .progress-fill.has-error {
+  background-color: #ef4444;
 }
 
-.time-elapsed {
-  color: #5755d9;
-  font-weight: 600;
-  background-color: rgba(87, 85, 217, 0.1);
-  padding: 3px 8px;
-  border-radius: 4px;
-}
-
-.dark .time-elapsed {
-  color: #a5b4fc; /* Even brighter indigo for elapsed time in dark mode */
-  background-color: rgba(99, 102, 241, 0.2);
-}
-
-.time-remaining {
-  color: #666;
-  background-color: rgba(0, 0, 0, 0.05);
-  padding: 3px 8px;
-  border-radius: 4px;
-}
-
-.dark .time-remaining {
-  color: #d1d5db;
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.status-container {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.status-text {
-  font-size: 16px;
-  text-align: center;
-  min-height: 24px;
-}
-
-.dark .status-text {
-  color: #e5e7eb;
-}
-
-.animation-container {
-  height: 120px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
-  position: relative;
-  transition: all 0.3s ease-in-out;
-}
-
-.dark .animation-container {
-  background-color: #111827;
-  border: 1px solid #374151;
-}
-
-/* Animation styles */
-.animation {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.preparing .gear {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  border: 6px dashed #5755d9;
-  animation: spin 3s linear infinite;
-}
-
-.preparing .document {
-  position: absolute;
-  width: 30px;
-  height: 40px;
-  background-color: #fff;
-  border: 2px solid #5755d9;
-  animation: moveLeftRight 2s ease-in-out infinite;
-}
-
-.container .docker-container {
-  width: 80px;
-  height: 60px;
-  background-color: #5755d9;
-  border-radius: 6px;
-  position: relative;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.container .docker-container::before {
-  content: "";
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  background-color: #fff;
-  border-radius: 50%;
-  top: 20px;
-  left: 15px;
-}
-
-.database .database-icon {
-  width: 60px;
-  height: 40px;
-  background-color: #5755d9;
-  border-radius: 4px;
-  position: relative;
-  animation: blink 1s ease-in-out infinite;
-}
-
-.database .database-icon::before {
-  content: "";
-  position: absolute;
-  width: 50px;
-  height: 5px;
-  background-color: #fff;
-  top: 10px;
-  left: 5px;
-}
-
-.database .database-icon::after {
-  content: "";
-  position: absolute;
-  width: 50px;
-  height: 5px;
-  background-color: #fff;
-  bottom: 10px;
-  left: 5px;
-}
-
-.installing .code-lines {
-  width: 80px;
-  height: 60px;
-  background-color: #f8f9fa;
-  border: 2px solid #5755d9;
-  position: relative;
-}
-
-.dark .installing .code-lines {
-  background-color: #1f2937;
-  border: 2px solid #6366f1;
-}
-
-.installing .code-lines::before,
-.installing .code-lines::after {
-  content: "";
-  position: absolute;
-  left: 10px;
-  height: 2px;
-  background-color: #5755d9;
-  animation: typingCode 2s ease-in-out infinite;
-}
-
-.installing .code-lines::before {
-  top: 15px;
-  width: 60%;
-}
-
-.installing .code-lines::after {
-  top: 30px;
-  width: 40%;
-}
-
-.complete .checkmark {
-  width: 60px;
-  height: 60px;
-  background-color: #4caf50;
-  border-radius: 50%;
-  position: relative;
-}
-
-.complete .checkmark::before {
-  content: "";
-  position: absolute;
-  width: 30px;
-  height: 15px;
-  border-left: 4px solid white;
-  border-bottom: 4px solid white;
-  transform: rotate(-45deg);
-  top: 20px;
-  left: 15px;
-}
-
-.complete .error-icon {
-  width: 60px;
-  height: 60px;
-  background-color: #f44336;
-  border-radius: 50%;
-  position: relative;
-}
-
-.complete .error-icon::before,
-.complete .error-icon::after {
-  content: "";
-  position: absolute;
-  width: 4px;
-  height: 30px;
-  background-color: white;
-  top: 15px;
-  left: 28px;
-}
-
-.complete .error-icon::before {
-  transform: rotate(45deg);
-}
-
-.complete .error-icon::after {
-  transform: rotate(-45deg);
-}
-
-/* Animation keyframes */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes moveLeftRight {
-  0%, 100% { transform: translateX(-20px); }
-  50% { transform: translateX(20px); }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-@keyframes typingCode {
-  0%, 100% { width: 30%; }
-  50% { width: 70%; }
+@keyframes progress-animation {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 1rem 0;
+  }
 }
 
 @keyframes modal-appear {
@@ -676,88 +452,289 @@ h2 {
   }
 }
 
-@keyframes progress-animation {
-  0% {
-    background-position: 1rem 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
+.progress-text {
+  min-width: 50px;
+  text-align: right;
+  font-weight: bold;
+  font-family: monospace;
+  font-size: 1rem;
 }
 
-/* Log accordion styles */
+.time-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+.status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.status-text {
+  font-weight: 500;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.animation-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.dark .animation-container {
+  background-color: #293548;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.animation {
+  width: 80px;
+  height: 80px;
+  position: relative;
+}
+
+/* Animation styling for preparing stage */
+.animation.preparing .gear {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background-color: #6366f1;
+  border-radius: 50%;
+  top: 20px;
+  left: 20px;
+}
+
+.animation.preparing .document {
+  position: absolute;
+  width: 25px;
+  height: 35px;
+  background-color: white;
+  border: 2px solid #6366f1;
+  border-radius: 3px;
+  top: 22px;
+  left: 45px;
+}
+
+.spinning {
+  animation: spin 2s linear infinite;
+}
+
+.moving {
+  animation: move 2s ease-in-out infinite;
+}
+
+@keyframes move {
+  0%, 100% { transform: translateX(-10px); }
+  50% { transform: translateX(10px); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Animation styling for container stage */
+.animation.container .docker-container {
+  width: 60px;
+  height: 40px;
+  background-color: #2563eb;
+  border-radius: 4px;
+  position: absolute;
+  top: 20px;
+  left: 10px;
+}
+
+.pulsing {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Animation styling for database stage */
+.animation.database .database-icon {
+  width: 50px;
+  height: 50px;
+  background-color: #10b981;
+  border-radius: 4px;
+  position: absolute;
+  top: 15px;
+  left: 15px;
+}
+
+.blinking {
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Animation styling for installing stage */
+.animation.installing .code-lines {
+  width: 60px;
+  height: 40px;
+  border-left: 4px solid #f59e0b;
+  position: absolute;
+  top: 20px;
+  left: 10px;
+  animation: typing 1s steps(5) infinite;
+}
+
+@keyframes typing {
+  from { height: 0; }
+  to { height: 40px; }
+}
+
+/* Animation styling for complete stage */
+.animation.complete .checkmark {
+  width: 40px;
+  height: 20px;
+  border-bottom: 8px solid #10b981;
+  border-left: 8px solid #10b981;
+  position: absolute;
+  top: 30px;
+  left: 20px;
+  transform: rotate(-45deg);
+  animation: complete-check 0.5s ease-in-out;
+}
+
+.animation.complete .error-icon {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+}
+
+.animation.complete .error-icon:before,
+.animation.complete .error-icon:after {
+  position: absolute;
+  content: "";
+  width: 8px;
+  height: 60px;
+  background-color: #ef4444;
+  top: 10px;
+  left: 26px;
+}
+
+.animation.complete .error-icon:before {
+  transform: rotate(45deg);
+}
+
+.animation.complete .error-icon:after {
+  transform: rotate(-45deg);
+}
+
+@keyframes complete-check {
+  0% { opacity: 0; transform: scale(0) rotate(-45deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-45deg); }
+}
+
+.time-display {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+.time-elapsed, .time-remaining {
+  display: flex;
+  align-items: center;
+}
+
+.time-label {
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+.time-value {
+  font-family: monospace;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: rgba(87, 85, 217, 0.1);
+}
+
+.dark .time-value {
+  background-color: rgba(99, 102, 241, 0.2);
+  color: #e5e7eb;
+}
+
 .logs-accordion {
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   overflow: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.dark .logs-accordion {
+  border-color: #4b5563;
 }
 
 .logs-header {
-  background-color: #f5f5f5;
-  padding: 10px 15px;
+  background-color: #f1f5f9;
+  padding: 12px 15px;
+  cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  cursor: pointer;
-  user-select: none;
 }
 
 .dark .logs-header {
-  background-color: #1f2937;
-  color: #f9fafb;
-  border-bottom: 1px solid #374151;
+  background-color: #374151;
 }
 
 .logs-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .toggle-icon {
-  font-size: 14px;
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
 }
 
 .logs-container {
-  max-height: 200px;
   overflow-y: auto;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  padding: 10px;
-  margin-top: 5px;
-  background-color: #f8f9fa;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  background-color: #f5f5f5;
+  border-radius: 0 0 8px 8px;
+  padding: 15px;
+  max-height: 200px;
   font-family: monospace;
-  font-size: 0.9em;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
 }
 
 .dark .logs-container {
-  background-color: #111827;
-  border-color: #374151;
-}
-
-.empty-logs-message {
-  padding: 10px;
-  color: #888;
-  font-style: italic;
-  text-align: center;
+  background-color: #374151;
+  color: #e5e7eb;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .log-entry {
-  padding: 2px 0;
   display: flex;
-  gap: 10px;
-  border-bottom: 1px solid #ccc;
-}
-
-.dark .log-entry {
-  border-bottom: 1px solid #374151;
+  margin-bottom: 6px;
+  line-height: 1.4;
 }
 
 .log-time {
-  color: #888;
-  white-space: nowrap;
+  font-weight: 600;
+  color: #64748b;
+  margin-right: 10px;
+  min-width: 80px;
 }
 
 .dark .log-time {
@@ -765,104 +742,109 @@ h2 {
 }
 
 .log-message {
+  flex: 1;
   word-break: break-word;
 }
 
-.dark .log-message {
-  color: #e5e7eb;
+.log-error {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.dark .log-error {
+  color: #f87171;
+}
+
+.empty-logs-message {
+  color: #94a3b8;
+  font-style: italic;
+  text-align: center;
+  padding: 10px;
 }
 
 .dark .empty-logs-message {
-  color: #9ca3af;
+  color: #64748b;
 }
 
-/* Button styles */
 .button-container {
   display: flex;
-  justify-content: center; /* Center buttons */
-  gap: 10px;
+  justify-content: center;
   margin-top: 20px;
-  width: 100%;
-}
-
-.cancel-button {
-  background-color: #f44336;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-transform: uppercase;
-  font-size: 0.9em;
-  letter-spacing: 0.5px;
-}
-
-.dark .cancel-button {
-  background-color: #ef4444;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.cancel-button:hover {
-  background-color: #d32f2f;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
-}
-
-.dark .cancel-button:hover {
-  background-color: #dc2626;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
 }
 
 .done-button {
   background-color: #5755d9;
   color: white;
   border: none;
-  padding: 12px 30px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500; /* Slightly lighter weight */
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-transform: uppercase; /* Removed for dashboard button */
-  font-size: 1rem; /* Larger font size */
-  letter-spacing: 0.5px;
-  width: 60%; /* Make button wider but not full width */
-  text-align: center;
-}
-
-.dark .done-button {
-  background-color: #5755d9; /* Match the color from the screenshot */
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   border-radius: 8px;
-  padding: 15px 30px 15px; /* Equal padding top and bottom */
+  padding: 15px 30px 15px;
   font-size: 1rem;
   letter-spacing: 0.7px;
   font-weight: 600;
   text-transform: uppercase;
+  cursor: pointer;
   width: auto; 
   min-width: 250px;
   text-align: center;
   justify-content: center;
-  line-height: 1.2; /* Slightly increased line height */
+  line-height: 1.2;
   display: flex;
   align-items: center;
-  height: 50px; /* Fixed height to ensure proper centering */
+  height: 50px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 }
 
-.done-button:hover {
-  background-color: #4644b8;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+.done-button:hover:not(.disabled) {
+  background-color: #4240c9;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
   transform: translateY(-1px);
 }
 
-.dark .done-button:hover {
+.done-button.disabled {
+  background-color: #9d9dd6;
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+.dark .done-button {
+  background-color: #6366f1;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark .done-button:hover:not(.disabled) {
   background-color: #4f46e5;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
-  padding: 15px 30px 15px; /* Maintain the same padding on hover */
-  height: 50px; /* Maintain the same height on hover */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.dark .done-button.disabled {
+  background-color: #6366f1;
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+.cancel-button {
+  background-color: #94a3b8;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 25px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background-color: #64748b;
+}
+
+.dark .cancel-button {
+  background-color: #4b5563;
+}
+
+.dark .cancel-button:hover {
+  background-color: #374151;
 }
 </style>
