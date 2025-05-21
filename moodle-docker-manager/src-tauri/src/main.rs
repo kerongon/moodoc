@@ -81,6 +81,7 @@ fn main() {
             docker::delete_site_backup,
             docker::open_backup_location,
             docker::update_moodle_version,
+            docker::open_site_folder,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

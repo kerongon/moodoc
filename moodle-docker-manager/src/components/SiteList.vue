@@ -52,16 +52,19 @@
             </td>
             <td>{{ site.php_version }}</td>
             <td>{{ site.db_type }}</td>
-            <td class="directory-path" :title="site.path">
-              {{ formatPath(site.path) }}
-              <!-- Link to open local directory -->
-              <a :href="`file://${site.path}`"
-                 :title="`file://${site.path}`"
-                 target="_blank"
-                 rel="noopener"
-                 class="ml-1">
-                <PhLinkSimple class="inline w-4 h-4 text-blue-500 hover:text-blue-700" />
-              </a>
+            <td :title="site.path">
+              <span class="directory-path inline-block align-middle" :title="site.path">
+                {{ formatPath(site.path) }}
+              </span>
+              <!-- Button to open local directory in file explorer -->
+              <button
+                @click.prevent="openDirectory(site.path)"
+                :title="site.path"
+                type="button"
+                class="ml-1 inline-block align-middle"
+              >
+                <PhFolder class="w-4 h-4 text-green-500 hover:text-green-700" />
+              </button>
             </td>
             <td>
               <span class="compact-status-badge" :class="{'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': site.status === 'running', 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': site.status !== 'running'}">
@@ -234,7 +237,7 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
 
 export default {
@@ -247,6 +250,7 @@ export default {
     PhTerminal,
     PhRecycle,
     PhLinkSimple,
+    PhFolder,
     UpdateSite
   },
   emits: ['action-start', 'action-end'],
@@ -448,6 +452,15 @@ export default {
       const filename = parts.pop();
       return `.../${parts.slice(-2).join('/')}/${filename}`;
     };
+    
+    // Open local directory in system file explorer via backend
+    const openDirectory = async (path) => {
+      try {
+        await invoke('open_site_folder', { path });
+      } catch (e) {
+        console.error('Failed to open directory via backend:', e);
+      }
+    };
 
     let refreshTimer;
     onMounted(() => {
@@ -474,6 +487,7 @@ export default {
       hideUpdateModal,
       handleSiteUpdated,
       formatPath,
+      openDirectory,
       updateModalVisible,
       selectedSiteName,
       showErrorModal,

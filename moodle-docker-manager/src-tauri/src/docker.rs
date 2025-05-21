@@ -277,15 +277,15 @@ fn create_site_blocking(
     let setup_script = format!(r#"#!/bin/bash
 
 # This script contains the environment setup and Moodle installation commands
-# for the {} site
+# for the {0} site
 
 # Export environment variables with absolute paths
-export COMPOSE_PROJECT_NAME={}
-export MOODLE_DOCKER_WWWROOT={}
-export MOODLE_DOCKER_DB={}
-export MOODLE_DOCKER_WEB_PORT={}
-export MOODLE_DOCKER_PHP_VERSION={}
-export MOODLE_DOCKER_DB_PORT={}
+export COMPOSE_PROJECT_NAME={0}
+export MOODLE_DOCKER_WWWROOT={1}
+export MOODLE_DOCKER_DB={2}
+export MOODLE_DOCKER_WEB_PORT={3}
+export MOODLE_DOCKER_PHP_VERSION={4}
+export MOODLE_DOCKER_DB_PORT={5}
 
 # Verify environment
 echo "Moodle Docker Environment:"
@@ -305,10 +305,10 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
 # Install Moodle
 ./bin/moodle-docker-compose exec webserver php admin/cli/install_database.php --agree-license --fullname="Docker Moodle" --shortname="docker_moodle" --summary="Docker Moodle site" --adminpass="test" --adminemail="admin@example.com"
 
-echo "Moodle is now available at http://localhost:{}"
+echo "Moodle is now available at http://localhost:{3}"
 echo "Admin username: admin"
 echo "Admin password: test"
-"#, name, name, abs_moodle_path.to_str().unwrap_or(""), db_env, web_port_str, php_version, db_port_str, web_port_str);
+"#, name, abs_moodle_path.to_str().unwrap_or(""), db_env, web_port_str, php_version, db_port_str);
 
     let setup_script_path = moodle_docker_dir.join("setup.sh");
     let mut file = File::create(&setup_script_path)
@@ -889,7 +889,6 @@ export MOODLE_DOCKER_WEB_PORT={}
 export MOODLE_DOCKER_DB_PORT={}
 
 # Echo environment for debugging
-echo "Environment variables:"
 echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
 echo "MOODLE_DOCKER_WWWROOT=$MOODLE_DOCKER_WWWROOT"
 echo "MOODLE_DOCKER_DB=$MOODLE_DOCKER_DB"
@@ -1011,12 +1010,10 @@ export MOODLE_DOCKER_PHP_VERSION={}
 export MOODLE_DOCKER_DB_PORT={}
 
 # Echo environment for debugging
-echo "Environment variables:"
 echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
 echo "MOODLE_DOCKER_WWWROOT=$MOODLE_DOCKER_WWWROOT"
 echo "MOODLE_DOCKER_DB=$MOODLE_DOCKER_DB"
 echo "MOODLE_DOCKER_WEB_PORT=$MOODLE_DOCKER_WEB_PORT"
-echo "MOODLE_DOCKER_PHP_VERSION=$MOODLE_DOCKER_PHP_VERSION"
 echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
 
 # Stop containers
@@ -1662,14 +1659,12 @@ pub fn restore_site_backup(app_handle: AppHandle, name: String, backup_timestamp
 cd {}
 export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
-export MOODLE_DOCKER_DB_PORT={}
 
 # Stop containers if running
 ./bin/moodle-docker-compose down
 "#, 
         site.path.to_str().unwrap_or(""),
         name,
-        site.db_port.unwrap_or(3306)
     );
     
     // Write the stop script
@@ -2206,4 +2201,59 @@ echo "Moodle site updated and started successfully"
     }
     
     Ok(format!("Site '{}' successfully updated to Moodle {}", name, new_branch))
+}
+
+#[command]
+pub fn open_site_folder(path: String) -> Result<String, String> {
+    // Check if the path exists
+    let path_buf = PathBuf::from(&path);
+    if !path_buf.exists() {
+        return Err(format!("Path does not exist: {}", path));
+    }
+    
+    // Open the folder in the system's default file explorer
+    #[cfg(target_os = "macos")]
+    {
+        // On macOS, use "open" command
+        let output = Command::new("open")
+            .arg(&path)
+            .output()
+            .map_err(|e| format!("Failed to open folder: {}", e))?;
+            
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(format!("Failed to open folder: {}", error));
+        }
+    }
+    
+    #[cfg(target_os = "windows")]
+    {
+        // On Windows, use "explorer" command
+        let path = path.replace("/", "\\"); // Replace forward slashes with backslashes
+        let output = Command::new("explorer")
+            .arg(&path)
+            .output()
+            .map_err(|e| format!("Failed to open folder: {}", e))?;
+            
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(format!("Failed to open folder: {}", error));
+        }
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        // On Linux, try xdg-open
+        let output = Command::new("xdg-open")
+            .arg(&path)
+            .output()
+            .map_err(|e| format!("Failed to open folder: {}", e))?;
+            
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(format!("Failed to open folder: {}", error));
+        }
+    }
+    
+    Ok(format!("Opened folder: {}", path))
 }
