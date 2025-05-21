@@ -55,7 +55,10 @@
             placeholder="moodle-site"
           />
           <p v-if="siteName && !siteNameIsValid" class="mt-0.5 text-xs text-red-600">
-            Site name can only contain letters, numbers, underscores and hyphens
+            Site name can only contain lowercase letters, numbers, underscores and hyphens
+          </p>
+          <p v-if="siteName" class="mt-2 text-xs text-gray-500">
+            Site will be created at: <span class="font-mono">{{ getFullSitePath() }}</span>
           </p>
         </div>
         
@@ -275,8 +278,11 @@
               Reset to default
             </button>
           </div>
-          <p v-if="siteName" class="mt-2 text-xs text-gray-500">
-            Site will be created at: <span class="font-mono">{{ getFullSitePath() }}</span>
+          <p v-if="!useDefaultDirectory && !siteDirectory" class="text-xs text-red-500 mt-1">
+            Please select an installation directory
+          </p>
+          <p v-else-if="useDefaultDirectory && !defaultDirectory" class="text-xs text-amber-500 mt-1">
+            Default directory not available. Please select a custom directory.
           </p>
         </div>
         
@@ -871,21 +877,42 @@ export default {
     },
 
     siteNameIsValid() {
-      // Check if the site name is valid: no spaces, special characters, etc.
-      return this.siteName.length === 0 || /^[a-z0-9_-]+$/i.test(this.siteName);
+      // Check if the site name is valid: only lowercase letters, numbers, underscores, and hyphens
+      return this.siteName.length === 0 || /^[a-z0-9_-]+$/.test(this.siteName);
     },
     
     formIsValid() {
-      if (!this.siteName || !this.siteNameIsValid) {
+      // Basic required fields validation
+      if (!this.siteName || !this.siteName.trim()) {
         return false;
       }
       
-      // Port validation
-      const portsValid = 
-        (!this.webPort || this.isWebPortInRange) && 
-        (!this.dbPort || this.isDbPortInRange);
-        
-      return portsValid;
+      // Directory must be selected or using default directory
+      // Enhance validation to be very strict about directory selection
+      if (!this.useDefaultDirectory) {
+        if (!this.siteDirectory || !this.siteDirectory.trim()) {
+          console.log("Form validation failed: Custom directory not selected");
+          return false;
+        }
+      }
+      
+      // If using default directory, make sure it's available
+      if (this.useDefaultDirectory && !this.defaultDirectory) {
+        console.log("Form validation failed: Default directory not available");
+        return false;
+      }
+      
+      // Additional validation for the active tab
+      if (this.activeTab === 'standard' && !this.moodleBranch) {
+        return false;
+      }
+      
+      // If in custom tab with custom repo, must have a branch
+      if (this.activeTab === 'custom' && this.customRepoUrl && !this.customBranch) {
+        return false;
+      }
+      
+      return true;
     },
     
     // Get the list of errors to show to the user
@@ -1117,6 +1144,34 @@ export default {
         this.createSiteInProgress = false;
         return;
       }
+      
+      // Enhanced directory validation
+      let installDir = "";
+      
+      if (this.useDefaultDirectory) {
+        if (!this.defaultDirectory) {
+          this.addLogMessage('Default directory is not available. Please select a custom directory.');
+          this.createSiteInProgress = false;
+          return;
+        }
+        installDir = this.defaultDirectory;
+      } else {
+        if (!this.siteDirectory || !this.siteDirectory.trim()) {
+          this.addLogMessage('Please select a valid installation directory');
+          this.createSiteInProgress = false;
+          return;
+        }
+        installDir = this.siteDirectory;
+      }
+      
+      // Validate directory doesn't contain problematic paths
+      if (installDir.includes("src-tauri") || installDir.includes("node_modules")) {
+        this.addLogMessage('The selected directory appears to be inside the application source. Please choose a different location.');
+        this.createSiteInProgress = false;
+        return;
+      }
+      
+      this.addLogMessage(`Using installation directory: ${installDir}`);
 
       if (!this.moodleBranch && this.activeTab === 'standard') {
         this.addLogMessage('Please select a Moodle version');

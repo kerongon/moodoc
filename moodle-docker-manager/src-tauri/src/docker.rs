@@ -121,17 +121,52 @@ fn create_site_blocking(
 ) -> Result<String, String> {
     // First validate the environment to ensure everything is set up correctly
     validate_environment(app_handle.clone())?;
+    
+    // Validate site name
+    if name.trim().is_empty() {
+        return Err("Site name cannot be empty".to_string());
+    }
+    
+    // REQUIRE directory parameter - this is the key validation
+    let directory = directory.ok_or_else(|| 
+        "Installation directory is required. Please select a folder to install Moodle.".to_string())?;
+    
+    // Validate directory is not empty
+    if directory.trim().is_empty() {
+        return Err("Installation directory cannot be empty".to_string());
+    }
+    
     // Normalize db_type for docker compose file naming (use 'pgsql' for PostgreSQL)
     let db_env = match db_type.to_lowercase().as_str() {
         "postgres" | "postgresql" | "pgsql" => "pgsql".to_string(),
         other => other.to_string(),
     };
-    // Continue with the rest of the original create_site body
     
     // Determine the site directory path based on user preferences
-    let site_dir = if let Some(dir) = directory {
-        // Use custom directory if provided
-        let path = PathBuf::from(dir);
+    let site_dir = {
+        // Check if the provided directory might be inside the application directory
+        if let Ok(current_exe) = std::env::current_exe() {
+            if let Some(exe_dir) = current_exe.parent() {
+                let path = PathBuf::from(&directory);
+                
+                // Try to get canonical paths to compare accurately
+                let path_str = path.to_string_lossy().to_string().to_lowercase();
+                let exe_str = exe_dir.to_string_lossy().to_string().to_lowercase();
+                
+                // Simple check to avoid installation in app directories
+                if path_str.contains(&exe_str) || exe_str.contains(&path_str) {
+                    return Err("Installation in the application directory is not allowed. Please choose a different location.".to_string());
+                }
+                
+                // Also check for 'src-tauri', which indicates we might be in the source code directory
+                if path_str.contains("src-tauri") {
+                    return Err("Installation in the source code directory is not allowed. Please choose a different location.".to_string());
+                }
+            }
+        }
+        
+        // Use the provided directory
+        let path = PathBuf::from(&directory);
         let site_path = path.join(&name);
         
         // Create the directory if it doesn't exist
@@ -141,19 +176,6 @@ fn create_site_blocking(
         }
         
         site_path
-    } else {
-        // Use default directory in app data if no custom directory provided
-        let app_dir = app_handle.path_resolver().app_data_dir()
-            .ok_or_else(|| "Failed to get app data directory".to_string())?;
-        
-        let sites_dir = app_dir.join("sites");
-        // Double check that sites directory exists
-        if !sites_dir.exists() {
-            create_dir_all(&sites_dir)
-                .map_err(|e| format!("Failed to create sites directory: {}", e))?;
-        }
-        
-        sites_dir.join(&name)
     };
     
     // Create the site directory if it doesn't exist
@@ -181,7 +203,17 @@ fn create_site_blocking(
     
     // Clone the specific Moodle version
     let moodle_dir = moodle_docker_dir.join("moodle");
+    
+    // Make sure the parent directories exist
+    if !moodle_docker_dir.exists() {
+        println!("Creating moodle-docker directory: {}", moodle_docker_dir.display());
+        create_dir_all(&moodle_docker_dir)
+            .map_err(|e| format!("Failed to create moodle-docker directory: {}", e))?;
+    }
+    
     if !moodle_dir.exists() {
+        println!("Cloning Moodle repository to: {}", moodle_dir.display());
+        
         // Clone the Moodle repository with the specified branch
         let output = Command::new("git")
             .current_dir(&moodle_docker_dir)
@@ -200,6 +232,20 @@ fn create_site_blocking(
                 .unwrap_or_else(|_| "Unknown error".to_string());
             return Err(format!("Failed to clone Moodle repository: {}", error));
         }
+        
+        // Verify the clone worked
+        if !moodle_dir.exists() {
+            return Err(format!("Failed to create Moodle directory at: {}. Git clone completed but directory doesn't exist.", moodle_dir.display()));
+        }
+        
+        println!("Successfully cloned Moodle repository to: {}", moodle_dir.display());
+    } else {
+        println!("Moodle directory already exists at: {}", moodle_dir.display());
+    }
+    
+    // Double check that the directory exists and has content
+    if !moodle_dir.exists() || fs::read_dir(&moodle_dir).map_or(true, |mut dir| dir.next().is_none()) {
+        return Err(format!("Moodle directory at {} is missing or empty. Please check file permissions and disk space.", moodle_dir.display()));
     }
     
     // Copy the template config file
@@ -225,13 +271,30 @@ fn create_site_blocking(
     // Create a script file to set up the environment and start the containers
     let web_port_str = web_port.map_or("8000".to_string(), |p| p.to_string());
     let db_port_str = db_port.map_or("3306".to_string(), |p| p.to_string());
+    let moodle_www_root = moodle_docker_dir.join("moodle");
+    let abs_moodle_path = moodle_www_root.canonicalize()
+        .unwrap_or_else(|_| moodle_www_root.clone());
     let setup_script = format!(r#"#!/bin/bash
+
+# This script contains the environment setup and Moodle installation commands
+# for the {} site
+
+# Export environment variables with absolute paths
 export COMPOSE_PROJECT_NAME={}
-export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_WWWROOT={}
 export MOODLE_DOCKER_DB={}
 export MOODLE_DOCKER_WEB_PORT={}
 export MOODLE_DOCKER_PHP_VERSION={}
 export MOODLE_DOCKER_DB_PORT={}
+
+# Verify environment
+echo "Moodle Docker Environment:"
+echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
+echo "MOODLE_DOCKER_WWWROOT=$MOODLE_DOCKER_WWWROOT"
+echo "MOODLE_DOCKER_DB=$MOODLE_DOCKER_DB"
+echo "MOODLE_DOCKER_WEB_PORT=$MOODLE_DOCKER_WEB_PORT"
+echo "MOODLE_DOCKER_PHP_VERSION=$MOODLE_DOCKER_PHP_VERSION"
+echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
 
 # Start the containers
 ./bin/moodle-docker-compose up -d
@@ -245,7 +308,7 @@ export MOODLE_DOCKER_DB_PORT={}
 echo "Moodle is now available at http://localhost:{}"
 echo "Admin username: admin"
 echo "Admin password: test"
-"#, name, db_env, web_port_str, php_version, db_port_str, web_port_str);
+"#, name, name, abs_moodle_path.to_str().unwrap_or(""), db_env, web_port_str, php_version, db_port_str, web_port_str);
 
     let setup_script_path = moodle_docker_dir.join("setup.sh");
     let mut file = File::create(&setup_script_path)
@@ -270,13 +333,33 @@ echo "Admin password: test"
     // Instead of directly executing the setup.sh script, we'll run the docker compose commands one by one
     // to better handle potential hanging/freezing issues
     
-    // Write .env file so docker-compose picks up our environment settings
+    // Write .env file so docker-compose picks up our environment settings with absolute paths
     let env_file_path = moodle_docker_dir.join(".env");
     let moodle_www_root = moodle_docker_dir.join("moodle");
+    
+    // Ensure we use absolute paths for the moodle directory
+    // Try to get the canonical (real) path first
+    let abs_moodle_path = match moodle_www_root.canonicalize() {
+        Ok(canonical) => canonical,
+        Err(_) => {
+            // If canonicalize fails (e.g., path doesn't exist yet), we'll create the directory first
+            if !moodle_www_root.exists() {
+                create_dir_all(&moodle_www_root)
+                    .map_err(|e| format!("Failed to create moodle directory: {}", e))?;
+            }
+            // Now try again or fall back to the original path
+            moodle_www_root.canonicalize().unwrap_or_else(|_| moodle_www_root.clone())
+        }
+    };
+    
+    // Log for debugging
+    println!("Setting MOODLE_DOCKER_WWWROOT to absolute path: {}", abs_moodle_path.display());
+    println!("Directory exists: {}", abs_moodle_path.exists());
+    
     let env_content = format!(
         "COMPOSE_PROJECT_NAME={}\nMOODLE_DOCKER_WWWROOT={}\nMOODLE_DOCKER_DB={}\nMOODLE_DOCKER_WEB_PORT={}\nMOODLE_DOCKER_PHP_VERSION={}\nMOODLE_DOCKER_DB_PORT={}\n",
         name,
-        moodle_www_root.to_str().unwrap_or(""),
+        abs_moodle_path.to_str().unwrap_or(""),
         db_env,
         web_port_str,
         php_version,
@@ -307,13 +390,61 @@ volumes:
     println!("Attempting to start Docker containers for site: {}", name);
     safe_emit(&app_handle, "site_creation_progress", format!("Starting Docker containers for {}", name));
     
-    let start_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_WEB_PORT={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose up -d"#,
-        moodle_docker_dir.to_str().unwrap_or(""),
+    // Ensure we use absolute paths for the moodle directory
+    let moodle_www_root = moodle_docker_dir.join("moodle");
+    let abs_moodle_path = moodle_www_root.canonicalize()
+        .unwrap_or_else(|_| moodle_www_root.clone());
+    
+    // Log the absolute Moodle path for debugging
+    println!("Using Moodle directory at: {}", abs_moodle_path.display());
+    println!("Directory exists: {}", abs_moodle_path.exists());
+    
+    // Write a dedicated script that explicitly exports all required variables with correct paths
+    let docker_script_path = moodle_docker_dir.join("docker-env.sh");
+    let docker_script_content = format!(r#"#!/bin/bash
+# This file is automatically generated - do not edit
+export COMPOSE_PROJECT_NAME="{}"
+export MOODLE_DOCKER_WWWROOT="{}"
+export MOODLE_DOCKER_DB="{}"
+export MOODLE_DOCKER_WEB_PORT="{}"
+export MOODLE_DOCKER_PHP_VERSION="{}"
+export MOODLE_DOCKER_DB_PORT="{}"
+
+# Print environment for debugging
+echo "Moodle Docker Environment:"
+echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
+echo "MOODLE_DOCKER_WWWROOT=$MOODLE_DOCKER_WWWROOT"
+echo "MOODLE_DOCKER_DB=$MOODLE_DOCKER_DB"
+echo "MOODLE_DOCKER_WEB_PORT=$MOODLE_DOCKER_WEB_PORT"
+echo "MOODLE_DOCKER_PHP_VERSION=$MOODLE_DOCKER_PHP_VERSION"
+echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
+echo ""
+"#,
         name,
+        abs_moodle_path.to_str().unwrap_or(""),
         db_env,
         web_port.map_or("8000".to_string(), |p| p.to_string()),
         php_version,
         db_port.map_or("3306".to_string(), |p| p.to_string())
+    );
+    
+    // Write the docker environment script
+    fs::write(&docker_script_path, docker_script_content)
+        .map_err(|e| format!("Failed to write docker environment script: {}", e))?;
+    
+    // Make the script executable
+    let chmod_output = Command::new("chmod")
+        .args(["+x", docker_script_path.to_str().unwrap_or("docker-env.sh")])
+        .output()
+        .map_err(|e| format!("Failed to make docker environment script executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        return Err(format!("Failed to make docker environment script executable"));
+    }
+    
+    // Use the source command to properly load the environment variables
+    let start_cmd = format!(r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose up -d"#,
+        moodle_docker_dir.to_str().unwrap_or("")
     );
     
     // Execute the start command
@@ -334,12 +465,8 @@ volumes:
     // Wait for the database to be ready
     println!("Attempting to wait for database for site: {}", name);
     safe_emit(&app_handle, "site_creation_progress", format!("Waiting for database to be ready for {}", name));
-    let wait_db_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-wait-for-db"#,
-        moodle_docker_dir.to_str().unwrap_or(""),
-        name,
-        db_env,
-        php_version,
-        db_port.map_or("3306".to_string(), |p| p.to_string())
+    let wait_db_cmd = format!(r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-wait-for-db"#,
+        moodle_docker_dir.to_str().unwrap_or("")
     );
     
     // Execute the wait for db command
@@ -361,10 +488,8 @@ volumes:
         safe_emit(&app_handle, "site_creation_progress", format!("Failed while waiting for database for {}", name));
         // Try to get container logs to see what's happening
         println!("Getting container logs to diagnose the issue...");
-        let logs_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose logs db"#,
-            moodle_docker_dir.to_str().unwrap_or(""),
-            name,
-            db_port.map_or("3306".to_string(), |p| p.to_string())
+        let logs_cmd = format!(r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose logs db"#,
+            moodle_docker_dir.to_str().unwrap_or("")
         );
         
         let logs_output = Command::new("sh")
@@ -380,16 +505,63 @@ volumes:
         return Err(format!("Failed while waiting for database: {}", error_output));
     }
     
+    // Verify Docker containers are running properly before proceeding
+    println!("Verifying Docker containers before installing Moodle");
+    safe_emit(&app_handle, "site_creation_progress", format!("Verifying Docker containers for {}", name));
+    
+    // Check webserver container status
+    let verify_cmd = format!(r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose ps webserver | grep -q "Up ""#,
+        moodle_docker_dir.to_str().unwrap_or("")
+    );
+    
+    let verify_result = Command::new("sh")
+        .arg("-c")
+        .arg(&verify_cmd)
+        .output();
+    
+    let webserver_running = match verify_result {
+        Ok(output) => output.status.success(),
+        Err(_) => false
+    };
+    
+    if !webserver_running {
+        println!("Webserver container is not running, checking logs");
+        let logs_cmd = format!(r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose logs webserver"#,
+            moodle_docker_dir.to_str().unwrap_or("")
+        );
+        
+        let logs_output = Command::new("sh")
+            .arg("-c")
+            .arg(&logs_cmd)
+            .output();
+            
+        if let Ok(logs) = logs_output {
+            let logs_str = String::from_utf8_lossy(&logs.stdout).to_string();
+            println!("Webserver container logs: {}", logs_str);
+        }
+        
+        // Try restarting the container
+        safe_emit(&app_handle, "site_creation_progress", format!("Restarting webserver container for {}", name));
+        let restart_cmd = format!(r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose restart webserver"#,
+            moodle_docker_dir.to_str().unwrap_or("")
+        );
+        
+        let _ = Command::new("sh")
+            .arg("-c")
+            .arg(&restart_cmd)
+            .output();
+        
+        // Give it a moment to start up
+        std::thread::sleep(std::time::Duration::from_secs(5));
+    }
+    
     // Install Moodle
     println!("Attempting to install Moodle for site: {}", name);
     safe_emit(&app_handle, "site_creation_progress", format!("Installing Moodle for {}. This may take several minutes...", name));
-    // Use single quotes to properly quote arguments in bash
-    let install_cmd = format!(r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT=$PWD/moodle && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname='Docker Moodle' --shortname='docker_moodle' --summary='Docker Moodle site' --adminpass='test' --adminemail='admin@example.com'"#,
-        moodle_docker_dir.to_str().unwrap_or(""),
-        name,
-        db_env,
-        php_version,
-        db_port.map_or("3306".to_string(), |p| p.to_string())
+    
+    // Use our environment script and single quotes to properly quote arguments in bash
+    let install_cmd = format!(r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname='Docker Moodle' --shortname='docker_moodle' --summary='Docker Moodle site' --adminpass='test' --adminemail='admin@example.com'"#,
+        moodle_docker_dir.to_str().unwrap_or("")
     );
     
     println!("Executing command: {}", install_cmd);
@@ -541,9 +713,20 @@ pub fn get_docker_logs(app_handle: AppHandle, name: String, service: String) -> 
     let db_port_str = site.db_port.map_or("3306".to_string(), |p| p.to_string());
 
     println!(
-        "Executing './bin/moodle-docker-compose logs {}' in dir: {}. Env: COMPOSE_PROJECT_NAME={}, MOODLE_DOCKER_WWWROOT={}, MOODLE_DOCKER_DB={}, MOODLE_DOCKER_PHP_VERSION={}, MOODLE_DOCKER_WEB_PORT={}, MOODLE_DOCKER_DB_PORT={}",
+        "Fetching logs for service '{}' in site '{}'", 
         service,
-        moodle_docker_dir_str,
+        name
+    );
+
+    // Create environment script for this operation
+    let docker_env_script = format!(r#"#!/bin/bash
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT={}
+export MOODLE_DOCKER_DB={}
+export MOODLE_DOCKER_PHP_VERSION={}
+export MOODLE_DOCKER_WEB_PORT={}
+export MOODLE_DOCKER_DB_PORT={}
+"#,
         name,
         moodle_www_root_str,
         site.db_type.to_lowercase(),
@@ -551,19 +734,32 @@ pub fn get_docker_logs(app_handle: AppHandle, name: String, service: String) -> 
         web_port_str,
         db_port_str
     );
-
-    let output = Command::new("./bin/moodle-docker-compose")
-        .current_dir(moodle_docker_dir_str) // Set the working directory
-        .env("COMPOSE_PROJECT_NAME", &name)
-        .env("MOODLE_DOCKER_WWWROOT", moodle_www_root_str)
-        .env("MOODLE_DOCKER_DB", site.db_type.to_lowercase())
-        .env("MOODLE_DOCKER_PHP_VERSION", &site.php_version)
-        .env("MOODLE_DOCKER_WEB_PORT", &web_port_str)
-        .env("MOODLE_DOCKER_DB_PORT", &db_port_str)
-        .arg("logs")
-        .arg(&service)
+    
+    let docker_env_path = site.path.join("docker-env-temp.sh");
+    fs::write(&docker_env_path, docker_env_script)
+        .map_err(|e| format!("Failed to create temporary environment script: {}", e))?;
+        
+    // Make it executable
+    Command::new("chmod")
+        .args(["+x", docker_env_path.to_str().unwrap_or("docker-env-temp.sh")])
+        .current_dir(&site.path)
         .output()
-        .map_err(|e| format!("Failed to execute log command './bin/moodle-docker-compose': {}", e))?;
+        .map_err(|e| format!("Failed to make environment script executable: {}", e))?;
+    
+    // Execute logs command with the environment variables
+    let logs_cmd = format!(r#"cd {} && source ./docker-env-temp.sh && ./bin/moodle-docker-compose logs {}"#,
+        moodle_docker_dir_str,
+        service
+    );
+    
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg(&logs_cmd)
+        .output()
+        .map_err(|e| format!("Failed to execute log command: {}", e))?;
+    
+    // Clean up the temporary script
+    let _ = fs::remove_file(&docker_env_path);
 
     if output.status.success() {
         let logs = String::from_utf8(output.stdout)
@@ -678,20 +874,34 @@ pub fn start_site(app_handle: AppHandle, name: String) -> Result<String, String>
         None => return Err(format!("Site '{}' not found", name)),
     };
     
+    // Get the absolute path to the moodle directory
+    let moodle_www_root = site.path.join("moodle");
+    let abs_moodle_path = moodle_www_root.canonicalize()
+        .unwrap_or_else(|_| moodle_www_root.clone());
+        
     // Set environment variables and start containers
     let script_content = format!(r#"#!/bin/bash
 cd {}
 export COMPOSE_PROJECT_NAME={}
-export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_WWWROOT={}
 export MOODLE_DOCKER_DB={}
 export MOODLE_DOCKER_WEB_PORT={}
 export MOODLE_DOCKER_DB_PORT={}
+
+# Echo environment for debugging
+echo "Environment variables:"
+echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
+echo "MOODLE_DOCKER_WWWROOT=$MOODLE_DOCKER_WWWROOT"
+echo "MOODLE_DOCKER_DB=$MOODLE_DOCKER_DB"
+echo "MOODLE_DOCKER_WEB_PORT=$MOODLE_DOCKER_WEB_PORT"
+echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
 
 # Start containers
 ./bin/moodle-docker-compose up -d
 "#, 
     site.path.to_str().unwrap_or(""),
     name,
+    abs_moodle_path.to_str().unwrap_or(""),
     site.db_type.to_lowercase(),
     site.web_port.unwrap_or(8000),
     site.db_port.unwrap_or(3306)
@@ -785,21 +995,36 @@ pub fn stop_site(app_handle: AppHandle, name: String) -> Result<String, String> 
         None => return Err(format!("Site '{}' not found", name)),
     };
     
+    // Get the absolute path to the moodle directory
+    let moodle_www_root = site.path.join("moodle");
+    let abs_moodle_path = moodle_www_root.canonicalize()
+        .unwrap_or_else(|_| moodle_www_root.clone());
+    
     // Set environment variables and stop containers
     let script_content = format!(r#"#!/bin/bash
 cd {}
 export COMPOSE_PROJECT_NAME={}
-export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_WWWROOT={}
 export MOODLE_DOCKER_DB={}
 export MOODLE_DOCKER_WEB_PORT={}
 export MOODLE_DOCKER_PHP_VERSION={}
 export MOODLE_DOCKER_DB_PORT={}
+
+# Echo environment for debugging
+echo "Environment variables:"
+echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
+echo "MOODLE_DOCKER_WWWROOT=$MOODLE_DOCKER_WWWROOT"
+echo "MOODLE_DOCKER_DB=$MOODLE_DOCKER_DB"
+echo "MOODLE_DOCKER_WEB_PORT=$MOODLE_DOCKER_WEB_PORT"
+echo "MOODLE_DOCKER_PHP_VERSION=$MOODLE_DOCKER_PHP_VERSION"
+echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
 
 # Stop containers
 ./bin/moodle-docker-compose down
 "#, 
     site.path.to_str().unwrap_or(""),
     name,
+    abs_moodle_path.to_str().unwrap_or(""),
     site.db_type.to_lowercase(),
     site.web_port.unwrap_or(8000),
     site.php_version,
@@ -1771,6 +1996,7 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
     file.write_all(stop_script.as_bytes())
         .map_err(|e| format!("Failed to write stop script: {}", e))?;
     
+    
     // Make the script executable
     let chmod_output = Command::new("chmod")
         .args(["+x", stop_script_path.to_str().unwrap_or("stop_for_update.sh")])
@@ -1798,12 +2024,19 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
         return Err(format!("Failed to stop site for update: {}", error));
     }
     
-    // Create update script with proper error handling
+    // Create update script
     let update_script = format!(r#"#!/bin/bash
 set -e
 cd {}
 
-# Save moodledata directory
+export COMPOSE_PROJECT_NAME={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_DB={}
+export MOODLE_DOCKER_PHP_VERSION={}
+export MOODLE_DOCKER_WEB_PORT={}
+export MOODLE_DOCKER_DB_PORT={}
+
+# Backup the existing moodledata directory if it exists
 if [ -d "moodledata" ]; then
     echo "Backing up moodledata directory..."
     mv moodledata moodledata_backup
@@ -1851,6 +2084,11 @@ fi
 echo "Successfully updated Moodle codebase to branch {}"
 "#, 
         site.path.to_str().unwrap_or(""),
+        name,
+        site.db_type,
+        new_php_version.as_ref().unwrap_or(&site.php_version),
+        site.web_port.unwrap_or(0),
+        site.db_port.unwrap_or(0),
         new_branch,
         new_branch
     );
