@@ -184,6 +184,23 @@ fn create_site_blocking(
                 .map_err(|e| format!("Failed to create directory '{}': {}", path.display(), e))?;
         }
         
+        // Check if the site directory already exists and contains files
+        if site_path.exists() {
+            // Read the directory to see if it has any files or folders
+            let dir_entries = fs::read_dir(&site_path)
+                .map_err(|e| format!("Failed to read site directory '{}': {}", site_path.display(), e))?;
+            
+            // Collect entries into a vector to check if directory is not empty
+            let entries: Vec<_> = dir_entries.collect::<Result<Vec<_>, _>>()
+                .map_err(|e| format!("Failed to read site directory entries '{}': {}", site_path.display(), e))?;
+            
+            if !entries.is_empty() {
+                return Err(format!("Site directory '{}' already exists and is not empty. Please choose a different site name.", site_path.display()));
+            }
+            
+            println!("Site directory exists but is empty. Will reuse it.");
+        }
+        
         site_path
     };
     
