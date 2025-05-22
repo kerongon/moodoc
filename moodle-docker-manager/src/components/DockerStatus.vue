@@ -1,15 +1,18 @@
 <template>
-  <div class="docker-status-card flex items-center gap-2">
+  <div class="docker-status-card flex items-center gap-2" style="display: flex; align-items: center; gap: 0.5rem;">
     <!-- Status indicator -->
-    <div v-if="!loading" class="status-indicator-compact">
-      <div v-if="dockerInstalled && dockerRunning" class="status-dot running"></div>
-      <div v-else-if="dockerInstalled && !dockerRunning" class="status-dot stopped"></div>
-      <div v-else class="status-dot not-installed"></div>
+    <div v-if="!loading" class="status-indicator-compact" style="display: flex; align-items: center;">
+      <div v-if="dockerInstalled && dockerRunning" class="status-dot running" 
+           style="width: 6px; height: 6px; border-radius: 50%; background-color: #22c55e; box-shadow: 0 0 4px rgba(34, 197, 94, 0.6);"></div>
+      <div v-else-if="dockerInstalled && !dockerRunning" class="status-dot stopped"
+           style="width: 6px; height: 6px; border-radius: 50%; background-color: #ef4444; box-shadow: 0 0 4px rgba(239, 68, 68, 0.6);"></div>
+      <div v-else class="status-dot not-installed"
+           style="width: 6px; height: 6px; border-radius: 50%; background-color: #f59e0b; box-shadow: 0 0 4px rgba(245, 158, 11, 0.6);"></div>
     </div>
 
     <!-- Text content -->
     <div>
-      <p class="status-text">
+      <p class="status-text" style="font-size: 0.7rem; font-weight: 500; margin: 0;">
         {{ loading ? '...' : dockerRunning ? 'Running' : 'Stopped' }}
       </p>
     </div>
@@ -41,7 +44,13 @@ export default {
     }
   },
   mounted() {
+    console.log('DockerStatus component mounted');
     this.fetchDockerStatus();
+    
+    // Re-check status every 10 seconds
+    setInterval(() => {
+      this.fetchDockerStatus();
+    }, 10000);
   }
 };
 </script>
