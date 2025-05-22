@@ -93,11 +93,11 @@ fn main() {
         .manage(docker::SiteState(Mutex::new(HashMap::new())))
         .manage(docker::RunningUpdates::default())
         .setup(|app| {
-            // Use a simple timer to show main window and close splash
+            // Use a timer to show main window and close splash after animation completes
             let handle = app.handle();
             std::thread::spawn(move || {
-                // Wait a moment for splash to display
-                std::thread::sleep(std::time::Duration::from_millis(1500));
+                // Wait for animation to complete (5 seconds)
+                std::thread::sleep(std::time::Duration::from_secs(5));
                 
                 // Get window references after the delay
                 if let Some(main_window) = handle.get_window("main") {
