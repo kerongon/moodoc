@@ -205,14 +205,17 @@
               </div>
             </div>
             <div class="flex justify-between mt-0.5 text-xs">
-              <span v-if="dbPort && isDbPortInRange && isPortAvailable(dbPort)" class="text-green-600">
+              <span v-if="dbPort && isDbPortInRange && portAvailability[dbPort]" class="text-green-600">
                 Port {{ dbPort }} is available ✓
               </span>
               <span v-else-if="dbPort && !isDbPortInRange" class="text-red-600">
                 Port outside range {{ currentDbPortRange }}
               </span>
-              <span v-else-if="dbPort && !isPortAvailable(dbPort)" class="text-amber-600">
-                Port {{ dbPort }} may be in use ⚠️
+              <span v-else-if="dbPort && portAvailability[dbPort] === false" class="text-amber-600">
+                Port {{ dbPort }} is in use ⚠️
+              </span>
+              <span v-else-if="dbPort && portAvailability[dbPort] === undefined" class="text-gray-400">
+                Checking port availability...
               </span>
               <span class="text-gray-400">{{ dbType }} database</span>
             </div>
@@ -263,14 +266,17 @@
               </div>
             </div>
             <div class="flex justify-between mt-0.5 text-xs">
-              <span v-if="webPort && isWebPortInRange && isPortAvailable(webPort)" class="text-green-600">
+              <span v-if="webPort && isWebPortInRange && portAvailability[webPort]" class="text-green-600">
                 Port {{ webPort }} is available ✓
               </span>
               <span v-else-if="webPort && !isWebPortInRange" class="text-red-600">
                 Port outside range {{ currentWebPortRange }}
               </span>
-              <span v-else-if="webPort && !isPortAvailable(webPort)" class="text-amber-600">
-                Port {{ webPort }} may be in use ⚠️
+              <span v-else-if="webPort && portAvailability[webPort] === false" class="text-amber-600">
+                Port {{ webPort }} is in use ⚠️
+              </span>
+              <span v-else-if="webPort && portAvailability[webPort] === undefined" class="text-gray-400">
+                Checking port availability...
               </span>
               <span class="text-gray-400">Apache web server</span>
             </div>
@@ -809,7 +815,7 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { open } from '@tauri-apps/api/dialog';
 import { useSettingsStore } from '../stores/settings';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { PhSquare, PhList, PhGear, PhArrowLeft, PhArrowRight, PhArrowClockwise } from '@phosphor-icons/vue';
 import { eventBus } from '../utils/event-bus';
 import { appWindow } from '@tauri-apps/api/window';
@@ -872,6 +878,8 @@ export default {
       },
       // Site creation state
       createSiteInProgress: false,
+      // Port availability cache
+      portAvailability: {},
       // Custom settings for the Custom tab
       customRepoUrl: '',
       customBranch: '',
@@ -997,6 +1005,40 @@ export default {
     this.updatePHPVersion(); // Set initial PHP version based on default Moodle branch
     this.initializeAdvancedTabData(); // Initialize default values for the advanced tab
     this.checkPlatformCompatibility(); // Check if selected DB is compatible with current platform
+    
+    // Check port availability if ports are already set
+    if (this.webPort) {
+      this.checkPortAvailability(this.webPort);
+    }
+    if (this.dbPort) {
+      this.checkPortAvailability(this.dbPort);
+    }
+  },
+  watch: {
+    // Watch for changes to db port
+    dbPort: {
+      handler(newVal) {
+        this.onDbPortChanged(newVal);
+      }
+    },
+    
+    // Watch for changes to web port
+    webPort: {
+      handler(newVal) {
+        this.onWebPortChanged(newVal);
+      }
+    },
+    
+    // When DB type changes, clear port cache and check again if needed
+    dbType() {
+      // Clear the port availability cache when changing db type
+      this.portAvailability = {};
+      
+      if (this.dbPort) {
+        // If a port is already set, check its availability with new DB type
+        this.onDbPortChanged(this.dbPort);
+      }
+    }
   },
   methods: {
     // Window control methods
@@ -1073,34 +1115,77 @@ export default {
       })
     },
     
-    generateWebPort() {
+    async generateWebPort() {
       // Generate a random port within the web port range
       const min = this.portRanges.web.min;
       const max = this.portRanges.web.max;
-      this.webPort = Math.floor(Math.random() * (max - min + 1)) + min;
+      
+      // First try to find an available port
+      const availablePort = await this.findAvailableWebPort();
+      if (availablePort) {
+        this.webPort = availablePort;
+        return;
+      }
+      
+      // Fallback to random port if finding available port failed
+      const randomPort = Math.floor(Math.random() * (max - min + 1)) + min;
+      this.webPort = randomPort;
+      
+      // Check and cache its availability
+      this.checkPortAvailability(randomPort);
     },
     
-    generateDbPort() {
+    async generateDbPort() {
       // Generate a random port within the database-specific range
       const dbRange = this.portRanges.db[this.dbType] || { min: 3306, max: 3399 };
       const min = dbRange.min;
       const max = dbRange.max;
-      this.dbPort = Math.floor(Math.random() * (max - min + 1)) + min;
+      
+      // First try to find an available port
+      const availablePort = await this.findAvailableDbPort();
+      if (availablePort) {
+        this.dbPort = availablePort;
+        return;
+      }
+      
+      // Fallback to random port if finding available port failed
+      const randomPort = Math.floor(Math.random() * (max - min + 1)) + min;
+      this.dbPort = randomPort;
+      
+      // Check and cache its availability
+      this.checkPortAvailability(randomPort);
     },
     
-    // When db type changes, update the db port placeholder and clear the value if out of range
-    updateDbType() {
-      if (this.dbPort) {
-        const port = parseInt(this.dbPort);
-        const dbRange = this.portRanges.db[this.dbType] || { min: 0, max: 0 };
-        if (port < dbRange.min || port > dbRange.max) {
-          // Clear the port if it's out of the new range
-          this.dbPort = '';
+    // New functions for finding available ports
+    async findAvailableWebPort() {
+      const min = this.portRanges.web.min;
+      const max = this.portRanges.web.max;
+      
+      // Try sequential ports first for efficiency
+      for (let port = min; port <= max; port++) {
+        if (await this.isPortAvailable(port)) {
+          return port;
         }
       }
       
-      // Check platform compatibility with the selected database type
-      this.checkPlatformCompatibility();
+      // If no available port found, return null
+      return null;
+    },
+    
+    async findAvailableDbPort() {
+      const dbRange = this.portRanges.db[this.dbType] || { min: 3306, max: 3399 };
+      const min = dbRange.min;
+      const max = dbRange.max;
+      
+      // Try sequential ports first for efficiency
+      for (let port = min; port <= max; port++) {
+        if (await this.isPortAvailable(port)) {
+          return port;
+        }
+      }
+      
+      // If no available port found, return null
+      return null;
     },
     
     async checkPlatformCompatibility() {
@@ -1283,12 +1368,38 @@ export default {
         this.addLogMessage('Validating environment...');
         await invoke('validate_environment');
         
+        // Find available ports if none are specified
+        let webPort = this.webPort;
+        let dbPort = this.dbPort;
+        
+        if (!webPort) {
+          this.addLogMessage('Finding available web port...');
+          webPort = await this.findAvailableWebPort();
+          if (!webPort) {
+            this.addLogMessage('Failed to find available web port in the range ' + this.currentWebPortRange);
+            this.createSiteInProgress = false;
+            return;
+          }
+          this.addLogMessage(`Found available web port: ${webPort}`);
+        }
+        
+        if (!dbPort) {
+          this.addLogMessage('Finding available database port...');
+          dbPort = await this.findAvailableDbPort();
+          if (!dbPort) {
+            this.addLogMessage('Failed to find available database port in the range ' + this.currentDbPortRange);
+            this.createSiteInProgress = false;
+            return;
+          }
+          this.addLogMessage(`Found available ${this.dbType} database port: ${dbPort}`);
+        }
+        
         // Compile the settings from all tabs
         const siteConfig = {
           name: this.siteName,
           directory: this.useDefaultDirectory ? this.defaultDirectory : this.siteDirectory,
-          webPort: this.webPort || this.portRanges.web.min,
-          dbPort: this.dbPort || this.portRanges.db[this.dbType].min,
+          webPort: webPort,
+          dbPort: dbPort,
           dbType: this.dbType,
           useRedis: this.useRedis,
           // Custom tab settings
@@ -1426,16 +1537,77 @@ export default {
       const gitUrlRegex = /^(https?:\/\/|git@)([^\s:]+)(:|\/)([\w\-\.]+)\/([\w\-\.]+)(\.git)?$/;
       return gitUrlRegex.test(url);
     },
-    
-    // Check if a port is likely available
-    isPortAvailable(port) {
-      // This is a simplified check - in a real implementation, you would
-      // want to actually check if the port is in use
-      // For now, we'll randomly return true/false to simulate the check
-      // In production, this would call a Tauri function to check the port
+
+    // Check if a port is available using the Tauri function
+    async isPortAvailable(port) {
+      if (!port) return false;
+      try {
+        return await invoke('check_port_available', { port: parseInt(port) });
+      } catch (error) {
+        console.error('Error checking port availability:', error);
+        return false;
+      }
+    },
+
+    // Method to check and cache port availability
+    async checkPortAvailability(port) {
+      if (!port) return;
       
-      // Pseudo random availability based on port number
-      return (port % 10) !== 3; // Ports ending in 3 are "unavailable" for demo purposes
+      // Convert to number to ensure correct comparison
+      const portNumber = parseInt(port);
+      
+      try {
+        // Call the Rust function to check if port is available
+        const isAvailable = await invoke('check_port_available', { port: portNumber });
+        
+        // Cache the result
+        this.portAvailability = {
+          ...this.portAvailability,
+          [portNumber]: isAvailable
+        };
+        
+        return isAvailable;
+      } catch (error) {
+        console.error('Error checking port availability:', error);
+        // Cache the error result
+        this.portAvailability = {
+          ...this.portAvailability,
+          [portNumber]: false
+        };
+        return false;
+      }
+    },
+    
+    // When db port changes, check its availability
+    async onDbPortChanged(newPort) {
+      if (newPort && this.isDbPortInRange) {
+        await this.checkPortAvailability(newPort);
+      }
+    },
+    
+    // When web port changes, check its availability
+    async onWebPortChanged(newPort) {
+      if (newPort && this.isWebPortInRange) {
+        await this.checkPortAvailability(newPort);
+      }
+    },
+
+    // When db type changes, update the db port placeholder and clear the value if out of range
+    updateDbType() {
+      if (this.dbPort) {
+        const port = parseInt(this.dbPort);
+        const dbRange = this.portRanges.db[this.dbType] || { min: 0, max: 0 };
+        if (port < dbRange.min || port > dbRange.max) {
+          // Clear the port if it's out of the new range
+          this.dbPort = '';
+        } else {
+          // If port is still in range, check availability
+          this.checkPortAvailability(port);
+        }
+      }
+      
+      // Check platform compatibility with the selected database type
+      this.checkPlatformCompatibility();
     },
   }
 };

@@ -143,6 +143,7 @@ fn main() {
             docker::open_site_folder,
             docker::open_in_editor,
             docker::cancel_update,
+            docker::check_port_available,
             open_logs_window,
         ])
         .run(tauri::generate_context!())

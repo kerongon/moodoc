@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use tauri::{command, AppHandle, Manager, State};
 use std::sync::Mutex;
+use std::net::{TcpListener, SocketAddrV4, Ipv4Addr};
 
 // Helper function for safe event emission
 fn safe_emit<T: serde::Serialize + Clone>(app_handle: &AppHandle, event: &str, payload: T) {
@@ -2310,7 +2311,7 @@ echo "Moodle site updated and started successfully"
     let chmod_output = Command::new("chmod")
         .args(["+x", start_script_path.to_str().unwrap_or("start_updated.sh")])
         .output()
-        .map_err(|e| format!("Failed to make script executable: {}", e))?;
+        .map_err(|e| format!("Failed to make start script executable: {}", e))?;
     
     if !chmod_output.status.success() {
         let _ = fs::remove_file(&start_script_path);
@@ -2612,4 +2613,16 @@ pub fn open_in_editor(editor_name: String, path: String) -> Result<String, Strin
     }
     
     Ok(format!("Opened Moodle code in editor: {}", target_path_str))
+}
+
+#[command]
+pub fn check_port_available(port: u16) -> bool {
+    // Create a socket address for localhost with the specified port
+    let socket_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port);
+    
+    // Try to bind to the port - if successful, the port is available
+    match TcpListener::bind(socket_addr) {
+        Ok(_) => true, // Port is available
+        Err(_) => false, // Port is unavailable
+    }
 }
