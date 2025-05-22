@@ -16,6 +16,16 @@
           
           <!-- Header actions -->
           <div class="header-actions">
+            <button @click="goBack" class="header-nav-button" title="Go Back">
+              <PhArrowLeft class="button-icon" />
+            </button>
+            <button @click="goForward" class="header-nav-button" title="Go Forward">
+              <PhArrowRight class="button-icon" />
+            </button>
+            <button @click="reloadPage" class="header-nav-button" title="Reload Page">
+              <PhArrowClockwise class="button-icon" />
+            </button>
+
             <DockerStatus class="docker-status-button" />
             
             <router-link to="/create" class="new-site-button" title="Create New Site">
@@ -41,7 +51,7 @@
 <script>
 
 import { invoke } from '@tauri-apps/api/tauri';
-import { PhList, PhPlus, PhGear } from '@phosphor-icons/vue';
+import { PhList, PhPlus, PhGear, PhArrowLeft, PhArrowRight, PhArrowClockwise } from '@phosphor-icons/vue';
 import SiteList from './SiteList.vue';
 import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
@@ -54,7 +64,10 @@ export default {
     SettingsModal,
     PhList,
     PhPlus,
-    PhGear
+    PhGear,
+    PhArrowLeft,
+    PhArrowRight,
+    PhArrowClockwise
   },
   data() {
     return {
@@ -68,6 +81,15 @@ export default {
       if (modal && typeof modal.openModal === 'function') {
         modal.openModal();
       }
+    },
+    goBack() {
+      this.$router.go(-1);
+    },
+    goForward() {
+      this.$router.go(1);
+    },
+    reloadPage() {
+      window.location.reload();
     }
   },
   async mounted() {
@@ -158,7 +180,39 @@ export default {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+}
+
+.header-nav-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  color: #4b5563;
+  border: none;
+  padding: 0;
+}
+
+.dark .header-nav-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #d1d5db;
+}
+
+.header-nav-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark .header-nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.header-nav-button .button-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .new-site-button {
@@ -253,7 +307,17 @@ export default {
   }
   
   .header-actions {
-    gap: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .header-nav-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .header-nav-button .button-icon {
+    width: 16px;
+    height: 16px;
   }
 }
 </style>
