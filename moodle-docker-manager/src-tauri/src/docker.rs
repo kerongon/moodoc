@@ -2502,3 +2502,97 @@ fn is_update_cancelled(app_handle: &AppHandle, site_name: &str) -> bool {
     }
     false
 }
+
+// Function to open a site folder in a specific editor
+#[tauri::command]
+pub fn open_in_editor(editor_name: String, path: String) -> Result<String, String> {
+    // Check if the path exists
+    let path_buf = PathBuf::from(&path);
+    if !path_buf.exists() {
+        return Err(format!("Path does not exist: {}", path));
+    }
+    
+    // First, try to find the Moodle code directory
+    let moodle_dir = path_buf.join("moodle");
+    
+    // If the standard "moodle" directory exists, use it
+    let target_path = if moodle_dir.exists() && moodle_dir.is_dir() {
+        moodle_dir
+    } else {
+        // Try to find any directory that might contain Moodle code
+        // Look for index.php or version.php which are core Moodle files
+        let mut found_dir = None;
+        
+        // Try to read directory entries in the path
+        if let Ok(entries) = fs::read_dir(&path_buf) {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let entry_path = entry.path();
+                    if entry_path.is_dir() {
+                        // Check for index.php or version.php in this directory
+                        let index_php = entry_path.join("index.php");
+                        let version_php = entry_path.join("version.php");
+                        
+                        if index_php.exists() && version_php.exists() {
+                            found_dir = Some(entry_path);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // If we found a directory with Moodle files, use it; otherwise use the original path
+        found_dir.unwrap_or_else(|| path_buf.clone())
+    };
+    
+    let target_path_str = target_path.to_str().unwrap_or(&path);
+    
+    #[cfg(target_os = "macos")]
+    {
+        // On macOS, use "open -a" command
+        let output = Command::new("open")
+            .arg("-a")
+            .arg(&editor_name)
+            .arg(target_path_str)
+            .output()
+            .map_err(|e| format!("Failed to open in editor: {}", e))?;
+            
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(format!("Failed to open in editor: {}", error));
+        }
+    }
+    
+    #[cfg(target_os = "windows")]
+    {
+        // On Windows, try to open with the editor
+        // This is a simple implementation that assumes the editor name is the executable
+        let windows_path = target_path_str.replace("/", "\\"); // Replace forward slashes with backslashes
+        let output = Command::new(&editor_name)
+            .arg(&windows_path)
+            .output()
+            .map_err(|e| format!("Failed to open in editor: {}", e))?;
+            
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(format!("Failed to open in editor: {}", error));
+        }
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        // On Linux, try to run the editor directly
+        let output = Command::new(&editor_name)
+            .arg(target_path_str)
+            .output()
+            .map_err(|e| format!("Failed to open in editor: {}", e))?;
+            
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(format!("Failed to open in editor: {}", error));
+        }
+    }
+    
+    Ok(format!("Opened Moodle code in editor: {}", target_path_str))
+}

@@ -605,17 +605,28 @@ export default {
     // Open in selected code editor
     const openInEditor = async (path) => {
       try {
-        // retrieve editor executable from user settings
-        const editor = await invoke('get_setting', { key: 'editorPath' });
-        if (!editor) {
+        // retrieve editor executable from localStorage
+        const editorPath = localStorage.getItem('editorPath');
+        if (!editorPath) {
           return showError(
             'No editor configured',
             'Please set your code editor executable path in the application settings.'
           );
         }
-        // spawn the editor with the site path
-        const cmd = new Command(editor, [path]);
-        await cmd.spawn();
+        
+        // Extract the application name from the path (between last / and .app)
+        let appName = editorPath;
+        const match = editorPath.match(/\/([^\/]+)\.app\/?$/);
+        if (match && match[1]) {
+          appName = match[1];
+        }
+        
+        // Use Tauri's backend function to open the editor
+        // This assumes you'll create a Rust function called open_in_editor on the backend
+        await invoke('open_in_editor', { 
+          editorName: appName,
+          path: path 
+        });
       } catch (e) {
         console.error('Failed to open in editor:', e);
         showError('Open in Editor failed', String(e));

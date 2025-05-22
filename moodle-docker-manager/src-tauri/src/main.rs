@@ -141,6 +141,7 @@ fn main() {
             docker::open_backup_location,
             docker::update_moodle_version,
             docker::open_site_folder,
+            docker::open_in_editor,
             docker::cancel_update,
             open_logs_window,
         ])
