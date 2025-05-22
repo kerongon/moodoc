@@ -13,6 +13,9 @@
   "tauri": {
     "allowlist": {
       "all": false,
+      "window": {
+        "all": true
+      },
       "shell": {
         "all": true,
         "execute": true,
@@ -66,11 +69,11 @@
         "minWidth": 1100,
         "minHeight": 850,
         "resizable": true,
+        "decorations": false,
         "minimizable": false,
         "maximizable": true,
         "fullscreen": false
-      }
-    ,
+      },
       {
         "label": "splashscreen",
         "title": "Loading...",

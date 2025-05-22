@@ -2,8 +2,35 @@
   <div>
     <div class="dashboard-full bg-white dark:bg-gray-900 min-h-screen w-full p-0">
       <!-- Modern macOS-style header -->
-      <header class="app-header">
+      <header class="app-header" data-tauri-drag-region>
         <div class="header-content">
+          <div class="titlebar-left-controls">
+            <!-- Window Controls -->
+            <div class="window-controls">
+              <button @click="closeWindow" class="window-control-button close-button" title="Close">
+                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FF5F57" stroke="#E0443E" stroke-width="1"></circle></svg>
+              </button>
+              <button @click="minimizeWindow" class="window-control-button minimize-button" title="Minimize">
+                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FFBD2E" stroke="#DEA123" stroke-width="1"></circle></svg>
+              </button>
+              <button @click="toggleMaximizeWindow" class="window-control-button maximize-button" title="Maximize">
+                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#27C93F" stroke="#1AAB29" stroke-width="1"></circle></svg>
+              </button>
+            </div>
+            <!-- Navigation Controls -->
+            <div class="navigation-controls">
+              <button @click="goBack" class="header-nav-button" title="Go Back">
+                <PhArrowLeft class="button-icon" />
+              </button>
+              <button @click="goForward" class="header-nav-button" title="Go Forward">
+                <PhArrowRight class="button-icon" />
+              </button>
+              <button @click="reloadPage" class="header-nav-button" title="Reload Page">
+                <PhArrowClockwise class="button-icon" />
+              </button>
+            </div>
+          </div>
+
           <!-- Logo and app title -->
           <div class="app-branding">
             <div class="logo-container">
@@ -16,16 +43,6 @@
           
           <!-- Header actions -->
           <div class="header-actions">
-            <button @click="goBack" class="header-nav-button" title="Go Back">
-              <PhArrowLeft class="button-icon" />
-            </button>
-            <button @click="goForward" class="header-nav-button" title="Go Forward">
-              <PhArrowRight class="button-icon" />
-            </button>
-            <button @click="reloadPage" class="header-nav-button" title="Reload Page">
-              <PhArrowClockwise class="button-icon" />
-            </button>
-
             <DockerStatus class="docker-status-button" />
             
             <router-link to="/create" class="new-site-button" title="Create New Site">
@@ -39,7 +56,7 @@
           </div>
         </div>
       </header>
-      <div class="px-8 pb-8">
+      <div class="main-content px-8 pb-8">
         <SiteList ref="siteList" />
       </div>
     </div>
@@ -49,7 +66,7 @@
 </template>
 
 <script>
-
+import { appWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/tauri';
 import { PhList, PhPlus, PhGear, PhArrowLeft, PhArrowRight, PhArrowClockwise } from '@phosphor-icons/vue';
 import SiteList from './SiteList.vue';
@@ -90,6 +107,20 @@ export default {
     },
     reloadPage() {
       window.location.reload();
+    },
+    minimizeWindow() {
+      appWindow.minimize();
+    },
+    async toggleMaximizeWindow() {
+      const isMaximized = await appWindow.isMaximized();
+      if (isMaximized) {
+        appWindow.unmaximize();
+      } else {
+        appWindow.maximize();
+      }
+    },
+    closeWindow() {
+      appWindow.close();
     }
   },
   async mounted() {
@@ -106,6 +137,8 @@ export default {
 <style scoped>
 
 .dashboard-full {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   width: 100vw;
   background: inherit;
@@ -117,11 +150,22 @@ export default {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  padding: 1rem 1.5rem;
-  position: sticky;
+  padding: 0.75rem 1rem; /* Adjusted padding */
+  position: fixed; /* Changed to fixed */
   top: 0;
+  left: 0; /* Added left: 0 */
+  right: 0; /* Added right: 0 */
   z-index: 10;
   transition: all 0.3s ease;
+  height: 56px; /* Fixed height for title bar */
+  display: flex; /* Added for centering content vertically */
+  align-items: center; /* Added for centering content vertically */
+}
+
+.main-content {
+  padding-top: 72px; /* Height of header + some margin */
+  flex-grow: 1;
+  overflow-y: auto;
 }
 
 .dark .app-header {
@@ -134,31 +178,82 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1400px;
+  width: 100%; /* Changed from max-width to width 100% */
   margin: 0 auto;
+  padding: 0 0.5rem; /* Reduced horizontal padding inside content */
+}
+
+.titlebar-left-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Gap between window controls and nav controls */
+}
+
+.window-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 12px; /* Space after window controls */
+}
+
+.window-control-button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default; /* Changed from pointer to default for native feel */
+}
+
+/* Specific styles for each button to mimic macOS traffic lights */
+.close-button svg circle { fill: #FF5F57; stroke: #E0443E; }
+.minimize-button svg circle { fill: #FFBD2E; stroke: #DEA123; }
+.maximize-button svg circle { fill: #27C93F; stroke: #1AAB29; }
+
+/* Hide icons on hover for a cleaner look, show on parent hover */
+.window-control-button svg {
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.app-header:hover .window-control-button svg {
+  opacity: 1;
+}
+
+.navigation-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Reduced gap for nav buttons */
 }
 
 .app-branding {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  /* Centering the title - this might need adjustment based on other elements */
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .logo-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 32px; /* Slightly smaller logo */
+  height: 32px;
+  border-radius: 8px;
   background: linear-gradient(135deg, #4f46e5, #7c3aed);
   box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3);
 }
 
 .logo-icon {
   color: white;
-  width: 22px;
-  height: 22px;
+  width: 18px; /* Adjusted icon size */
+  height: 18px;
 }
 
 .title-container {
@@ -167,8 +262,8 @@ export default {
 }
 
 .app-title {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.1rem; /* Slightly smaller title for title bar */
+  font-weight: 600; /* Adjusted font weight */
   margin: 0;
   background: linear-gradient(90deg, #6366F1, #D946EF, #EC4899);
   -webkit-background-clip: text;
@@ -180,16 +275,16 @@ export default {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem; /* Reduced gap */
 }
 
 .header-nav-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 28px; /* Smaller nav buttons */
+  height: 28px;
+  border-radius: 6px;
   background-color: rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
   color: #4b5563;
@@ -211,8 +306,8 @@ export default {
 }
 
 .header-nav-button .button-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px; /* Smaller icons in nav buttons */
+  height: 16px;
 }
 
 .new-site-button {
@@ -221,12 +316,12 @@ export default {
   gap: 0.5rem;
   background-color: #4f46e5;
   color: white;
-  padding: 0.5rem 1.25rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.95rem;
+  padding: 0.4rem 1rem; /* Adjusted padding */
+  border-radius: 6px;
+  font-weight: 500; /* Adjusted font weight */
+  font-size: 0.85rem; /* Adjusted font size */
   transition: all 0.2s ease;
-  box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);
 }
 
 .new-site-button:hover {
@@ -235,16 +330,16 @@ export default {
 }
 
 .button-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px; /* Adjusted default icon size */
+  height: 16px;
 }
 
 .settings-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 32px; /* Smaller settings button */
+  height: 32px;
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
@@ -269,27 +364,48 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.95rem;
+  padding: 0.4rem 1rem; /* Adjusted padding */
+  border-radius: 6px;
+  font-weight: 500; /* Adjusted font weight */
+  font-size: 0.85rem; /* Adjusted font size */
   background-color: #F3F4F6;
   color: #374151;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  min-height: 42px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-height: 32px; /* Adjusted min height */
 }
 .dark .docker-status-button {
   background-color: #1F2937;
   color: #D1D5DB;
 }
 
+@media (max-width: 768px) { /* Adjusted breakpoint */
+  .app-branding {
+    /* Hide app title on smaller screens if space is an issue */
+    /* You might want to only show the logo or a shorter title */
+    position: static; /* Remove absolute positioning */
+    transform: none; /* Remove transform */
+    margin-left: 10px; /* Add some margin if needed */
+  }
+  .app-title {
+    font-size: 1rem;
+  }
+  .header-actions {
+    /* Adjust layout or hide some actions if needed */
+  }
+}
+
 @media (max-width: 640px) {
   .app-header {
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem; /* Further reduced padding */
+    height: 52px; /* Slightly smaller height */
+  }
+
+  .main-content {
+    padding-top: 60px; /* Adjust accordingly */
   }
   
   .app-title {
-    font-size: 1.25rem;
+    font-size: 0.9rem; /* Smaller title */
   }
   
   .new-site-button span {
@@ -297,8 +413,8 @@ export default {
   }
   
   .new-site-button {
-    width: 42px;
-    height: 42px;
+    width: 32px; /* Smaller button */
+    height: 32px;
     padding: 0;
     display: flex;
     align-items: center;
@@ -307,17 +423,24 @@ export default {
   }
   
   .header-actions {
-    gap: 0.5rem;
+    gap: 0.25rem; /* Tighter gap */
   }
 
   .header-nav-button {
-    width: 32px;
-    height: 32px;
+    width: 26px; /* Smaller nav buttons */
+    height: 26px;
   }
 
   .header-nav-button .button-icon {
-    width: 16px;
-    height: 16px;
+    width: 14px; /* Smaller icons */
+    height: 14px;
+  }
+  .window-controls {
+    gap: 6px;
+    margin-right: 8px;
+  }
+  .titlebar-left-controls {
+    gap: 8px;
   }
 }
 </style>
