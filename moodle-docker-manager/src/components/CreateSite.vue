@@ -694,8 +694,8 @@
       </div>
     </form>
     
-    <!-- Logs -->
-    <div v-if="logs.length" class="mt-6 border-t border-gray-200 pt-4">
+    <!-- Logs section hidden for now, may be deleted later -->
+    <div v-if="false && logs.length" class="mt-6 border-t border-gray-200 pt-4">
       <button 
         type="button"
         @click="logsExpanded = !logsExpanded"
@@ -704,13 +704,11 @@
         <div class="flex items-center">
           <h3 class="text-sm font-medium text-gray-700 dark:text-gray-100">Logs</h3>
           <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">({{ logs.length }} entries)</span>
-          <!-- Show a badge for latest logs -->
           <span v-if="logs.length > 0 && !logsExpanded" class="ml-2 inline-block bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
             {{ logs[logs.length-1].substring(0, 30) }}{{ logs[logs.length-1].length > 30 ? '...' : '' }}
           </span>
         </div>
         <div class="flex items-center space-x-3">
-          <!-- Copy Logs Button -->
           <button
             v-if="logs.length > 0" 
             type="button"
@@ -730,7 +728,6 @@
             Copy
           </button>
           
-          <!-- Show/Hide Details -->
           <div class="flex items-center text-gray-500 text-xs">
             {{ logsExpanded ? 'Hide details' : 'Show details' }}
             <svg 
