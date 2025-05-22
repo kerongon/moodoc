@@ -213,14 +213,10 @@ export default {
 .minimize-button svg circle { fill: #FFBD2E; stroke: #DEA123; }
 .maximize-button svg circle { fill: #27C93F; stroke: #1AAB29; }
 
-/* Hide icons on hover for a cleaner look, show on parent hover */
+/* Always display the macOS traffic-light icons */
 .window-control-button svg {
-  opacity: 0;
+  opacity: 1 !important;
   transition: opacity 0.1s ease-in-out;
-}
-
-.app-header:hover .window-control-button svg {
-  opacity: 1;
 }
 
 .navigation-controls {
