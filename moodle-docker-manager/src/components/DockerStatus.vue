@@ -1,5 +1,10 @@
 <template>
-  <div class="docker-status-card flex items-center gap-2" style="display: flex; align-items: center; gap: 0.5rem;">
+  <div class="docker-status-card flex items-center gap-2" 
+       style="display: flex; align-items: center; gap: 0.5rem;"
+       :title="loading ? 'Checking Docker status...' : 
+               dockerInstalled && dockerRunning ? 'Docker is installed and running' : 
+               dockerInstalled ? 'Docker is installed but not running' : 
+               'Docker is not installed'">
     <!-- Status indicator -->
     <div v-if="!loading" class="status-indicator-compact" style="display: flex; align-items: center;">
       <div v-if="dockerInstalled && dockerRunning" class="status-dot running" 
