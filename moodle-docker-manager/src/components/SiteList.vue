@@ -198,30 +198,36 @@
 
       <!-- pagination -->
       <div
-        class="mt-3 flex items-center justify-center space-x-1"
+        v-if="totalPages > 0"
+        class="mt-4 flex items-center justify-between"
         role="navigation"
         aria-label="Pagination"
       >
-        <button
-          @click="currentPage = Math.max(currentPage-1,1)"
-          :disabled="currentPage===1"
-          class="px-2 py-1 border rounded disabled:opacity-50 text-sm"
-        >Previous</button>
-        <button
-          v-for="page in totalPages"
-          :key="page"
-          @click="currentPage = page"
-          :class="[
-            'px-2 py-1 border rounded text-sm',
-            currentPage===page ? 'bg-primary text-white' : ''
-          ]"
-          aria-current="page"
-        >{{ page }}</button>
-        <button
-          @click="currentPage = Math.min(currentPage+1,totalPages)"
-          :disabled="currentPage===totalPages"
-          class="px-2 py-1 border rounded disabled:opacity-50 text-sm"
-        >Next</button>
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          Showing {{ paginatedSites.length }} of {{ sites.length }} sites
+        </div>
+        <div class="flex items-center space-x-1">
+          <button
+            @click="currentPage = Math.max(currentPage-1,1)"
+            :disabled="currentPage===1"
+            class="px-2 py-1 border rounded disabled:opacity-50 text-sm"
+          >Previous</button>
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            @click="currentPage = page"
+            :class="[
+              'px-2 py-1 border rounded text-sm',
+              currentPage===page ? 'bg-primary text-white' : ''
+            ]"
+            aria-current="page"
+          >{{ page }}</button>
+          <button
+            @click="currentPage = Math.min(currentPage+1,totalPages)"
+            :disabled="currentPage===totalPages"
+            class="px-2 py-1 border rounded disabled:opacity-50 text-sm"
+          >Next</button>
+        </div>
       </div>
     </div>
 
