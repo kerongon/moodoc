@@ -21,12 +21,18 @@
       </div>
       <div class="px-8">
         <div class="site-backups bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full my-4 p-4">
-          <!-- Breadcrumbs -->
-          <nav class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            <router-link to="/" class="hover:underline">Home</router-link>
-            <span class="mx-2">›</span>
-            <span>Site Backups</span>
-          </nav>
+          <!-- Breadcrumbs and Docker status -->
+          <div class="flex justify-between items-center mb-4">
+            <nav class="text-sm text-gray-600 dark:text-gray-400">
+              <router-link to="/" class="hover:underline">Home</router-link>
+              <span class="mx-2">›</span>
+              <span>Site Backups</span>
+            </nav>
+            <div class="docker-status-top">
+              <DockerStatus />
+            </div>
+          </div>
+
     <!-- Header - macOS style (more compact) -->
     <div class="flex items-center mb-5">
       <div class="bg-green-600 rounded-lg p-1.5 mr-3 shadow-sm">
@@ -484,8 +490,8 @@ export default {
 
 <style>
 .site-backups {
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
 }
 
 .compact-action-button {
@@ -510,7 +516,8 @@ export default {
   transition: color 0.15s ease, background-color 0.15s ease;
 }
 
-.error-details, .output-details {
+.error-details,
+.output-details {
   margin-top: 10px;
   border: 1px solid #fee2e2;
   border-radius: 6px;
@@ -526,7 +533,8 @@ export default {
   background-color: #fee2e2;
 }
 
-.error-title, .output-title {
+.error-title,
+.output-title {
   font-weight: 500;
   color: #dc2626;
   margin-bottom: 4px;
@@ -552,7 +560,8 @@ export default {
   color: #2563eb;
 }
 
-.error-content, .output-content {
+.error-content,
+.output-content {
   font-family: monospace;
   font-size: 0.75rem;
   white-space: pre-wrap;
