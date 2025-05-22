@@ -77,24 +77,35 @@
               index % 2 === 0
                 ? 'bg-white dark:bg-gray-800'
                 : 'bg-gray-50 dark:bg-gray-700',
-              { 'opacity-50 pointer-events-none': activeActionSite===site.name }
+              { 'opacity-50 pointer-events-none': activeActionSite===site.name },
+              { 'recently-created-site': isRecentlyCreated(site.name) }
             ]"
           >
             <td>
-              {{ site.name }}
-              <!-- Link to open site in browser -->
-              <a v-if="site.web_port"
-                 :href="`http://localhost:${site.web_port}`"
-                 :title="`http://localhost:${site.web_port}`"
-                 target="_blank"
-                 rel="noopener"
-                 class="ml-1">
-                <PhLinkSimple class="inline w-4 h-4 text-blue-500 hover:text-blue-700" />
-              </a>
-              <!-- Inline status indicator that shows when an action is in progress -->
-              <span v-if="activeActionSite === site.name" class="ml-2 text-xs text-blue-500 animate-pulse">
-                processing...
-              </span>
+              <div class="flex items-center">
+                <span class="site-name-container">
+                  {{ site.name }}
+                  <!-- New site indicator -->
+                  <span v-if="isRecentlyCreated(site.name)" 
+                        class="ml-1 text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200 py-0.5 px-1.5 rounded-full"
+                        :title="`Created at ${getCreationTime(site.name)}`">
+                    NEW
+                  </span>
+                </span>
+                <!-- Link to open site in browser -->
+                <a v-if="site.web_port"
+                   :href="`http://localhost:${site.web_port}`"
+                   :title="`http://localhost:${site.web_port}`"
+                   target="_blank"
+                   rel="noopener"
+                   class="ml-1">
+                  <PhLinkSimple class="inline w-4 h-4 text-blue-500 hover:text-blue-700" />
+                </a>
+                <!-- Inline status indicator that shows when an action is in progress -->
+                <span v-if="activeActionSite === site.name" class="ml-2 text-xs text-blue-500 animate-pulse">
+                  processing...
+                </span>
+              </div>
             </td>
             <td>{{ site.php_version }}</td>
             <td>{{ site.db_type }}</td>
@@ -318,11 +329,12 @@
 
 <script>
 import { invoke } from '@tauri-apps/api/tauri';
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
 import { Command } from '@tauri-apps/api/shell';
+import { cleanupRecentSites } from '../utils/notifications';
 
 export default {
   name: 'SiteList',
@@ -359,6 +371,39 @@ export default {
     const sortOrder = ref('asc');
     const currentPage = ref(1);
     const perPage = 10;
+
+    // Recently created sites tracking
+    const recentlyCreatedSites = ref({});
+    
+    // Check for recently created sites
+    const loadRecentlyCreatedSites = () => {
+      try {
+        // First, clean up old entries
+        cleanupRecentSites();
+        
+        // Then, load the freshly cleaned list
+        const storedRecent = localStorage.getItem('recentlyCreatedSites');
+        if (storedRecent) {
+          recentlyCreatedSites.value = JSON.parse(storedRecent);
+        }
+      } catch (err) {
+        console.error("Failed to load recently created sites:", err);
+      }
+    };
+    
+    // Check if a site was recently created (within last hour)
+    const isRecentlyCreated = (siteName) => {
+      return recentlyCreatedSites.value[siteName] !== undefined;
+    };
+    
+    // Get when a site was created (for tooltip)
+    const getCreationTime = (siteName) => {
+      const timestamp = recentlyCreatedSites.value[siteName];
+      if (!timestamp) return '';
+      
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString();
+    };
 
     // Initial load of site list
     const loadSites = async () => {
@@ -620,6 +665,8 @@ export default {
       loadSites();
       // Poll for status changes every 5 seconds without full re-render
       refreshTimer = setInterval(refreshStatuses, 5000);
+      // Load recently created sites from local storage
+      loadRecentlyCreatedSites();
     });
     onBeforeUnmount(() => clearInterval(refreshTimer));
     
@@ -647,6 +694,9 @@ export default {
       showErrorModal,
       errorContent,
       closeErrorModal,
+      // Recently created sites highlight
+      isRecentlyCreated,
+      getCreationTime,
       // New removal modal properties and methods
       showRemoveModal,
       siteToRemove,
@@ -656,7 +706,11 @@ export default {
       // Search, sort, and pagination properties
       searchQuery,
       sortKey, sortOrder, sort,
-      currentPage, totalPages, paginatedSites
+      currentPage, totalPages, paginatedSites,
+      // Recently created sites
+      recentlyCreatedSites,
+      isRecentlyCreated,
+      getCreationTime
     };
   }
 };
@@ -801,5 +855,32 @@ export default {
   font-weight: 500;
   margin-top: 0.5rem;
   transition: background-color 0.15s ease;
+}
+
+/* Highlight recently created sites */
+.recently-created-site {
+  position: relative;
+  animation: highlight-pulse 2s infinite;
+}
+
+.recently-created-site::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-left: 3px solid #10b981;
+  pointer-events: none;
+}
+
+@keyframes highlight-pulse {
+  0%, 100% { background-color: inherit; }
+  50% { background-color: rgba(16, 185, 129, 0.05); }
+}
+
+.site-name-container {
+  display: inline-flex;
+  align-items: center;
 }
 </style>

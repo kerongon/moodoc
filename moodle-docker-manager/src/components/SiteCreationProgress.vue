@@ -5,6 +5,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { confirm } from '@tauri-apps/api/dialog';
 import { useRouter } from 'vue-router';
 import { eventBus } from '../utils/event-bus';
+import { checkNotificationPermission, sendAppNotification, trackRecentSite } from '../utils/notifications';
 
 export default {
   name: 'SiteCreationProgress',
@@ -52,6 +53,7 @@ export default {
     const showLogs = ref(true);
     const creationSuccess = ref(false);
     const copySuccess = ref(false);
+    const notificationPermission = ref(false);
 
     // Time-based progress tracking
     const startTime = ref(Date.now());
@@ -88,7 +90,45 @@ export default {
 
     let unlisten = null;
 
+    // Function to check for notification permissions
+    const checkPermissions = async () => {
+      const permissionGranted = await checkNotificationPermission();
+      notificationPermission.value = permissionGranted;
+      console.log("Notification permission:", permissionGranted);
+      return permissionGranted;
+    };
+
+    // Function to send a notification when site is created
+    const sendSiteCreatedNotification = async () => {
+      if (!notificationPermission.value) {
+        const granted = await checkPermissions();
+        if (!granted) return;
+      }
+      
+      try {
+        // Create a notification with site information
+        const siteUrl = `http://localhost:${props.webPort}`;
+        
+        const success = await sendAppNotification(
+          "Site Creation Complete!",
+          `Your Moodle site "${props.siteName}" has been successfully created.\nClick to view site details.`
+        );
+        
+        if (success) {
+          console.log("Notification sent for site:", props.siteName);
+        }
+        
+        // Store the site creation timestamp in localStorage to show a visual indicator
+        trackRecentSite(props.siteName);
+      } catch (err) {
+        console.error("Failed to send notification:", err);
+      }
+    };
+
     const startSiteCreation = async () => {
+      // Check for notification permissions early
+      await checkPermissions();
+      
       // Listen for site creation progress events
       unlisten = await eventBus.listenForSiteCreationProgress((msg) => {
         logs.value.push({ time: new Date().toLocaleTimeString(), message: msg });
@@ -170,6 +210,9 @@ export default {
         animationPhase.value = 'complete';
         isCreating.value = false;
         creationSuccess.value = true;
+        
+        // Send notification when site is created successfully
+        await sendSiteCreatedNotification();
       } catch (err) {
         error.value = err;
         logs.value.push({ time: new Date().toLocaleTimeString(), message: `Error: ${err}` });
