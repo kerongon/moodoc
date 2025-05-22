@@ -233,9 +233,9 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  /* Centering the title - this might need adjustment based on other elements */
+  /* Adjusted position to avoid overlap with Docker Status */
   position: absolute;
-  left: 50%;
+  left: 40%; /* Changed from 50% to 40% to move it left */
   transform: translateX(-50%);
 }
 
