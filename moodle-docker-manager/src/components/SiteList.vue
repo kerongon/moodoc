@@ -78,19 +78,13 @@
                 ? 'bg-white dark:bg-gray-800'
                 : 'bg-gray-50 dark:bg-gray-700',
               { 'opacity-50 pointer-events-none': activeActionSite===site.name },
-              { 'recently-created-site': isRecentlyCreated(site.name) }
+              // { 'recently-created-site': isRecentlyCreated(site.name) }
             ]"
           >
             <td>
               <div class="flex items-center">
                 <span class="site-name-container">
                   {{ site.name }}
-                  <!-- New site indicator -->
-                  <span v-if="isRecentlyCreated(site.name)" 
-                        class="ml-1 text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200 py-0.5 px-1.5 rounded-full"
-                        :title="`Created at ${getCreationTime(site.name)}`">
-                    NEW
-                  </span>
                 </span>
                 <!-- Link to open site in browser -->
                 <a v-if="site.web_port"
@@ -136,6 +130,12 @@
               <span class="compact-status-badge" :class="{'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': site.status === 'running', 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': site.status !== 'running'}">
                 <span class="inline-block w-1.5 h-1.5 rounded-full mr-1" :class="{'bg-green-500': site.status === 'running', 'bg-gray-400': site.status !== 'running'}"></span>
                 {{ site.status }}
+              </span>
+              <!-- New site indicator -->
+              <span v-if="isRecentlyCreated(site.name)" 
+                    class="ml-1 text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200 py-0.5 px-1.5 rounded-full"
+                    :title="`Created at ${getCreationTime(site.name)}`">
+                NEW
               </span>
             </td>
             <td class="actions flex items-center space-x-2">
