@@ -8,6 +8,8 @@ import { useSettingsStore } from './stores/settings';
 import './index.css';
 // Import compact UI styles
 import './assets/compact-ui.css';
+// Import scrollbar hiding styles
+import './assets/hide-scrollbar.css';
 // Import compact UI fixes
 import './assets/compact-ui-fix.css';
 

@@ -267,7 +267,7 @@
     </div>
 
     <!-- Error Modal -->
-    <div v-if="showErrorModal" class="fixed inset-0 z-50 overflow-y-auto">
+    <div v-if="showErrorModal" class="fixed inset-0 z-50 overflow-y-auto hide-scrollbar">
       <div class="flex items-center justify-center min-h-screen px-4">
         <!-- Modal backdrop -->
         <div class="fixed inset-0 bg-black/50 transition-opacity" @click="closeErrorModal"></div>
@@ -316,7 +316,7 @@
     />
     
     <!-- Confirmation Modal for Site Removal -->
-    <div v-if="showRemoveModal" class="fixed inset-0 z-50 overflow-y-auto">
+    <div v-if="showRemoveModal" class="fixed inset-0 z-50 overflow-y-auto hide-scrollbar">
       <div class="flex items-center justify-center min-h-screen px-4">
         <!-- Modal backdrop -->
         <div class="fixed inset-0 bg-black/50 transition-opacity" @click="cancelRemove"></div>

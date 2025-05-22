@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-full bg-white dark:bg-gray-900 min-h-screen w-full p-0">
+  <div class="dashboard-full hide-scrollbar bg-white dark:bg-gray-900 min-h-screen w-full p-0">
     <!-- Modern macOS-style header (copied from Dashboard, no New Site button) -->
     <header class="app-header" data-tauri-drag-region>
       <div class="header-content">
@@ -49,7 +49,7 @@
         </div>
       </div>
     </header>
-    <div class="main-content px-8 pb-8">
+    <div class="main-content px-8 pb-8 hide-scrollbar">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto p-3 dark:text-gray-100 text-sm">
         <h2 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Create a New Moodle Site</h2>
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Configure and set up a new Moodle development environment</p>
@@ -1135,7 +1135,7 @@ export default {
         await navigator.clipboard.writeText(logText);
         
         // Update button to show success
-        button.innerHTML = '<svg class="w-3 h-3 mr-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>Copied!';
+        button.innerHTML = '<svg class="w-3 h-3 mr-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 01-1.414-1.414L7.586 10l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>Copied!';
         button.className = originalClass.replace('text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100', 'text-green-600 bg-green-50');
         
         // Show a brief notification in logs
@@ -1836,6 +1836,16 @@ h3.text-sm {
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+/* Hide scrollbar styles */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 }
 
 /* Hide scrollbar when not scrolling */

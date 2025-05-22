@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="dashboard-full bg-white dark:bg-gray-900 min-h-screen w-full p-0">
+    <div class="dashboard-full hide-scrollbar bg-white dark:bg-gray-900 min-h-screen w-full p-0">
       <!-- Modern macOS-style header -->
       <header class="app-header" data-tauri-drag-region>
         <div class="header-content">
@@ -53,7 +53,7 @@
           </div>
         </div>
       </header>
-      <div class="main-content px-8 pb-8">
+      <div class="main-content px-8 pb-8 hide-scrollbar">
         <SiteList ref="siteList" />
       </div>
     </div>

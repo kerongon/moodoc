@@ -1,0 +1,28 @@
+/* Hide scrollbar for all browsers in CreateSite page */
+.dashboard-full.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.dashboard-full.hide-scrollbar::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+.dashboard-full.hide-scrollbar .main-content {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.dashboard-full.hide-scrollbar .main-content::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* For modal content areas */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}

@@ -383,7 +383,7 @@ export default {
             <span class="toggle-icon">{{ showLogs ? '▼' : '▶' }}</span>
           </div>
         </div>
-        <div class="logs-container" v-if="showLogs">
+        <div class="logs-container hide-scrollbar" v-if="showLogs">
           <div v-for="(log, index) in logs" :key="index" class="log-entry">
             <span class="log-time">{{ log.time }}</span>
             <span class="log-message">{{ log.message }}</span>
@@ -430,6 +430,8 @@ export default {
   max-height: 90vh;
   overflow-y: auto;
   display: flex;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
   flex-direction: column;
   gap: 20px;
   animation: modal-appear 0.3s ease-out;
@@ -441,6 +443,10 @@ export default {
   color: #f3f4f6;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 6px 10px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-content::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 }
 
 .modal-header {

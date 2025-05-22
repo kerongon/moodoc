@@ -6,7 +6,7 @@
         <button @click="closeModal" class="close-button">×</button>
       </div>
       
-      <div class="settings-body">
+      <div class="settings-body hide-scrollbar">
         <div class="setting-group mb-3">
           <h3 class="text-sm font-medium mb-1">Default Sites Directory</h3>
           <p class="setting-description text-xs mb-2">
