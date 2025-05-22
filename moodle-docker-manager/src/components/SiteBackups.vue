@@ -1,37 +1,66 @@
 <template>
   <div>
-    <!-- Main header from Dashboard -->
-    <div class="dashboard-full bg-white dark:bg-gray-800 min-h-screen w-full p-0">
-      <div class="flex items-center justify-between px-8 pt-8 pb-2">
-        <div class="flex items-center gap-3">
-          <PhList class="w-10 h-10 text-blue-500 drop-shadow" weight="fill" />
-          <h1 class="text-4xl font-extrabold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight flex items-center">
-            Moodle Docker Manager
-          </h1>
-        </div>
-        <div class="flex items-center gap-4">
-          <div class="docker-status-top">
-            <DockerStatus />
-          </div>
-          <router-link to="/create" class="create-site-btn flex items-center gap-2 text-white font-semibold rounded-lg px-4 py-2 text-base shadow transition-all duration-150" title="Create New Site">
-            <PhPlus class="w-5 h-5" weight="fill" />
-            <span class="sm:inline">New Site</span>
-          </router-link>
-        </div>
-      </div>
-      <div class="px-8">
-        <div class="site-backups bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full my-4 p-4">
-          <!-- Breadcrumbs and Docker status -->
-          <div class="flex justify-between items-center mb-4">
-            <nav class="text-sm text-gray-600 dark:text-gray-400">
-              <router-link to="/" class="hover:underline">Home</router-link>
-              <span class="mx-2">›</span>
-              <span>Site Backups</span>
-            </nav>
-            <div class="docker-status-top">
-              <DockerStatus />
+    <div class="dashboard-full hide-scrollbar bg-white dark:bg-gray-900 min-h-screen w-full p-0">
+      <!-- Modern macOS-style header (similar to CreateSite.vue, no New Site button) -->
+      <header class="app-header" data-tauri-drag-region>
+        <div class="header-content">
+          <div class="titlebar-left-controls">
+            <!-- Window Controls -->
+            <div class="window-controls">
+              <button @click="closeWindow" class="window-control-button close-button" title="Close">
+                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FF5F57" stroke="#E0443E" stroke-width="1"></circle></svg>
+              </button>
+              <button @click="minimizeWindow" class="window-control-button minimize-button" title="Minimize">
+                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FFBD2E" stroke="#DEA123" stroke-width="1"></circle></svg>
+              </button>
+              <button @click="toggleMaximizeWindow" class="window-control-button maximize-button" title="Maximize">
+                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#27C93F" stroke="#1AAB29" stroke-width="1"></circle></svg>
+              </button>
+            </div>
+            <!-- Navigation Controls -->
+            <div class="navigation-controls">
+              <button @click="goBack" class="header-nav-button" title="Go Back">
+                <PhArrowLeft class="button-icon" />
+              </button>
+              <button @click="goForward" class="header-nav-button" title="Go Forward">
+                <PhArrowRight class="button-icon" />
+              </button>
+              <button @click="reloadPage" class="header-nav-button" title="Reload Page">
+                <PhArrowClockwise class="button-icon" />
+              </button>
             </div>
           </div>
+
+          <!-- Logo and app title -->
+          <div class="app-branding">
+            <div class="logo-container">
+              <PhList class="logo-icon" weight="fill" />
+            </div>
+            <div class="title-container">
+              <h1 class="app-title">Moodle Docker Manager</h1>
+            </div>
+          </div>
+          <!-- Header actions -->
+          <div class="header-actions">
+            <DockerStatus class="docker-status-button" />
+            <button @click="openSettings" class="settings-button" title="Settings">
+              <PhGear class="button-icon" />
+            </button>
+          </div>
+        </div>
+      </header>
+      
+      <div class="main-content px-8 pb-8 hide-scrollbar">
+        <!-- Breadcrumbs -->
+        <div class="flex py-2 mb-2">
+          <nav class="text-sm text-gray-600 dark:text-gray-400">
+            <router-link to="/" class="hover:underline">Home</router-link>
+            <span class="mx-2">›</span>
+            <span>Site Backups</span>
+          </nav>
+        </div>
+        
+        <div class="site-backups bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full p-4">
 
     <!-- Header - macOS style (more compact) -->
     <div class="flex items-center mb-5">
@@ -221,8 +250,8 @@
         Back to Dashboard
       </button>
     </div>
-  </div> <!-- existing closing for .site-backups -->
-  </div> <!-- end of px-8 -->
+  </div> <!-- end of .site-backups -->
+  </div> <!-- end of .main-content -->
 </div> <!-- end of dashboard-full -->
 </div> <!-- end of root div -->
 </template>
@@ -230,7 +259,8 @@
 <script>
 import DockerStatus from './DockerStatus.vue';
 import { invoke } from '@tauri-apps/api/tauri';
-import { PhArchiveBox, PhPlus, PhArrowClockwise, PhFolderNotch, PhFolderOpen, PhTrash } from '@phosphor-icons/vue';
+import { appWindow } from '@tauri-apps/api/window';
+import { PhArchiveBox, PhPlus, PhArrowClockwise, PhFolderNotch, PhFolderOpen, PhTrash, PhArrowLeft, PhArrowRight, PhGear, PhList } from '@phosphor-icons/vue';
 
 export default {
   name: 'SiteBackups',
@@ -241,7 +271,11 @@ export default {
     PhArrowClockwise,
     PhFolderNotch,
     PhFolderOpen,
-    PhTrash
+    PhTrash,
+    PhArrowLeft,
+    PhArrowRight,
+    PhGear,
+    PhList
   },
   props: {
     siteName: {
@@ -265,6 +299,36 @@ export default {
     };
   },
   methods: {
+    // Window control methods
+    openSettings() {
+      // Use event bus to open settings modal
+      this.$router.push('/settings');
+    },
+    goBack() {
+      this.$router.go(-1);
+    },
+    goForward() {
+      this.$router.go(1);
+    },
+    reloadPage() {
+      window.location.reload();
+    },
+    minimizeWindow() {
+      appWindow.minimize();
+    },
+    async toggleMaximizeWindow() {
+      const isMaximized = await appWindow.isMaximized();
+      if (isMaximized) {
+        appWindow.unmaximize();
+      } else {
+        appWindow.maximize();
+      }
+    },
+    closeWindow() {
+      appWindow.close();
+    },
+    
+    // Existing backup methods
     async refreshBackups() {
       this.loading = true;
       this.error = null;
@@ -518,6 +582,7 @@ export default {
   transition: color 0.15s ease, background-color 0.15s ease;
 }
 
+/* Error and output message styling */
 .error-details,
 .output-details {
   margin-top: 10px;
@@ -581,5 +646,323 @@ export default {
   padding: 0.15rem 0.3rem;
   border-radius: 0.25rem;
   transition: all 0.15s ease;
+}
+
+/* Modern macOS-style header CSS */
+.dashboard-full {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100vw;
+  background: inherit;
+  padding: 0;
+}
+
+.app-header {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0.75rem 1rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  transition: all 0.3s ease;
+  height: 56px;
+  display: flex;
+  align-items: center;
+}
+
+.main-content {
+  padding-top: 72px;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.dark .app-header {
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 0.5rem;
+}
+
+.titlebar-left-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.window-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 12px;
+}
+
+.window-control-button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+/* Specific styles for each button to mimic macOS traffic lights */
+.close-button svg circle { fill: #FF5F57; stroke: #E0443E; }
+.minimize-button svg circle { fill: #FFBD2E; stroke: #DEA123; }
+.maximize-button svg circle { fill: #27C93F; stroke: #1AAB29; }
+
+/* Always display the macOS traffic-light icons */
+.window-control-button svg {
+  opacity: 1 !important;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.navigation-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-branding {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3);
+}
+
+.logo-icon {
+  color: white;
+  width: 18px;
+  height: 18px;
+}
+
+.title-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  background: linear-gradient(90deg, #6366F1, #D946EF, #EC4899);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.02em;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-nav-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  color: #4b5563;
+  border: none;
+  padding: 0;
+}
+
+.dark .header-nav-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #d1d5db;
+}
+
+.header-nav-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark .header-nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.header-nav-button .button-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.settings-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  color: #4b5563;
+}
+
+.dark .settings-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #d1d5db;
+}
+
+.settings-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: rotate(15deg);
+}
+
+.dark .settings-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.docker-status-button {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 50px;
+  font-weight: 500;
+  font-size: 0.75rem;
+  background-color: #F3F4F6;
+  color: #374151;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  min-height: 24px;
+  margin-right: 4px;
+}
+
+.dark .docker-status-button {
+  background-color: #1F2937;
+  color: #D1D5DB;
+}
+
+.button-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .app-branding {
+    position: static;
+    transform: none;
+    margin-left: 10px;
+  }
+  .app-title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    padding: 0.5rem 0.75rem;
+    height: 52px;
+  }
+  .main-content {
+    padding-top: 60px;
+  }
+  .app-title {
+    font-size: 0.9rem;
+  }
+  .header-actions {
+    gap: 0.25rem;
+  }
+  .header-nav-button {
+    width: 26px;
+    height: 26px;
+  }
+  .header-nav-button .button-icon {
+    width: 14px;
+    height: 14px;
+  }
+  .window-controls {
+    gap: 6px;
+    margin-right: 8px;
+  }
+  .titlebar-left-controls {
+    gap: 8px;
+  }
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .macos-input,
+  .macos-select {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: white !important;
+  }
+  
+  .macos-button-secondary {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #e5e7eb !important;
+  }
+  
+  .macos-button-primary {
+    background-color: #2563eb !important;
+  }
+  
+  .bg-gray-50 {
+    background-color: #1f2937 !important;
+  }
+  
+  .bg-gray-100 {
+    background-color: #1f2937 !important;
+  }
+  
+  .border-gray-200 {
+    border-color: #374151 !important;
+  }
+  
+  .text-gray-700 {
+    color: #e5e7eb !important;
+  }
+  
+  .text-gray-600 {
+    color: #d1d5db !important;
+  }
+  
+  .text-gray-500 {
+    color: #9ca3af !important;
+  }
+}
+
+/* Hide scrollbar styles */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 }
 </style>
