@@ -3,14 +3,77 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline';">
   <title>Loading...</title>
   <style>
-    body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f9fafb; }
-    .spinner { width: 64px; height: 64px; border: 8px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    body { 
+      margin: 0; 
+      display: flex; 
+      flex-direction: column;
+      justify-content: center; 
+      align-items: center; 
+      height: 100vh; 
+      background: #1a202c; /* Dark background */
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: 600;
+      color: #90cdf4; /* Light blue color */
+      margin-bottom: 8px;
+    }
+    
+    .spinner { 
+      width: 64px; 
+      height: 64px; 
+      border: 6px solid rgba(79, 70, 229, 0.2); /* Indigo with opacity */
+      border-top-color: #4f46e5; /* Solid indigo for spinner */
+      border-radius: 50%; 
+      animation: spin 1s linear infinite; 
+      box-shadow: 0 0 15px rgba(79, 70, 229, 0.3); /* Subtle glow */
+    }
+    
+    .status {
+      font-size: 14px;
+      color: #a0aec0; /* Lighter text */
+      margin-top: 8px;
+    }
+    
+    @keyframes spin { 
+      to { transform: rotate(360deg); } 
+    }
+    
+    /* Make sure the spinner is visible on any background */
+    @media (prefers-color-scheme: light) {
+      body {
+        background: #f9fafb;
+        color: #1a202c;
+      }
+      
+      .logo {
+        color: #4f46e5;
+      }
+      
+      .status {
+        color: #4a5568;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="spinner"></div>
+  <div class="container">
+    <div class="logo">Moodle Docker Manager</div>
+    <div class="spinner"></div>
+    <div class="status">Loading...</div>
+  </div>
 </body>
 </html>
