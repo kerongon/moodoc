@@ -59,13 +59,13 @@
               </span>
             </th>
             <th
-              @click="sort('php_version')"
-              :aria-sort="sortKey==='php_version'? sortOrder:'none'"
+              @click="sort('version_combined')"
+              :aria-sort="sortKey==='version_combined'? sortOrder:'none'"
               tabindex="0"
               class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
             >
-              PHP Version
-              <span v-if="sortKey === 'php_version'" class="ml-1">
+              Versions
+              <span v-if="sortKey === 'version_combined'" class="ml-1">
                 <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
                 <PhCaretDown v-else class="inline-block w-3 h-3" />
               </span>
@@ -141,7 +141,7 @@
                 </span>
               </div>
             </td>
-            <td>{{ site.php_version }}</td>
+            <td>{{ formatVersions(site) }}</td>
             <td>{{ site.db_type }}</td>
             <td :title="site.path">
               <span class="directory-path inline-block align-middle" :title="site.path">
@@ -643,6 +643,32 @@ export default {
       return `.../${parts.slice(-2).join('/')}/${filename}`;
     };
     
+    // Extract Moodle version from branch name
+    const extractMoodleVersion = (branchName) => {
+      if (!branchName) return 'N/A';
+      
+      // Common format: MOODLE_402_STABLE or MOODLE_311_STABLE
+      const parts = branchName.split('_');
+      if (parts.length >= 2) {
+        // Check if the second part is numeric
+        const versionPart = parts[1];
+        if (/^\d+$/.test(versionPart)) {
+          return versionPart;
+        }
+      }
+      
+      // Fallback for other formats
+      return branchName;
+    };
+    
+    // Format versions display as "MoodleVer / PHPVer"
+    const formatVersions = (site) => {
+      const moodleVer = extractMoodleVersion(site.moodle_branch);
+      const phpVer = site.php_version;
+      
+      return `${moodleVer} / ${phpVer}`;
+    };
+
     // Open local directory in system file explorer via backend
     const openDirectory = async (path) => {
       try {
@@ -687,18 +713,50 @@ export default {
     const filteredSites = computed(() =>
       sites.value.filter(s => {
         const q = searchQuery.value.toLowerCase();
-        return ['name','php_version','db_type','path','status']
-          .some(k => String(s[k]||'').toLowerCase().includes(q));
+        // Include moodle_branch in search fields and also search in the formatted version string
+        return ['name','php_version','moodle_branch','db_type','path','status']
+          .some(k => String(s[k]||'').toLowerCase().includes(q)) || 
+          formatVersions(s).toLowerCase().includes(q);
       })
     );
 
     const sortedSites = computed(() => {
       const arr = [...filteredSites.value];
       if (!sortKey.value) return arr;
+      
       return arr.sort((a,b) => {
+        // Special case for combined version sorting
+        if (sortKey.value === 'version_combined') {
+          // First sort by Moodle version, then by PHP version
+          const moodleVerA = extractMoodleVersion(a.moodle_branch);
+          const moodleVerB = extractMoodleVersion(b.moodle_branch);
+          
+          // Try to convert to numbers for numeric comparison
+          const numA = parseInt(moodleVerA);
+          const numB = parseInt(moodleVerB);
+          
+          if (!isNaN(numA) && !isNaN(numB)) {
+            // Primary sort by Moodle version (numeric)
+            if (numA !== numB) {
+              return sortOrder.value === 'asc' ? numA - numB : numB - numA;
+            }
+          } else if (moodleVerA !== moodleVerB) {
+            // Primary sort by Moodle version (string)
+            return sortOrder.value === 'asc' ? 
+              moodleVerA.localeCompare(moodleVerB) : 
+              moodleVerB.localeCompare(moodleVerA);
+          }
+          
+          // Secondary sort by PHP version
+          return sortOrder.value === 'asc' ? 
+            a.php_version.localeCompare(b.php_version) : 
+            b.php_version.localeCompare(a.php_version);
+        }
+        
+        // Default sort for other columns
         const A = String(a[sortKey.value]||'').toLowerCase();
         const B = String(b[sortKey.value]||'').toLowerCase();
-        return sortOrder.value==='asc' ? A.localeCompare(B) : B.localeCompare(A);
+        return sortOrder.value === 'asc' ? A.localeCompare(B) : B.localeCompare(A);
       });
     });
 
@@ -748,6 +806,8 @@ export default {
       hideUpdateModal,
       handleSiteUpdated,
       formatPath,
+      extractMoodleVersion,
+      formatVersions,
       openDirectory,
       openInEditor,
       updateModalVisible,
