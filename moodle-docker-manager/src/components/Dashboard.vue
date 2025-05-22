@@ -10,9 +10,6 @@
               <button @click="closeWindow" class="window-control-button close-button" title="Close">
                 <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FF5F57" stroke="#E0443E" stroke-width="1"></circle></svg>
               </button>
-              <button @click="minimizeWindow" class="window-control-button minimize-button" title="Minimize">
-                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FFBD2E" stroke="#DEA123" stroke-width="1"></circle></svg>
-              </button>
               <button @click="toggleMaximizeWindow" class="window-control-button maximize-button" title="Maximize">
                 <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#27C93F" stroke="#1AAB29" stroke-width="1"></circle></svg>
               </button>
