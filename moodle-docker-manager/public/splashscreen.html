@@ -13,6 +13,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
+      background: #1a202c; /* Dark background */
     }
     
     body { 
@@ -20,8 +21,7 @@
       flex-direction: column;
       justify-content: center; 
       align-items: center; 
-      height: 100vh; 
-      background: #1a202c; /* Dark background */
+      height: 100vh;
       color: white;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
@@ -30,34 +30,161 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
     }
     
     .logo {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: 600;
-      color: #90cdf4; /* Light blue color */
-      margin-bottom: 8px;
+      color: #90cdf4;
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-in forwards;
+      animation-delay: 3s;
     }
     
-    .spinner { 
-      width: 64px; 
-      height: 64px; 
-      border: 6px solid rgba(79, 70, 229, 0.2); /* Indigo with opacity */
-      border-top-color: #4f46e5; /* Solid indigo for spinner */
-      border-radius: 50%; 
-      animation: spin 1s linear infinite; 
-      box-shadow: 0 0 15px rgba(79, 70, 229, 0.3); /* Subtle glow */
+    .animation-container {
+      position: relative;
+      width: 300px;
+      height: 200px;
+    }
+    
+    .graduation-hat {
+      position: absolute;
+      left: -100px;
+      top: 50px;
+      width: 100px;
+      height: 60px;
+      background-color: #4f46e5;
+      animation: moveGraduationHat 3s forwards;
+    }
+    
+    .graduation-hat:before {
+      content: "";
+      position: absolute;
+      top: -25px;
+      left: 20px;
+      border-left: 30px solid transparent;
+      border-right: 30px solid transparent;
+      border-bottom: 25px solid #4f46e5;
+    }
+    
+    .graduation-hat:after {
+      content: "";
+      position: absolute;
+      top: -5px;
+      left: 45px;
+      width: 10px;
+      height: 30px;
+      background-color: #90cdf4;
+    }
+    
+    .server {
+      position: absolute;
+      right: -100px;
+      top: 40px;
+      width: 80px;
+      height: 120px;
+      background-color: #718096;
+      border-radius: 5px;
+      animation: moveServer 3s forwards;
+    }
+    
+    .server:before {
+      content: "";
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 60px;
+      height: 10px;
+      background-color: #4fd1c5;
+      border-radius: 2px;
+    }
+    
+    .server:after {
+      content: "";
+      position: absolute;
+      top: 30px;
+      left: 10px;
+      width: 60px;
+      height: 10px;
+      background-color: #4fd1c5;
+      border-radius: 2px;
+    }
+    
+    .merged {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
+      opacity: 0;
+      animation: showMerged 1s forwards;
+      animation-delay: 3s;
     }
     
     .status {
-      font-size: 14px;
-      color: #a0aec0; /* Lighter text */
-      margin-top: 8px;
+      font-size: 16px;
+      color: #a0aec0;
+      margin-top: 30px;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-in forwards;
+      animation-delay: 3.2s;
     }
     
-    @keyframes spin { 
+    @keyframes moveGraduationHat {
+      0% { left: -100px; opacity: 0; }
+      20% { opacity: 1; }
+      80% { left: 90px; top: 50px; opacity: 1; }
+      100% { left: 90px; top: 50px; opacity: 0; }
+    }
+    
+    @keyframes moveServer {
+      0% { right: -100px; opacity: 0; }
+      20% { opacity: 1; }
+      80% { right: 130px; top: 40px; opacity: 1; }
+      100% { right: 130px; top: 40px; opacity: 0; }
+    }
+    
+    @keyframes showMerged {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .spinner { 
+      width: 40px; 
+      height: 40px; 
+      border: 4px solid rgba(79, 70, 229, 0.2);
+      border-top-color: #4f46e5;
+      border-radius: 50%; 
+      animation: spin 1s linear infinite; 
+      box-shadow: 0 0 15px rgba(79, 70, 229, 0.3);
+      margin-top: 20px;
+      opacity: 0;
+      animation-name: spin, fadeIn;
+      animation-duration: 1s, 0.5s;
+      animation-timing-function: linear, ease-in;
+      animation-iteration-count: infinite, 1;
+      animation-fill-mode: none, forwards;
+      animation-delay: 3.5s, 3.5s;
+    }
+    
+    @keyframes spin {
       to { transform: rotate(360deg); } 
+    }
+    
+    /* SVG logo styling */
+    .logo-svg {
+      width: 120px;
+      height: 120px;
     }
     
     /* Make sure the spinner is visible on any background */
@@ -79,9 +206,31 @@
 </head>
 <body>
   <div class="container">
-    <div class="logo">Moodle Docker Manager</div>
+    <h1 class="logo">Moodle Docker Manager</h1>
+    
+    <div class="animation-container">
+      <div class="graduation-hat"></div>
+      <div class="server"></div>
+      <div class="merged">
+        <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- Server base -->
+          <rect x="25" y="30" width="50" height="60" rx="3" fill="#718096" />
+          <!-- Server details -->
+          <rect x="30" y="40" width="40" height="5" rx="1" fill="#4fd1c5" />
+          <rect x="30" y="50" width="40" height="5" rx="1" fill="#4fd1c5" />
+          <rect x="30" y="60" width="40" height="5" rx="1" fill="#4fd1c5" />
+          
+          <!-- Graduation cap -->
+          <polygon points="25,25 75,25 50,10" fill="#4f46e5" />
+          <rect x="35" y="25" width="30" height="10" fill="#4f46e5" />
+          <circle cx="50" cy="25" r="3" fill="#90cdf4" />
+          <line x1="50" y1="22" x2="50" y2="8" stroke="#90cdf4" stroke-width="2" />
+        </svg>
+      </div>
+    </div>
+    
+    <div class="status">Initializing application...</div>
     <div class="spinner"></div>
-    <div class="status">Loading...</div>
   </div>
 </body>
 </html>
