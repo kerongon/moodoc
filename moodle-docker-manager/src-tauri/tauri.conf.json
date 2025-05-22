@@ -74,7 +74,7 @@
       {
         "label": "splashscreen",
         "title": "Loading...",
-        "url": "/splashscreen.html",
+        "url": "splashscreen.html",
         "visible": true,
         "alwaysOnTop": true,
         "skipTaskbar": true,

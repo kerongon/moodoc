@@ -93,13 +93,19 @@ fn main() {
         .manage(docker::SiteState(Mutex::new(HashMap::new())))
         .manage(docker::RunningUpdates::default())
         .setup(|app| {
-            // Show main window and close splashscreen after a brief delay
+            // Use a simple timer to show main window and close splash
             let handle = app.handle();
             std::thread::spawn(move || {
-                std::thread::sleep(std::time::Duration::from_millis(1200));
-                if let (Some(main), Some(splash)) = (handle.get_window("main"), handle.get_window("splashscreen")) {
-                    let _ = main.show();
-                    let _ = splash.close();
+                // Wait a moment for splash to display
+                std::thread::sleep(std::time::Duration::from_millis(1500));
+                
+                // Get window references after the delay
+                if let Some(main_window) = handle.get_window("main") {
+                    let _ = main_window.show();
+                }
+                
+                if let Some(splash_window) = handle.get_window("splashscreen") {
+                    let _ = splash_window.close();
                 }
             });
             // Load any existing site configurations
