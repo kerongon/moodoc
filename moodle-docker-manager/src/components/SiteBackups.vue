@@ -10,9 +10,9 @@
               <button @click="closeWindow" class="window-control-button close-button" title="Close">
                 <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FF5F57" stroke="#E0443E" stroke-width="1"></circle></svg>
               </button>
-              <button @click="minimizeWindow" class="window-control-button minimize-button" title="Minimize">
+              <!-- <button @click="minimizeWindow" class="window-control-button minimize-button" title="Minimize">
                 <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FFBD2E" stroke="#DEA123" stroke-width="1"></circle></svg>
-              </button>
+              </button> -->
               <button @click="toggleMaximizeWindow" class="window-control-button maximize-button" title="Maximize">
                 <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#27C93F" stroke="#1AAB29" stroke-width="1"></circle></svg>
               </button>
@@ -254,10 +254,12 @@
   </div> <!-- end of .main-content -->
 </div> <!-- end of dashboard-full -->
 </div> <!-- end of root div -->
+  <SettingsModal ref="settingsModal" />
 </template>
 
 <script>
 import DockerStatus from './DockerStatus.vue';
+import SettingsModal from './SettingsModal.vue';
 import { invoke } from '@tauri-apps/api/tauri';
 import { appWindow } from '@tauri-apps/api/window';
 import { PhArchiveBox, PhPlus, PhArrowClockwise, PhFolderNotch, PhFolderOpen, PhTrash, PhArrowLeft, PhArrowRight, PhGear, PhList } from '@phosphor-icons/vue';
@@ -266,6 +268,7 @@ export default {
   name: 'SiteBackups',
   components: {
     DockerStatus,
+    SettingsModal,
     PhArchiveBox,
     PhPlus,
     PhArrowClockwise,
@@ -301,8 +304,10 @@ export default {
   methods: {
     // Window control methods
     openSettings() {
-      // Use event bus to open settings modal
-      this.$router.push('/settings');
+      const modal = this.$refs.settingsModal;
+      if (modal && typeof modal.openModal === 'function') {
+        modal.openModal();
+      }
     },
     goBack() {
       this.$router.go(-1);
