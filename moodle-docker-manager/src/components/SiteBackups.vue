@@ -1,5 +1,32 @@
 <template>
-  <div class="site-backups w-screen h-screen bg-white dark:bg-gray-800 shadow-none border-none p-0">
+  <div>
+    <!-- Main header from Dashboard -->
+    <div class="dashboard-full bg-white dark:bg-gray-800 min-h-screen w-full p-0">
+      <div class="flex items-center justify-between px-8 pt-8 pb-2">
+        <div class="flex items-center gap-3">
+          <PhList class="w-10 h-10 text-blue-500 drop-shadow" weight="fill" />
+          <h1 class="text-4xl font-extrabold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight flex items-center">
+            Moodle Docker Manager
+          </h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="docker-status-top">
+            <DockerStatus />
+          </div>
+          <router-link to="/create" class="create-site-btn flex items-center gap-2 text-white font-semibold rounded-lg px-4 py-2 text-base shadow transition-all duration-150" title="Create New Site">
+            <PhPlus class="w-5 h-5" weight="fill" />
+            <span class="sm:inline">New Site</span>
+          </router-link>
+        </div>
+      </div>
+      <div class="px-8">
+        <div class="site-backups bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full my-4 p-4">
+          <!-- Breadcrumbs -->
+          <nav class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <router-link to="/" class="hover:underline">Home</router-link>
+            <span class="mx-2">›</span>
+            <span>Site Backups</span>
+          </nav>
     <!-- Header - macOS style (more compact) -->
     <div class="flex items-center mb-5">
       <div class="bg-green-600 rounded-lg p-1.5 mr-3 shadow-sm">
@@ -188,7 +215,10 @@
         Back to Dashboard
       </button>
     </div>
-  </div>
+  </div> <!-- existing closing for .site-backups -->
+  </div> <!-- end of px-8 -->
+</div> <!-- end of dashboard-full -->
+</div> <!-- end of root div -->
 </template>
 
 <script>
