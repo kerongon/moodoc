@@ -50,27 +50,62 @@
               @click="sort('name')"
               :aria-sort="sortKey==='name'? sortOrder:'none'"
               tabindex="0"
-            >Site Name</th>
+              class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+            >
+              Site Name
+              <span v-if="sortKey === 'name'" class="ml-1">
+                <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
+                <PhCaretDown v-else class="inline-block w-3 h-3" />
+              </span>
+            </th>
             <th
               @click="sort('php_version')"
               :aria-sort="sortKey==='php_version'? sortOrder:'none'"
               tabindex="0"
-            >PHP Version</th>
+              class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+            >
+              PHP Version
+              <span v-if="sortKey === 'php_version'" class="ml-1">
+                <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
+                <PhCaretDown v-else class="inline-block w-3 h-3" />
+              </span>
+            </th>
             <th
               @click="sort('db_type')"
               :aria-sort="sortKey==='db_type'? sortOrder:'none'"
               tabindex="0"
-            >Database Type</th>
+              class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+            >
+              Database Type
+              <span v-if="sortKey === 'db_type'" class="ml-1">
+                <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
+                <PhCaretDown v-else class="inline-block w-3 h-3" />
+              </span>
+            </th>
             <th
               @click="sort('path')"
               :aria-sort="sortKey==='path'? sortOrder:'none'"
               tabindex="0"
-            >Directory</th>
+              class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+            >
+              Directory
+              <span v-if="sortKey === 'path'" class="ml-1">
+                <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
+                <PhCaretDown v-else class="inline-block w-3 h-3" />
+              </span>
+            </th>
             <th
               @click="sort('status')"
               :aria-sort="sortKey==='status'? sortOrder:'none'"
               tabindex="0"
-            >Status</th>
+              class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+            >
+              Status
+              <span v-if="sortKey === 'status'" class="ml-1">
+                <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
+                <PhCaretDown v-else class="inline-block w-3 h-3" />
+              </span>
+            </th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -342,7 +377,7 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass, PhFileText, PhCaretUp, PhCaretDown } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
 import { Command } from '@tauri-apps/api/shell';
 import { cleanupRecentSites } from '../utils/notifications';
@@ -360,7 +395,10 @@ export default {
     PhFolder,
     PhCode,
     UpdateSite,
-    PhMagnifyingGlass
+    PhMagnifyingGlass,
+    PhFileText,
+    PhCaretUp,
+    PhCaretDown
   },
   emits: ['action-start', 'action-end'],
   setup(props, { expose, emit }) {
