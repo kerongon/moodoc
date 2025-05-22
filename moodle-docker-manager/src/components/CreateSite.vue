@@ -691,7 +691,8 @@
         </div>
       </div>
       
-      <!-- Docker Status - more compact -->
+      <!-- Docker Status - more compact - commented out since it's already in the header -->
+      <!--
       <div class="flex items-center justify-between text-xs px-2 py-1 bg-gray-50 dark:bg-gray-700 rounded-md mb-2">
         <div class="text-gray-700 dark:text-gray-200 text-xs">Docker is installed and running</div>
         <div class="flex items-center">
@@ -699,6 +700,7 @@
           <span class="text-green-600 dark:text-green-400 text-xs">Active</span>
         </div>
       </div>
+      -->
       
       <!-- Form Errors -->
       <div v-if="formErrors.length > 0" class="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
