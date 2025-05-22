@@ -1,25 +1,30 @@
 <template>
   <div class="site-list-container bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full p-3 dark:text-gray-100 flex flex-col">
     <!-- Header - macOS style (more compact) -->
-    <div class="flex items-center mb-2">
-      <div class="bg-blue-600 rounded-lg p-1 mr-2 shadow-sm site-list-icon">
-        <PhList class="text-white w-5 h-5" weight="fill" />
+    <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center">
+        <div class="bg-blue-600 rounded-lg p-1 mr-2 shadow-sm site-list-icon">
+          <PhList class="text-white w-5 h-5" weight="fill" />
+        </div>
+        <div>
+          <h2 class="text-sm font-medium text-gray-900 dark:text-gray-100">Configured Sites</h2>
+          <p class="text-[10px] text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
+        </div>
       </div>
-      <div>
-        <h2 class="text-sm font-medium text-gray-900 dark:text-gray-100">Configured Sites</h2>
-        <p class="text-[10px] text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
-      </div>
-    </div>
 
-    <!-- search box -->
-    <div class="flex justify-end mb-2">
-      <input
-        type="search"
-        v-model="searchQuery"
-        placeholder="Search…"
-        aria-label="Search sites"
-        class="p-1 border rounded text-sm"
-      />
+      <!-- search box -->
+      <div class="relative">
+        <input
+          type="search"
+          v-model="searchQuery"
+          placeholder="Search sites..."
+          aria-label="Search sites"
+          class="p-2 pl-3 pr-10 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 w-64"
+        />
+        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+          <PhMagnifyingGlass class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+        </div>
+      </div>
     </div>
 
     <div class="site-list flex-1 overflow-x-auto">
@@ -331,7 +336,7 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
 import { Command } from '@tauri-apps/api/shell';
 import { cleanupRecentSites } from '../utils/notifications';
@@ -348,7 +353,8 @@ export default {
     PhLinkSimple,
     PhFolder,
     PhCode,
-    UpdateSite
+    UpdateSite,
+    PhMagnifyingGlass
   },
   emits: ['action-start', 'action-end'],
   setup(props, { expose, emit }) {
