@@ -363,15 +363,16 @@ export default {
 .docker-status-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 1rem; /* Adjusted padding */
-  border-radius: 6px;
-  font-weight: 500; /* Adjusted font weight */
-  font-size: 0.85rem; /* Adjusted font size */
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem; /* Reduced padding */
+  border-radius: 50px; /* Pill shape */
+  font-weight: 500; 
+  font-size: 0.75rem; /* Smaller font */
   background-color: #F3F4F6;
   color: #374151;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  min-height: 32px; /* Adjusted min height */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  min-height: 24px; /* Smaller height */
+  margin-right: 4px;
 }
 .dark .docker-status-button {
   background-color: #1F2937;
