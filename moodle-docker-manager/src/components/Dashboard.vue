@@ -235,8 +235,10 @@ export default {
   gap: 0.75rem;
   /* Adjusted position to avoid overlap with Docker Status */
   position: absolute;
-  left: 40%; /* Changed from 50% to 40% to move it left */
+  left: 50%; /* Changed from 50% to 40% to move it left */
   transform: translateX(-50%);
+  /* Add pointer-events: none to prevent it from blocking clicks on elements behind it */
+  pointer-events: none;
 }
 
 .logo-container {
