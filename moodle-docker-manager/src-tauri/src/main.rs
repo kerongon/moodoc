@@ -93,6 +93,15 @@ fn main() {
         .manage(docker::SiteState(Mutex::new(HashMap::new())))
         .manage(docker::RunningUpdates::default())
         .setup(|app| {
+            // Show main window and close splashscreen after a brief delay
+            let handle = app.handle();
+            std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_millis(1200));
+                if let (Some(main), Some(splash)) = (handle.get_window("main"), handle.get_window("splashscreen")) {
+                    let _ = main.show();
+                    let _ = splash.close();
+                }
+            });
             // Load any existing site configurations
             if let Err(err) = docker::load_site_configs(app) {
                 eprintln!("Failed to load site configurations: {}", err);

@@ -60,6 +60,7 @@
       {
         "label": "main",
         "title": "Moodle Docker Manager",
+        "visible": false,
         "width": 1100,
         "height": 850,
         "minWidth": 1100,
@@ -68,6 +69,20 @@
         "minimizable": false,
         "maximizable": true,
         "fullscreen": false
+      }
+    ,
+      {
+        "label": "splashscreen",
+        "title": "Loading...",
+        "url": "/splashscreen.html",
+        "visible": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "decorations": false,
+        "width": 600,
+        "height": 400,
+        "center": true
       }
     ]
   }
