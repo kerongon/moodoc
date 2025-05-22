@@ -1,7 +1,7 @@
 <template>
-  <div class="site-list-container bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full p-3 dark:text-gray-100 flex flex-col">
+  <div class="site-list-container bg-white dark:bg-gray-800 w-full dark:text-gray-100 flex flex-col">
     <!-- Header - macOS style (more compact) -->
-    <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center justify-between mb-3 px-4">
       <div class="flex items-center">
         <div class="bg-blue-600 rounded-lg p-1 mr-2 shadow-sm site-list-icon">
           <PhList class="text-white w-5 h-5" weight="fill" />
@@ -38,10 +38,10 @@
         <p>No sites have been created yet.</p>
         <router-link to="/create" class="compact-button bg-blue-600 text-white hover:bg-blue-700">Create a Site</router-link>
       </div>
-      <div v-else class="table-container bg-white dark:bg-gray-800 border border-gray-700 rounded-lg overflow-hidden mb-4">
-        <div class="overflow-x-auto">
+      <div v-else class="table-container w-full">
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
           <table
-            class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
+            class="w-full divide-y divide-gray-200 dark:divide-gray-700"
             role="table"
             aria-label="Configured Sites"
           >
@@ -52,7 +52,7 @@
                   @click="sort('name')"
                   :aria-sort="sortKey==='name'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/5"
                 >
                   Site Name
                   <span v-if="sortKey === 'name'" class="ml-1">
@@ -64,7 +64,7 @@
                   @click="sort('version_combined')"
                   :aria-sort="sortKey==='version_combined'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/6"
                 >
                   Versions
                   <span v-if="sortKey === 'version_combined'" class="ml-1">
@@ -76,9 +76,9 @@
                   @click="sort('db_type')"
                   :aria-sort="sortKey==='db_type'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/8"
                 >
-                  Database Type
+                  Database
                   <span v-if="sortKey === 'db_type'" class="ml-1">
                     <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
                     <PhCaretDown v-else class="inline-block w-3 h-3" />
@@ -88,7 +88,7 @@
                   @click="sort('path')"
                   :aria-sort="sortKey==='path'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/4"
                 >
                   Directory
                   <span v-if="sortKey === 'path'" class="ml-1">
@@ -100,7 +100,7 @@
                   @click="sort('status')"
                   :aria-sort="sortKey==='status'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/8"
                 >
                   Status
                   <span v-if="sortKey === 'status'" class="ml-1">
@@ -108,7 +108,7 @@
                     <PhCaretDown v-else class="inline-block w-3 h-3" />
                   </span>
                 </th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300">Actions</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/4">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -123,7 +123,7 @@
                   // { 'recently-created-site': isRecentlyCreated(site.name) }
                 ]"
               >
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-4 whitespace-nowrap">
                   <div class="flex items-center">
                     <span class="site-name-container text-sm font-medium text-gray-900 dark:text-white">
                       {{ site.name }}
@@ -143,9 +143,9 @@
                     </span>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ formatVersions(site) }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ site.db_type }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300" :title="site.path">
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ formatVersions(site) }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ site.db_type }}</td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300" :title="site.path">
                   <span class="directory-path inline-block align-middle" :title="site.path">
                     {{ formatPath(site.path) }}
                   </span>
@@ -168,7 +168,7 @@
                     <PhCode class="w-4 h-4 text-purple-500 hover:text-purple-700" />
                   </button>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-4 whitespace-nowrap">
                   <span class="compact-status-badge" :class="{'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': site.status === 'running', 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': site.status !== 'running'}">
                     <span class="inline-block w-1.5 h-1.5 rounded-full mr-1" :class="{'bg-green-500': site.status === 'running', 'bg-gray-400': site.status !== 'running'}"></span>
                     {{ site.status }}
@@ -180,8 +180,8 @@
                     NEW
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center space-x-2">
+                <td class="px-4 py-4 whitespace-nowrap">
+                  <div class="flex items-center space-x-1">
                     <!-- Start button with prominent spinner -->
                     <button v-if="site.status !== 'running'" 
                         @click="startSite(site.name)" 
