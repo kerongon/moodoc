@@ -228,12 +228,14 @@
 </template>
 
 <script>
+import DockerStatus from './DockerStatus.vue';
 import { invoke } from '@tauri-apps/api/tauri';
 import { PhArchiveBox, PhPlus, PhArrowClockwise, PhFolderNotch, PhFolderOpen, PhTrash } from '@phosphor-icons/vue';
 
 export default {
   name: 'SiteBackups',
   components: {
+    DockerStatus,
     PhArchiveBox,
     PhPlus,
     PhArrowClockwise,
