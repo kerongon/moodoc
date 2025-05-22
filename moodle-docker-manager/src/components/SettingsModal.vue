@@ -88,11 +88,11 @@
       <div class="modal-footer">
         <button @click="closeModal" class="cancel-button text-xs py-1 px-3">Cancel</button>
         <button 
-          @click="saveSettings" 
-          class="save-button text-xs py-1 px-3"
+          @click="resetSettings" 
+          class="reset-button text-xs py-1 px-3"
           :disabled="settingsStore.isLoading"
         >
-          Save
+          Reset
         </button>
       </div>
     </div>
@@ -109,8 +109,9 @@
  */
 import { ref, computed, onMounted, watch } from 'vue';
 import { useSettingsStore } from '../stores/settings';
-import { open } from '@tauri-apps/api/dialog';
+import { open, confirm } from '@tauri-apps/api/dialog';
 import { listen } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/tauri';
 
 export default {
   setup() {
@@ -126,6 +127,8 @@ export default {
     const currentEditor = computed(() => {
       return settingsStore.editorPath || '';
     });
+    
+    // Auto-save settings when they change
     
     // Watch for dark mode changes and apply them immediately
     watch(darkMode, (newMode) => {
@@ -150,6 +153,16 @@ export default {
       
       // Also update the store
       settingsStore.setDarkMode(newMode);
+    });
+    
+    // Auto-save directory when it changes
+    watch(sitesDirectory, (newDir) => {
+      settingsStore.setSitesRootDirectory(newDir);
+    });
+    
+    // Auto-save editor path when it changes
+    watch(editorPath, (newPath) => {
+      settingsStore.setEditorPath(newPath);
     });
     
     onMounted(async () => {
@@ -200,35 +213,46 @@ export default {
       }
     };
     
-    const saveSettings = async () => {
-      // Update all settings in the store
-      await settingsStore.setSitesRootDirectory(sitesDirectory.value);
-      await settingsStore.setDarkMode(darkMode.value);
-      await settingsStore.setEditorPath(editorPath.value);
-      
-      // Apply the dark mode setting immediately
-      if (window.ThemeManager) {
-        window.ThemeManager.applyTheme(darkMode.value);
-      } else {
-        settingsStore.applyDarkMode(true);
-      }
-      
-      // Verify settings were saved to localStorage as well
+    const resetSettings = async () => {
       try {
-        localStorage.setItem('theme', darkMode.value);
-        localStorage.setItem('sitesRootDirectory', sitesDirectory.value);
-        console.log('Settings also saved to localStorage');
-      } catch (e) {
-        console.warn('Could not save to localStorage:', e);
+        // Show confirmation dialog using Tauri's dialog API
+        const confirmed = await confirm(
+          'Are you sure you want to reset all settings to default values? This cannot be undone.',
+          {
+            title: 'Reset Settings',
+            type: 'warning'
+          }
+        );
+        
+        if (!confirmed) {
+          return; // User cancelled the reset
+        }
+        
+        // Call the store's resetSettings method
+        await settingsStore.resetSettings();
+        
+        // Update local refs with the reset values
+        sitesDirectory.value = settingsStore.sitesRootDirectory;
+        darkMode.value = settingsStore.darkMode;
+        editorPath.value = settingsStore.editorPath;
+        
+        console.log('Settings have been reset to default values');
+        
+        // Show success notification
+        try {
+          await invoke('show_notification', { 
+            title: 'Settings Reset', 
+            body: 'All settings have been reset to default values.' 
+          });
+        } catch (e) {
+          console.warn('Failed to show notification:', e);
+        }
+        
+        // Close the modal after reset
+        closeModal();
+      } catch (error) {
+        console.error('Failed to reset settings:', error);
       }
-      
-      console.log('Settings saved with values:', {
-        darkMode: darkMode.value,
-        sitesDirectory: sitesDirectory.value,
-        editorPath: editorPath.value
-      });
-      
-      closeModal();
     };
     
     const closeModal = () => {
@@ -252,7 +276,7 @@ export default {
       isVisible,
       selectDirectory,
       selectEditor,
-      saveSettings,
+      resetSettings,
       closeModal,
       openModal
     };
@@ -497,9 +521,9 @@ export default {
   color: #e5e7eb;
 }
 
-.save-button {
+.reset-button {
   padding: 5px 10px;
-  background-color: #0070f3;
+  background-color: #f59e0b;
   color: white;
   border: none;
   border-radius: 4px;
@@ -507,24 +531,24 @@ export default {
   cursor: pointer;
 }
 
-.dark .save-button {
-  background-color: #3b82f6;
+.dark .reset-button {
+  background-color: #d97706;
 }
 
-.save-button:hover {
-  background-color: #0060df;
+.reset-button:hover {
+  background-color: #d97706;
 }
 
-.dark .save-button:hover {
-  background-color: #2563eb;
+.dark .reset-button:hover {
+  background-color: #b45309;
 }
 
-.save-button:disabled {
-  background-color: #ccc;
+.reset-button:disabled {
+  background-color: #fcd34d;
   cursor: not-allowed;
 }
 
-.dark .save-button:disabled {
-  background-color: #6b7280;
+.dark .reset-button:disabled {
+  background-color: #fbbf24;
 }
 </style>

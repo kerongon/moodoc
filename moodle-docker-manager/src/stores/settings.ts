@@ -257,6 +257,71 @@ export const useSettingsStore = defineStore('settings', {
           document.body.style.setProperty('color', '#111827', 'important');
         }
       }
+    },
+
+    /**
+     * Reset all settings to default values and clear stored settings
+     */
+    async resetSettings() {
+      this.isLoading = true;
+      this.error = null;
+      
+      try {
+        console.log('Resetting all settings to default values');
+        
+        // Reset state to default values
+        this.sitesRootDirectory = '';
+        this.darkMode = 'system';
+        this.editorPath = '';
+        
+        // Clear localStorage
+        try {
+          localStorage.removeItem('theme');
+          localStorage.removeItem('sitesRootDirectory');
+          localStorage.removeItem('editorPath');
+          console.log('Cleared settings from localStorage');
+        } catch (e) {
+          console.warn('Could not clear localStorage:', e);
+        }
+        
+        // Delete settings file if possible
+        try {
+          const configDir = await appConfigDir();
+          const settingsPath = `${configDir}/settings.json`;
+          
+          // Check if the file exists first
+          const fileExists = await exists(settingsPath);
+          if (fileExists) {
+            // In Tauri API, there's no direct delete, so we overwrite with empty settings
+            await writeTextFile(
+              settingsPath,
+              JSON.stringify({
+                sitesRootDirectory: '',
+                darkMode: 'system',
+                editorPath: ''
+              }, null, 2)
+            );
+            console.log('Reset settings file at:', settingsPath);
+          }
+        } catch (error) {
+          console.error('Failed to reset settings file:', error);
+          this.error = `Failed to reset settings file: ${error}`;
+        }
+        
+        // Apply default theme
+        if (window.ThemeManager) {
+          window.ThemeManager.applyTheme('system');
+        } else {
+          this.applyDarkMode(true);
+        }
+        
+        console.log('Settings reset to defaults');
+      } catch (error) {
+        console.error('Error during settings reset:', error);
+        this.error = `Error during settings reset: ${error}`;
+      } finally {
+        this.isLoading = false;
+      }
     }
   }
 });
