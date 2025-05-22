@@ -93,17 +93,25 @@ fn main() {
         .manage(docker::SiteState(Mutex::new(HashMap::new())))
         .manage(docker::RunningUpdates::default())
         .setup(|app| {
-            // Use a timer to show main window and close splash after animation completes
+            // Use a timer for smoother transition between splash and main app
             let handle = app.handle();
             std::thread::spawn(move || {
-                // Wait for animation to complete (5 seconds)
-                std::thread::sleep(std::time::Duration::from_secs(5));
+                // Wait for animation to complete (6.5 seconds - longer for smoother experience)
+                std::thread::sleep(std::time::Duration::from_secs(6));
                 
-                // Get window references after the delay
+                // First trigger fade-out animation in splash screen
+                if let Some(splash_window) = handle.get_window("splashscreen") {
+                    let _ = splash_window.eval("document.body.classList.add('fade-out');");
+                    // Give the fade-out animation time to complete
+                    std::thread::sleep(std::time::Duration::from_millis(500));
+                }
+                
+                // Show main window after fade-out starts
                 if let Some(main_window) = handle.get_window("main") {
                     let _ = main_window.show();
                 }
                 
+                // Close splash window after fade-out completes
                 if let Some(splash_window) = handle.get_window("splashscreen") {
                     let _ = splash_window.close();
                 }
