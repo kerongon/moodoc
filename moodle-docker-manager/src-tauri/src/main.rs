@@ -96,14 +96,14 @@ fn main() {
             // Use a timer for smoother transition between splash and main app
             let handle = app.handle();
             std::thread::spawn(move || {
-                // Wait for animation to complete (6.5 seconds - longer for smoother experience)
-                std::thread::sleep(std::time::Duration::from_secs(6));
+                // Wait for animation to complete (7.5 seconds - longer for smoother experience)
+                std::thread::sleep(std::time::Duration::from_secs(7));
                 
                 // First trigger fade-out animation in splash screen
                 if let Some(splash_window) = handle.get_window("splashscreen") {
                     let _ = splash_window.eval("document.body.classList.add('fade-out');");
-                    // Give the fade-out animation time to complete
-                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    // Give the fade-out animation time to complete (800ms for smoother transition)
+                    std::thread::sleep(std::time::Duration::from_millis(800));
                 }
                 
                 // Show main window after fade-out starts
