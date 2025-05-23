@@ -1,14 +1,14 @@
 <template>
-  <div class="site-list-container bg-white dark:bg-gray-800 w-full dark:text-gray-100 flex flex-col">
+  <div class="site-list-container bg-white dark:bg-gray-900 w-full dark:text-gray-100 flex flex-col">
     <!-- Header - macOS style (more compact) -->
-    <div class="flex items-center justify-between mb-3 px-4">
+    <div class="flex items-center justify-between mb-3 px-4 pt-3">
       <div class="flex items-center">
-        <div class="bg-blue-600 rounded-lg p-1 mr-2 shadow-sm site-list-icon">
+        <div class="bg-indigo-600 rounded-lg p-1.5 mr-3 shadow-sm site-list-icon">
           <PhList class="text-white w-5 h-5" weight="fill" />
         </div>
         <div>
-          <h2 class="text-sm font-medium text-gray-900 dark:text-gray-100">Configured Sites</h2>
-          <p class="text-[10px] text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
+          <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">Configured Sites</h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
         </div>
       </div>
 
@@ -28,15 +28,30 @@
     </div>
 
     <div class="site-list flex-1 overflow-x-auto">
-      <div v-if="loading" class="loading text-xs">
+      <div v-if="loading" class="loading text-xs p-4 text-center">
         Loading sites...
       </div>
-      <div v-else-if="error" class="error text-xs">
+      <div v-else-if="error" class="error text-xs p-4 text-center text-red-500">
         {{ error }}
       </div>
-      <div v-else-if="sites.length === 0" class="no-sites text-xs">
-        <p>No sites have been created yet.</p>
-        <router-link to="/create" class="compact-button bg-blue-600 text-white hover:bg-blue-700">Create a Site</router-link>
+      <div v-else-if="sites.length === 0" 
+           class="flex-1 flex flex-col items-center justify-center p-6 text-center">
+        <div class="bg-white dark:bg-slate-800 p-8 sm:p-12 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 max-w-md mx-auto">
+          <div class="bg-indigo-500 dark:bg-indigo-600 p-4 rounded-lg inline-block mb-6 shadow-lg">
+            <PhCheckSquare class="w-12 h-12 text-white" weight="light" />
+          </div>
+          <h3 class="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-50">No sites have been created yet</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-8">
+            Get started by creating your first Moodle development site. You can configure multiple environments and manage them all from here.
+          </p>
+          <router-link 
+            to="/create" 
+            class="inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 transition-all duration-150 text-sm"
+          >
+            <PhPlus class="w-5 h-5 mr-2 -ml-1" weight="bold" />
+            Create a Site
+          </router-link>
+        </div>
       </div>
       <div v-else class="table-container w-full">
         <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -383,7 +398,7 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass, PhFileText, PhCaretUp, PhCaretDown } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass, PhFileText, PhCaretUp, PhCaretDown, PhCheckSquare, PhPlus } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
 import { Command } from '@tauri-apps/api/shell';
 import { cleanupRecentSites } from '../utils/notifications';
@@ -404,7 +419,9 @@ export default {
     PhMagnifyingGlass,
     PhFileText,
     PhCaretUp,
-    PhCaretDown
+    PhCaretDown,
+    PhCheckSquare, // Added
+    PhPlus         // Added
   },
   emits: ['action-start', 'action-end'],
   setup(props, { expose, emit }) {
