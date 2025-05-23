@@ -190,7 +190,7 @@
                   </span>
                   <!-- New site indicator -->
                   <span v-if="isRecentlyCreated(site.name)" 
-                        class="ml-1 text-xs bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200 py-0.5 px-1.5 rounded-full"
+                        class="ml-1 text-xs new-badge  bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200 py-0.5 px-1.5 rounded-full"
                         :title="`Created at ${getCreationTime(site.name)}`">
                     NEW
                   </span>
@@ -985,8 +985,22 @@ export default {
   display: inline-flex;
   align-items: center;
   padding: 0.125rem 0.375rem;
+  height: 1.5rem;
   border-radius: 0.25rem;
   font-size: 0.75rem; /* text-xs */
+}
+
+.new-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem; /* Match the height of the status badge */
+  vertical-align: middle;
+}
+
+/* If you need to adjust the vertical position further */
+td .compact-status-badge,
+td .new-badge {
+  vertical-align: middle;
 }
 
 .directory-path {
