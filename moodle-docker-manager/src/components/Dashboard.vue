@@ -17,10 +17,10 @@
             <!-- Navigation Controls -->
             <div class="navigation-controls">
               <button @click="goBack" class="header-nav-button" title="Go Back">
-                <PhArrowLeft class="button-icon" />
+                <span class="chevron">&lt;</span>
               </button>
               <button @click="goForward" class="header-nav-button" title="Go Forward">
-                <PhArrowRight class="button-icon" />
+                <span class="chevron">&gt;</span>
               </button>
               <button @click="reloadPage" class="header-nav-button" title="Reload Page">
                 <PhArrowClockwise class="button-icon" />
@@ -65,7 +65,7 @@
 <script>
 import { appWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/tauri';
-import { PhList, PhPlus, PhGear, PhArrowLeft, PhArrowRight, PhArrowClockwise, PhSquare } from '@phosphor-icons/vue';
+import { PhList, PhPlus, PhGear, PhArrowClockwise, PhSquare } from '@phosphor-icons/vue';
 import SiteList from './SiteList.vue';
 import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
@@ -79,8 +79,6 @@ export default {
     PhList,
     PhPlus,
     PhGear,
-    PhArrowLeft,
-    PhArrowRight,
     PhArrowClockwise,
     PhSquare
   },
@@ -247,6 +245,11 @@ export default {
 }
 .header-nav-button:hover {
   background: rgba(50, 56, 74, 0.95);
+}
+
+.chevron {
+  font-size: 16px;
+  font-weight: bold;
 }
 
 .app-branding {
