@@ -102,6 +102,39 @@ form.space-y-4 {
   position: relative !important;
 }
 
+/* Fix refresh button overlap with input fields in compact mode */
+.port-input {
+  padding-right: 40px !important; /* Space for the refresh button */
+}
+
+.generate-button {
+  position: absolute !important;
+  right: 6px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 28px !important;
+  height: 28px !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  z-index: 2 !important;
+  font-size: 14px !important;
+  color: #9CA3AF !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+.generate-button:hover {
+  color: #F9FAFB !important;
+  background-color: rgba(75, 85, 99, 0.3) !important;
+}
+
+/* Ensure number inputs have proper spacing */
+input[type="number"].port-input,
+input[type="text"].port-input {
+  padding-right: 40px !important;
+}
+
 .port-status {
   display: flex !important;
   justify-content: space-between !important;

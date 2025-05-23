@@ -2260,18 +2260,24 @@ input:checked + .toggle-switch-label::after {
   display: flex;
 }
 
+/* Ensure number inputs have proper spacing for refresh buttons */
+input[type="number"].port-input,
+input[type="text"].port-input {
+  padding-right: 45px !important;
+}
+
 .port-input {
   width: 100%;
-  padding-right: 40px;
+  padding-right: 45px; /* Increased from 40px to provide more space for the button */
 }
 
 .generate-button {
   position: absolute;
-  right: 4px;
+  right: 8px; /* Moved slightly left from 4px to 8px */
   top: 50%;
   transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
+  width: 32px; /* Slightly larger for better clickability */
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2282,6 +2288,7 @@ input:checked + .toggle-switch-label::after {
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 2; /* Ensure button stays above input field */
 }
 
 .generate-button:hover {
