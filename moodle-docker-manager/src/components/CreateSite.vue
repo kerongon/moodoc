@@ -48,15 +48,15 @@
         </div>
       </div>
     </header>
-    <div class="main-content px-8 pb-8 hide-scrollbar">
+    <div class="main-content px-4 pb-4 hide-scrollbar">
       <div class="create-site-container">
-        <div class="site-header flex items-center mb-6">
-          <div class="icon-container bg-gradient-to-r from-indigo-600 to-blue-500 p-2.5 rounded-xl mr-4 shadow-lg shadow-indigo-500/20">
-            <PhPlus class="text-white w-6 h-6" weight="fill" />
+        <div class="site-header flex items-center mb-4">
+          <div class="icon-container bg-gradient-to-r from-indigo-600 to-blue-500 p-2 rounded-xl mr-3 shadow-lg shadow-indigo-500/20">
+            <PhPlus class="text-white w-5 h-5" weight="fill" />
           </div>
           <div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Create a New Moodle Site</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Configure and set up a new Moodle development environment</p>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Create a New Moodle Site</h2>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Configure and set up a new Moodle development environment</p>
           </div>
         </div>
         
@@ -86,7 +86,7 @@
         </div>
     
     <!-- Form Content -->
-    <form @submit.prevent="createSite" class="space-y-4">
+    <form @submit.prevent="createSite" class="space-y-2">
         <!-- Tab content with transitions -->
         <transition name="tab-transition" mode="out-in">
         <!-- Standard Tab Content -->
@@ -116,7 +116,7 @@
         
         <div class="config-section version-config">
           <h3 class="section-title">Version Configuration</h3>
-          <div class="grid-container">
+          <div class="grid-container compact">
             <!-- Moodle Version -->
             <div class="form-group">
               <label for="moodleBranch" class="modern-form-label">
@@ -349,7 +349,7 @@
       <!-- Custom Tab Content -->
       <transition name="tab-transition" mode="out-in">
       <div v-if="activeTab === 'custom'" key="custom" class="form-content">
-        <div class="space-y-5">
+        <div class="space-y-3">
           <!-- Custom Moodle Repository -->
           <div class="config-section">
             <label for="customRepo" class="modern-form-label">
@@ -474,7 +474,7 @@
               <div class="section-icon">👤</div>
               Admin Account
             </h3>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-2 gap-2">
               <div>
                 <label for="adminUsername" class="modern-form-label">Username</label>
                 <input 
@@ -527,14 +527,14 @@
       <!-- Advanced Tab Content -->
       <transition name="tab-transition" mode="out-in">
       <div v-if="activeTab === 'advanced'" key="advanced" class="form-content">
-        <div class="space-y-5">
+        <div class="space-y-3">
           <!-- Docker Configuration -->
           <div class="config-section">
             <h3 class="section-title">
               <div class="section-icon">🐳</div>
               Docker Configuration
             </h3>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-2 gap-2">
               <div>
                 <label for="dockerNetwork" class="modern-form-label">Docker Network</label>
                 <input 
@@ -583,7 +583,7 @@
               <div class="section-icon">❯</div>
               PHP Configuration
             </h3>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-2 gap-2">
               <div>
                 <label for="phpVersion" class="modern-form-label">PHP Version</label>
                 <select id="phpVersion" v-model="phpVersion" class="modern-select">
