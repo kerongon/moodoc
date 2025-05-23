@@ -227,21 +227,26 @@ export default {
 }
 
 .header-nav-button {
-  background: none;
+  background: rgba(33, 37, 50, 0.95);
   border: none;
-  padding: 4px;
+  padding: 6px;
   margin: 0 2px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   color: #FFFFFF;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
 }
 .header-nav-button .button-icon {
-  width: 18px;
-  height: 18px;
-  display: block;
+  width: 16px;
+  height: 16px;
 }
 .header-nav-button:hover {
-  opacity: 0.7;
+  background: rgba(50, 56, 74, 0.95);
 }
 
 .app-branding {

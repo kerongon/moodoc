@@ -1754,35 +1754,28 @@ export default {
 }
 
 .header-nav-button {
+  background: rgba(33, 37, 50, 0.95);
+  border: none;
+  padding: 6px;
+  margin: 0 2px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: #FFFFFF;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background-color: rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-  color: #4b5563;
-  border: none;
-  padding: 0;
-}
-
-.dark .header-nav-button {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #d1d5db;
-}
-
-.header-nav-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.dark .header-nav-button:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+  transition: background-color 0.2s ease;
 }
 
 .header-nav-button .button-icon {
   width: 16px;
   height: 16px;
+}
+
+.header-nav-button:hover {
+  background: rgba(50, 56, 74, 0.95);
 }
 
 .settings-button {
