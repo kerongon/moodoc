@@ -127,9 +127,9 @@
 }
 
 .modern-settings-button:hover {
-  color: var(--settings-hover) !important;
-  background-color: rgba(99, 102, 241, 0.05) !important;
-  transform: translateY(-2px) !important;
+  color: var(--settings-color) !important; /* Changed from var(--settings-hover) */
+  background-color: transparent !important; /* Changed from rgba(99, 102, 241, 0.05) */
+  transform: rotate(15deg) !important; /* Changed from translateY(-2px) to rotate(15deg) */
 }
 
 .modern-settings-button .button-icon {
@@ -139,10 +139,10 @@
 }
 
 .modern-settings-button:hover .button-icon {
-  transform: rotate(90deg) !important;
-  color: var(--settings-hover) !important;
-   -webkit-filter: none !important;
-           filter: none !important;
+  transform: rotate(90deg) !important; /* Icon rotation remains */
+  color: var(--settings-color) !important; /* Changed from var(--settings-hover) */
+  -webkit-filter: none !important;
+  filter: none !important;
   /* -webkit-filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.5)) !important;
           filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.5)) !important; */
 }

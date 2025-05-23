@@ -346,16 +346,17 @@ export default {
 
 .settings-button:hover {
   color: #6366F1;
-  transform: rotate(15deg);
+  transform: rotate(15deg); /* Added back rotation */
 }
 
 .dark .settings-button:hover {
-  color: #a5b4fc;
+  color: #d1d5db; /* This is light gray, not purple, and matches default dark mode color */
 }
 
 .docker-status-button {
   display: flex;
   align-items: center;
+  gap: 0.3rem;
   gap: 0.3rem;
   padding: 0;
   border-radius: 0;
