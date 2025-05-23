@@ -67,7 +67,7 @@
         "width": 1000,
         "height": 775,
         "minWidth": 1000,
-        "minHeight": 750,
+        "minHeight": 775,
         "resizable": true,
         "decorations": false,
         "minimizable": false,
