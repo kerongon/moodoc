@@ -58,20 +58,20 @@ form.space-y-4 {
 
 /* Reduce section spacing */
 .config-section {
-  padding: 10px !important;
-  margin-bottom: 10px !important;
-  border-radius: 8px !important;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+  padding: 8px !important; /* was 10px */
+  margin-bottom: 8px !important; /* was 10px */
+  border-radius: 6px !important; /* was 8px */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important; /* reduced shadow */
 }
 
 /* Make the server configuration section more compact */
 .server-config {
-  padding: 8px !important;
+  padding: 6px !important; /* was 8px */
 }
 
 /* Port configuration */
 .config-subsection {
-  margin-bottom: 8px !important;
+  margin-bottom: 6px !important; /* was 8px */
 }
 
 .subsection-header {
@@ -172,27 +172,31 @@ input[type="text"].port-input {
 
 /* Smaller section titles */
 .section-title, .subsection-title {
-  font-size: 14px !important;
-  margin-bottom: 8px !important;
+  font-size: 13px !important; /* was 14px */
+  margin-bottom: 6px !important; /* was 8px */
+  display: flex !important;
+  align-items: center !important;
 }
 
 /* Reduce spacing in grid layouts */
 .grid {
-  gap: 8px !important;
+  gap: 6px !important; /* was 8px */
 }
 
 .grid-container {
-  gap: 8px !important;
+  gap: 6px !important; /* was 8px */
 }
 
 /* Make toggle containers more compact */
 .toggle-section {
-  padding: 6px !important;
+  padding: 4px !important; /* was 6px */
+  margin-bottom: 6px !important;
 }
 
 .toggle-container {
-  padding: 6px !important;
-  border-radius: 6px !important;
+  padding: 4px !important; /* was 6px */
+  border-radius: 5px !important; /* was 6px */
+  min-height: 54px !important; /* was 65px */
 }
 
 .toggle-content {
@@ -201,28 +205,62 @@ input[type="text"].port-input {
 
 .toggle-icon {
   font-size: 12px !important;
-  margin-right: 6px !important;
-  line-height: 1.2 !important;
-}
-
-.toggle-info {
-  line-height: 1.2 !important;
+  width: 20px !important;
+  height: 20px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .toggle-title {
   font-size: 12px !important;
-  margin-bottom: 0 !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
   line-height: 1.2 !important;
 }
 
 .toggle-description {
   font-size: 10px !important;
+  margin: 0 !important;
+  color: #6B7280 !important;
   line-height: 1.2 !important;
 }
 
 /* Toggle switch */
 .toggle-switch {
-  transform: scale(0.8) !important;
+  position: relative;
+  min-width: 46px !important; /* Force width - was 50px */
+  height: 22px !important; /* Force height - was 26px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px; /* Add spacing between text and toggle - was 10px */
+}
+
+.toggle-switch-label {
+  position: absolute;
+  width: 42px !important; /* Exact width - was 46px */
+  height: 18px !important; /* Exact height - was 22px */
+  background-color: rgba(31, 41, 55, 0.8);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch-label::after {
+  content: "";
+  position: absolute;
+  width: 14px !important; /* was 18px */
+  height: 14px !important; /* was 18px */
+  border-radius: 50%;
+  background-color: #9CA3AF;
+  top: 2px !important;
+  left: 2px !important;
+  transition: all 0.3s ease;
+}
+
+input:checked + .toggle-switch-label::after {
+  left: 26px !important; /* Adjusted to account for new width - was 26px */
 }
 
 /* Info messages */
@@ -333,119 +371,89 @@ input[type="text"].port-input {
 
 /* Reduce height of icon containers */
 .section-icon, .label-icon {
-  width: 18px !important;
-  height: 18px !important;
-  font-size: 12px !important;
-  margin-right: 6px !important;
+  width: 16px !important; /* was 18px */
+  height: 16px !important; /* was 18px */
+  font-size: 11px !important; /* was 12px */
+  margin-right: 5px !important; /* was 6px */
 }
 
 /* For Advanced tab */
 .mount-row, .env-var-row {
-  gap: 6px !important;
-  margin-bottom: 6px !important;
+  gap: 4px !important; /* was 6px */
+  margin-bottom: 4px !important; /* was 6px */
 }
 
-/* Directory Configuration styling */
-.directory-config {
-  padding: 8px !important;
-}
-
-.directory-input-row {
-  gap: 4px !important;
-  margin-bottom: 4px !important;
-}
-
-.browse-button {
-  padding: 0 8px !important;
+/* Make inputs for mounts and environment variables smaller */
+.mount-row input, .env-var-row input {
   font-size: 11px !important;
-  height: 28px !important;
+  padding: 3px 6px !important;
+  height: 24px !important;
+  min-height: 24px !important;
 }
 
-.directory-info {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-}
-
-.directory-path {
-  font-size: 10px !important;
-  margin: 0 !important;
-  line-height: 1.2 !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  white-space: nowrap !important;
-  max-width: 90% !important;
-}
-
-.reset-button {
-  font-size: 10px !important;
-  padding: 2px 6px !important;
-  height: auto !important;
-}
-
-/* Better form transitions */
-.tab-transition-enter-active,
-.tab-transition-leave-active {
-  transition: all 0.25s ease !important;
-}
-
-.tab-transition-enter-from,
-.tab-transition-leave-to {
-  opacity: 0 !important;
-  transform: translateY(15px) !important;
-}
-
-/* Additional styles to fix toggle switch issues */
-
-/* Fix Toggle Switch Appearance */
-.toggle-switch {
-  position: relative;
-  min-width: 50px !important; /* Force width */
-  height: 26px !important; /* Force height */
+.mount-separator, .env-var-separator {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 10px; /* Add more spacing between text and toggle */
+  width: 12px;
+  font-weight: bold;
+  color: #9CA3AF;
 }
 
-.toggle-switch-label {
-  position: absolute;
-  width: 46px !important; /* Exact width */
-  height: 22px !important; /* Exact height */
-  background-color: rgba(31, 41, 55, 0.8);
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.toggle-switch-label::after {
-  content: "";
-  position: absolute;
+/* Smaller remove buttons */
+.remove-item-button {
   width: 18px !important;
   height: 18px !important;
-  border-radius: 50%;
-  background-color: #9CA3AF;
-  top: 2px !important;
-  left: 2px !important;
-  transition: all 0.3s ease;
+  font-size: 10px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
 }
 
-input:checked + .toggle-switch-label::after {
-  left: 26px !important; /* Adjusted to account for new width */
+/* Smaller info message text */
+.info-message {
+  font-size: 10px !important;
+  margin-top: 2px !important;
+  color: #6B7280;
+  line-height: 1.2 !important;
 }
 
-/* Ensure toggle container has enough spacing */
-.toggle-container {
-  min-height: 65px !important; /* Force height to be consistent */
-  padding: 12px 15px !important; /* Add more horizontal padding */
+/* Extra compact version for volume mounts area */
+.config-section .section-header + p.info-message {
+  margin-top: 0 !important;
 }
 
-/* Fix alignment issues */
-.toggle-content {
-  gap: 10px !important; /* Add spacing between icon and text */
+/* Section header with add button */
+.section-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 6px !important;
 }
 
-/* Override any scaling */
-.toggle-section .toggle-switch {
-  transform: none !important; /* Remove any scaling that might be applied */
+/* Additional Volume Mounts styling */
+.config-section:has(.mount-row), 
+.config-section:has(.env-var-row) {
+  padding: 6px !important;
+}
+
+/* Additional styling for the volume mounts and env vars headers */
+.section-header h3.section-title {
+  font-size: 12px !important;
+  margin-bottom: 0 !important;
+}
+
+/* Add more compact margins to the volume mounts and env vars section */
+.config-section .mount-row:last-child,
+.config-section .env-var-row:last-child {
+  margin-bottom: 2px !important;
+}
+
+/* Make the info messages in volume mounts and env vars sections smaller */
+.config-section:has(.mount-row) .info-message,
+.config-section:has(.env-var-row) .info-message {
+  font-size: 9px !important;
+  margin-top: 1px !important;
+  padding: 0 2px !important;
 }
