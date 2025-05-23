@@ -426,7 +426,7 @@ export default {
     const sortKey = ref('');
     const sortOrder = ref('asc');
     const currentPage = ref(1);
-    const perPage = 10;
+    const perPage = 5;
 
     // Recently created sites tracking
     const recentlyCreatedSites = ref({});
