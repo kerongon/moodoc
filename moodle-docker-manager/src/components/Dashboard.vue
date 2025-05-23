@@ -223,7 +223,25 @@ export default {
 .navigation-controls {
   display: flex;
   align-items: center;
-  gap: 6px; /* Reduced gap for nav buttons */
+  gap: 6px;
+}
+
+.header-nav-button {
+  background: none;
+  border: none;
+  padding: 4px;
+  margin: 0 2px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.header-nav-button .button-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+.header-nav-button:hover {
+  opacity: 0.7;
 }
 
 .app-branding {
@@ -269,38 +287,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-}
-
-.header-nav-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px; /* Smaller nav buttons */
-  height: 28px;
-  border-radius: 6px;
-  background-color: rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-  color: #4b5563;
-  border: none;
-  padding: 0;
-}
-
-.dark .header-nav-button {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #d1d5db;
-}
-
-.header-nav-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.dark .header-nav-button:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-.header-nav-button .button-icon {
-  width: 16px; /* Smaller icons in nav buttons */
-  height: 16px;
 }
 
 .new-site-button {
@@ -372,7 +358,7 @@ export default {
   color: #4ade80;
 }
 
-@media (max-width: 768px) { /* Adjusted breakpoint */
+@media (max-width: 768px) {
   .app-branding {
     /* Hide app title on smaller screens if space is an issue */
     /* You might want to only show the logo or a shorter title */
@@ -383,19 +369,16 @@ export default {
   .app-title {
     font-size: 1rem;
   }
-  .header-actions {
-    /* Adjust layout or hide some actions if needed */
-  }
 }
 
 @media (max-width: 640px) {
   .app-header {
-    padding: 0.5rem 0.75rem; /* Further reduced padding */
-    height: 52px; /* Slightly smaller height */
+    padding: 0.5rem 0.75rem;
+    height: 52px;
   }
 
   .main-content {
-    padding-top: 60px; /* Adjust accordingly */
+    padding-top: 60px;
   }
   
   .app-title {
@@ -415,20 +398,17 @@ export default {
     justify-content: center;
     border-radius: 50%;
   }
-  
-  .header-actions {
-    gap: 0.25rem; /* Tighter gap */
-  }
 
   .header-nav-button {
-    width: 26px; /* Smaller nav buttons */
-    height: 26px;
+    width: 28px;
+    height: 28px;
   }
 
   .header-nav-button .button-icon {
-    width: 14px; /* Smaller icons */
-    height: 14px;
+    width: 16px;
+    height: 16px;
   }
+
   .window-controls {
     gap: 6px;
     margin-right: 8px;

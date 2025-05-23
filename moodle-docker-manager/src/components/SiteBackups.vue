@@ -792,35 +792,21 @@ export default {
 }
 
 .header-nav-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background-color: rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-  color: #4b5563;
+  background: none;
   border: none;
-  padding: 0;
+  padding: 4px;
+  margin: 0 2px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
 }
-
-.dark .header-nav-button {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #d1d5db;
-}
-
-.header-nav-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.dark .header-nav-button:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
 .header-nav-button .button-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+.header-nav-button:hover {
+  opacity: 0.7;
 }
 
 .settings-button {
