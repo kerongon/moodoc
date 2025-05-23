@@ -14,6 +14,10 @@ import './assets/hide-scrollbar.css';
 import './assets/compact-ui-fix.css';
 // Import modern button styles
 import './assets/modern-buttons.css';
+// Import create site compact styles
+import './assets/create-site-compact.css';
+// Import create site compact styles
+import './assets/create-site-compact.css';
 
 // Import icons
 import * as PhosphorIcons from '@phosphor-icons/vue';

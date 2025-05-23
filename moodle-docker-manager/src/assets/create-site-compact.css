@@ -1,0 +1,180 @@
+/* Ultra-compact styles for CreateSite.vue to fit within 850px viewport */
+
+/* Adjust the main content container */
+.create-site-container {
+  padding: 12px !important;
+  border-radius: 12px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Reduce header size */
+.app-header {
+  height: 42px !important;
+  min-height: 42px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Adjust main content padding */
+.main-content {
+  padding: 8px !important;
+  padding-top: 48px !important; /* Match header height + a bit of space */
+}
+
+/* Compact site header */
+.site-header {
+  margin-bottom: 10px !important;
+}
+
+.site-header .icon-container {
+  padding: 6px !important;
+  margin-right: 10px !important;
+}
+
+.site-header h2 {
+  font-size: 16px !important;
+  margin-bottom: 0px !important;
+}
+
+.site-header p {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+/* Make form more compact */
+form.space-y-4 {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Reduce section spacing */
+.config-section {
+  padding: 12px !important;
+  margin-bottom: 12px !important;
+  border-radius: 10px !important;
+}
+
+/* Smaller form controls */
+.modern-form-label {
+  font-size: 12px !important;
+  margin-bottom: 4px !important;
+}
+
+.modern-input, .modern-select {
+  font-size: 12px !important;
+  padding: 6px 8px !important;
+  height: auto !important;
+  min-height: 30px !important;
+  border-radius: 6px !important;
+}
+
+/* Smaller section titles */
+.section-title, .subsection-title {
+  font-size: 14px !important;
+  margin-bottom: 8px !important;
+}
+
+/* Reduce spacing in grid layouts */
+.grid {
+  gap: 8px !important;
+}
+
+.grid-container {
+  gap: 8px !important;
+}
+
+/* Make toggle containers more compact */
+.toggle-container {
+  padding: 8px !important;
+  border-radius: 8px !important;
+}
+
+.toggle-title {
+  font-size: 13px !important;
+  margin-bottom: 0 !important;
+}
+
+.toggle-description {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+
+/* Info messages */
+.info-message {
+  font-size: 11px !important;
+  margin-top: 4px !important;
+}
+
+/* Tab styling */
+.modern-tabs-container {
+  margin-bottom: 10px !important;
+}
+
+.modern-tab-button {
+  font-size: 13px !important;
+  padding: 6px 10px !important;
+}
+
+/* Action buttons */
+.action-buttons {
+  margin-top: 12px !important;
+  margin-bottom: 0 !important;
+}
+
+.action-button, .secondary-button, .cancel-button, .create-button {
+  font-size: 13px !important;
+  padding: 6px 12px !important;
+  height: 32px !important;
+  border-radius: 6px !important;
+}
+
+/* Adjust vertical spacing between elements */
+.space-y-4 {
+  margin-top: 8px !important;
+}
+
+/* Modify grid container for version config */
+.grid-container.compact {
+  gap: 8px !important; 
+}
+
+/* Remove any overhanging margins */
+.mt-3 {
+  margin-top: 8px !important;
+}
+
+/* Compact checkbox grid */
+.modern-checkbox-grid {
+  gap: 4px !important;
+}
+
+.modern-checkbox-item {
+  font-size: 12px !important;
+}
+
+/* Reduce height of icon containers */
+.section-icon, .label-icon {
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 12px !important;
+  margin-right: 6px !important;
+}
+
+/* For Advanced tab */
+.mount-row, .env-var-row {
+  gap: 6px !important;
+  margin-bottom: 6px !important;
+}
+
+/* Better form transitions */
+.tab-transition-enter-active,
+.tab-transition-leave-active {
+  transition: all 0.25s ease !important;
+}
+
+.tab-transition-enter-from,
+.tab-transition-leave-to {
+  opacity: 0 !important;
+  transform: translateY(15px) !important;
+}
