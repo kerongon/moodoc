@@ -291,42 +291,61 @@ input:checked + .toggle-switch-label::after {
 }
 
 /* Action buttons */
-.action-buttons {
-  margin-top: 6px !important;   /* was 12px */
+/* Action buttons container - force even layout */
+.create-site-container .action-buttons {
+  margin-top: 6px !important;
   margin-bottom: 0 !important;
   display: flex !important;
   justify-content: space-between !important;
-  padding: 8px 10px !important;
+  gap: 10px !important;
+  padding: 8px 0 !important;
 }
 
-.action-button, .secondary-button, .cancel-button, .create-button {
-  font-size: 12px !important;
-  padding: 4px 10px !important;
-  height: 28px !important;
+/* Base button styles - ensure equal sizing */
+.create-site-container .action-button,
+.create-site-container .secondary-button,
+.create-site-container .cancel-button,
+.create-site-container .create-button {
+  font-size: 13px !important;
+  padding: 8px 12px !important;
+  height: 38px !important;
   border-radius: 6px !important;
-  min-width: 80px !important;
+  flex: none !important; /* Disable flex growing */
+  width: 49% !important; /* Make buttons equal width */
+  max-width: none !important; /* Remove max-width restriction */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   transition: all 0.15s ease !important;
+  min-width: 0 !important;
 }
 
-/* Make create button stand out more */
-.create-button {
-  padding: 4px 15px !important;
+/* Create button specific styles */
+.create-site-container .create-button {
   background: #6366F1 !important;
   color: white !important;
   font-weight: 500 !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  margin: 0 !important;
 }
 
-.create-button:hover {
+.create-site-container .create-button:hover {
   background: #4F46E5 !important;
   transform: translateY(-1px) !important;
 }
 
-/* Make cancel button more subtle */
-.cancel-button {
-  background: transparent !important;
+/* Cancel button specific styles */
+.create-site-container .cancel-button {
+  background: #f3f4f6 !important;
   border: 1px solid #d1d5db !important;
   color: #4b5563 !important;
+  margin: 0 !important;
+}
+
+.dark .create-site-container .cancel-button {
+  background: #374151 !important;
+  border: 1px solid #4b5563 !important;
+  color: #d1d5db !important;
 }
 
 /* Loading spinner for button */
