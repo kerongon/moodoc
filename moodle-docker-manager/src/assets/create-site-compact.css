@@ -633,11 +633,19 @@ button.add-item-button:hover {
   margin-top: 6px !important; 
 }
 
-/* Optimize tab content transition height */
+/* Tab transition - make it immediate or very fast */
+.tab-transition-enter-active,
+.tab-transition-leave-active {
+  transition: opacity 0.15s ease !important;
+  position: relative !important; /* Ensures transitions happen in place */
+}
+
 .tab-transition-enter-from,
 .tab-transition-leave-to {
-  transform: translateY(10px) !important; /* was 15px */
+  opacity: 0 !important;
 }
+
+/* No transform to avoid content jumping */
 
 /* Make the vertical space inside the form more efficient */
 .space-y-4 > :not([hidden]) ~ :not([hidden]) {
@@ -689,4 +697,30 @@ fieldset.config-section {
 /* Fix the height of toggles in advanced tab */
 #advanced .toggle-switch {
   margin-left: 4px !important; /* was 8px */
+}
+
+/* Ensure consistent height for tab content to prevent layout shifting */
+.form-content {
+  min-height: 400px !important; /* Set a reasonable minimum height */
+  position: relative !important;
+  width: 100% !important;
+}
+
+/* Fix potential content display issues within tabs */
+.modern-tabs-container {
+  overflow: visible !important; /* Ensure content isn't cut off */
+}
+
+/* Ensure tab content container doesn't shift during transitions */
+.create-site-container .tab-content {
+  position: relative !important;
+  overflow-x: hidden !important;
+}
+
+/* Avoid tab button size changes during interaction */
+.modern-tab-button {
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
