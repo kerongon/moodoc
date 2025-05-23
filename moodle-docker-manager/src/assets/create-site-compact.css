@@ -2,11 +2,11 @@
 
 /* Adjust the main content container */
 .create-site-container {
-  padding: 8px !important;      /* was 10px */
+  padding: 6px !important;      /* was 8px */
   border-radius: 10px !important;
   width: 100% !important;
   max-width: 100% !important;
-  max-height: calc(100vh - 60px) !important; /* Ensure it fits in the viewport */
+  max-height: calc(100vh - 56px) !important; /* Ensure it fits in the viewport */
   overflow-y: auto !important;
 }
 
@@ -265,8 +265,10 @@ input:checked + .toggle-switch-label::after {
 
 /* Info messages */
 .info-message {
-  font-size: 11px !important;
-  margin-top: 4px !important;
+  font-size: 10px !important;
+  margin-top: 2px !important;
+  color: #6B7280;
+  line-height: 1.2 !important;
 }
 
 /* Tab styling */
@@ -277,14 +279,15 @@ input:checked + .toggle-switch-label::after {
 }
 
 .modern-tab-button {
+  padding: 6px 12px !important;
   font-size: 12px !important;
-  padding: 5px 8px !important;
-  border-radius: 8px !important;
+  min-width: auto !important;
 }
 
-.tab-icon {
-  font-size: 10px !important;
-  margin-right: 4px !important;
+/* Ensure consistent styling across tabs */
+.form-content {
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 /* Action buttons */
@@ -298,6 +301,46 @@ input:checked + .toggle-switch-label::after {
   padding: 6px 12px !important;
   height: 32px !important;
   border-radius: 6px !important;
+}
+
+/* Specific styling for Add Mount and Add Variable buttons */
+button.add-item-button {
+  font-size: 9px !important;
+  padding: 1px 6px !important;
+  height: 20px !important;
+  min-width: 70px !important;
+  border-radius: 3px !important;
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  color: #2563eb !important;
+  border: 1px solid rgba(59, 130, 246, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+button.add-item-button:hover {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Extra precise adjustments for the buttons in volume mounts and env vars */
+.section-header {
+  min-height: 20px !important;
+}
+
+.add-item-button span {
+  margin-right: 2px !important;
+  font-weight: bold !important;
+}
+
+.remove-item-button {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+.remove-item-button:hover {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
 }
 
 /* Adjust vertical spacing between elements */
@@ -456,4 +499,124 @@ input:checked + .toggle-switch-label::after {
   font-size: 9px !important;
   margin-top: 1px !important;
   padding: 0 2px !important;
+}
+
+/* Specific spacing adjustments for the PHP config section */
+#advanced .config-section:first-child {
+  margin-top: 0 !important;
+}
+
+/* Make the Xdebug section specifically more compact */
+.config-section:has(#enableXdebug) {
+  padding: 6px !important;
+  margin-bottom: 6px !important;
+}
+
+/* Make all inputs in the Advanced tab more compact */
+#advanced .modern-input, #advanced .modern-select {
+  font-size: 11px !important;
+  padding: 3px 6px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+}
+
+/* Docker Configuration in Advanced tab */
+.config-section:has(#dockerNetwork) {
+  padding: 6px !important;
+}
+
+.config-section:has(#dockerNetwork) .grid {
+  gap: 4px !important;
+}
+
+.config-section:has(#dockerNetwork) .mt-3 {
+  margin-top: 4px !important;
+}
+
+/* PHP Configuration in Advanced tab */
+.config-section:has(#phpMemoryLimit) {
+  padding: 6px !important;
+}
+
+.config-section:has(#phpMemoryLimit) .grid {
+  gap: 4px !important;
+}
+
+.config-section:has(#phpMemoryLimit) .mt-3 {
+  margin-top: 4px !important;
+}
+
+/* More compact section titles in the Advanced tab */
+#advanced .section-title {
+  font-size: 12px !important;
+  margin-bottom: 4px !important;
+}
+
+/* Reduce space around form labels in the Advanced tab */
+#advanced .modern-form-label {
+  font-size: 11px !important;
+  margin-bottom: 2px !important;
+}
+
+/* Optimize the vertical margins between all config sections in advanced tab */
+#advanced .config-section + .config-section {
+  margin-top: 6px !important; 
+}
+
+/* Optimize tab content transition height */
+.tab-transition-enter-from,
+.tab-transition-leave-to {
+  transform: translateY(10px) !important; /* was 15px */
+}
+
+/* Make the vertical space inside the form more efficient */
+.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse))) !important;
+  margin-bottom: calc(0.75rem * var(--tw-space-y-reverse)) !important;
+}
+
+/* Make advanced settings look lighter with reduced borders */
+#advanced .config-section {
+  border: 1px solid rgba(209, 213, 219, 0.5) !important; /* Lighter border */
+}
+
+/* Make the Xdebug toggle section specifically more compact */
+.toggle-container:has(#enableXdebug) {
+  min-height: 40px !important; /* was 50px */
+  padding: 6px 8px !important; /* was 8px 10px */
+}
+
+/* Final padding adjustments for the main container */
+.create-site-container {
+  padding: 6px !important; /* was 8px */
+}
+
+/* Adjust the gap between form elements for a more compact look */
+form .config-section:first-child {
+  margin-top: 0 !important;
+}
+
+/* Ensure icon sizes are visually consistent across the UI */
+.toggle-icon, .section-icon {
+  display: flex !important;
+  align-items: center !important; 
+  justify-content: center !important;
+}
+
+/* Ensure field sets maintain proper spacing */
+fieldset.config-section {
+  padding-bottom: 4px !important;
+}
+
+/* Make all mount inputs and environment variables in a perfect grid */
+.mount-row, .env-var-row {
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr auto !important;
+  align-items: center !important;
+}
+
+/* Fix the height of toggles in advanced tab */
+#advanced .toggle-switch {
+  margin-left: 4px !important; /* was 8px */
 }
