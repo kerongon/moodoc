@@ -174,6 +174,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { listen } from '@tauri-apps/api/event';
 import { PhArrowClockwise, PhX, PhRecycle } from '@phosphor-icons/vue';
 import { useSitesStore } from '../stores/sites';
+import { MoodleService } from '../services/moodleService';
 
 export default {
   name: 'UpdateSite',
@@ -195,22 +196,8 @@ export default {
   emits: ['close', 'updated'],
   data() {
     return {
-      moodleBranches: [
-        // Newer stable branches
-        'MOODLE_405_STABLE',
-        'MOODLE_404_STABLE',
-        'MOODLE_403_STABLE',
-        // Existing stable branches
-        'MOODLE_402_STABLE',
-        'MOODLE_401_STABLE',
-        'MOODLE_400_STABLE',
-        'MOODLE_311_STABLE',
-        'MOODLE_310_STABLE',
-        'MOODLE_39_STABLE',
-        // Primary development branch
-        'master'
-      ],
-      phpVersions: ['8.2', '8.1', '8.0', '7.4', '7.3', '7.2', '7.1'],
+      moodleBranches: MoodleService.getAvailableBranches(),
+      phpVersions: MoodleService.getAvailablePhpVersions(),
       currentVersion: '',
       currentPhpVersion: '',
       currentDbType: '',
@@ -264,16 +251,10 @@ export default {
     },
     
     updatePHPVersion() {
-      // Set recommended PHP version based on selected Moodle branch
-      if (this.newMoodleBranch.includes('402') || this.newMoodleBranch.includes('401') || this.newMoodleBranch.includes('400') || this.newMoodleBranch === 'master') {
-        this.recommendedPhpVersion = '8.0';
-        this.newPhpVersion = '8.0';
-      } else if (this.newMoodleBranch.includes('311') || this.newMoodleBranch.includes('310')) {
-        this.recommendedPhpVersion = '7.4';
-        this.newPhpVersion = '7.4';
-      } else if (this.newMoodleBranch.includes('39')) {
-        this.recommendedPhpVersion = '7.2';
-        this.newPhpVersion = '7.2';
+      if (this.newMoodleBranch) {
+        const versionInfo = MoodleService.updatePhpVersionForBranch(this.newMoodleBranch);
+        this.recommendedPhpVersion = versionInfo.recommendedVersion;
+        this.newPhpVersion = versionInfo.recommendedVersion;
       } else {
         this.recommendedPhpVersion = this.currentPhpVersion;
         this.newPhpVersion = this.currentPhpVersion;

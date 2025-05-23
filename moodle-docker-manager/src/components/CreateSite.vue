@@ -846,6 +846,7 @@ import { eventBus } from '../utils/event-bus';
 import { appWindow } from '@tauri-apps/api/window';
 import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
+import { MoodleService } from '../services/moodleService';
 
 export default {
   components: {
@@ -871,9 +872,9 @@ export default {
       useRedis: false, // Default to false for Redis support
       dockerInstalled: false,
       dockerRunning: false,
-      phpVersions: ['8.4', '8.3', '8.2', '8.1', '8.0', '7.4', '7.3', '7.2', '7.1', '7.0', '5.6'],
-      dbTypes: ['MySQL', 'MariaDB', 'PostgreSQL', 'Microsoft SQL Server', 'Oracle'],
-      moodleBranches: ['MOODLE_500_STABLE', 'MOODLE_405_STABLE', 'MOODLE_404_STABLE', 'MOODLE_403_STABLE', 'MOODLE_402_STABLE', 'MOODLE_401_STABLE'],
+      phpVersions: MoodleService.getAvailablePhpVersions(),
+      dbTypes: MoodleService.getAvailableDbTypes(),
+      moodleBranches: MoodleService.getAvailableBranches(),
       logsExpanded: false, // Controls the visibility of the logs section
       logs: [],
       settingsStore: useSettingsStore(),
@@ -890,15 +891,6 @@ export default {
           'Oracle': { min: 1521, max: 1599 }
         }
       },
-      // Mapping of Moodle branches to PHP versions
-      moodlePhpVersionMap: {
-        'MOODLE_500_STABLE': { recommended: '8.2', compatible: ['8.2', '8.3', '8.4'] },
-        'MOODLE_405_STABLE': { recommended: '8.3', compatible: ['8.1', '8.2', '8.3'] },
-        'MOODLE_404_STABLE': { recommended: '8.3', compatible: ['8.1', '8.2', '8.3'] },
-        'MOODLE_403_STABLE': { recommended: '8.2', compatible: ['8.0', '8.1', '8.2'] },
-        'MOODLE_402_STABLE': { recommended: '8.2', compatible: ['8.0', '8.1', '8.2'] },
-        'MOODLE_401_STABLE': { recommended: '8.1', compatible: ['7.4', '8.0', '8.1'] }
-      },
       // Site creation state
       createSiteInProgress: false,
       // Port availability cache
@@ -907,29 +899,11 @@ export default {
       customRepoUrl: '',
       customBranch: '',
       dbPrefix: 'mdl_',
-      siteConfig: {
-        debug: false,
-        devLibs: false,
-        disableCaching: false,
-        disableThemeCaching: false
-      },
-      adminAccount: {
-        username: '',
-        password: '',
-        email: '',
-        fullname: ''
-      },
+      siteConfig: MoodleService.getDefaultSiteConfig(),
+      adminAccount: MoodleService.getDefaultAdminAccount(),
       // New data properties for Advanced tab
-      dockerConfig: {
-        network: 'moodle-network',
-        containerPrefix: 'moodle-',
-        composePath: '/usr/local/bin/docker-compose'
-      },
-      phpConfig: {
-        memoryLimit: '512M',
-        additionalModules: '',
-        xdebug: false
-      },
+      dockerConfig: MoodleService.getDefaultDockerConfig(),
+      phpConfig: MoodleService.getDefaultPhpConfig(),
       volumeMounts: [],
       environmentVariables: []
     };
@@ -1106,22 +1080,10 @@ export default {
       }
     },
     updatePHPVersion() {
-      const branchMap = this.moodlePhpVersionMap[this.moodleBranch];
-      
-      if (branchMap) {
-        // Set the recommended PHP version
-        this.recommendedPhpVersion = branchMap.recommended;
-        
-        // Check if current PHP version is compatible
-        this.isPhpVersionCompatible = branchMap.compatible.includes(this.phpVersion);
-        
-        // Auto-select the recommended PHP version
-        this.phpVersion = branchMap.recommended;
-      } else {
-        // If no mapping exists, set a default and mark as potentially incompatible
-        this.recommendedPhpVersion = '8.0';
-        this.isPhpVersionCompatible = false;
-      }
+      const versionInfo = MoodleService.updatePhpVersionForBranch(this.moodleBranch);
+      this.recommendedPhpVersion = versionInfo.recommendedVersion;
+      this.isPhpVersionCompatible = versionInfo.isCompatible;
+      this.phpVersion = versionInfo.recommendedVersion;
     },
     
     selectFolder() {
