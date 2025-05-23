@@ -294,13 +294,64 @@ input:checked + .toggle-switch-label::after {
 .action-buttons {
   margin-top: 6px !important;   /* was 12px */
   margin-bottom: 0 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  padding: 8px 10px !important;
 }
 
 .action-button, .secondary-button, .cancel-button, .create-button {
-  font-size: 13px !important;
-  padding: 6px 12px !important;
-  height: 32px !important;
+  font-size: 12px !important;
+  padding: 4px 10px !important;
+  height: 28px !important;
   border-radius: 6px !important;
+  min-width: 80px !important;
+  transition: all 0.15s ease !important;
+}
+
+/* Make create button stand out more */
+.create-button {
+  padding: 4px 15px !important;
+  background: #6366F1 !important;
+  color: white !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.create-button:hover {
+  background: #4F46E5 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Make cancel button more subtle */
+.cancel-button {
+  background: transparent !important;
+  border: 1px solid #d1d5db !important;
+  color: #4b5563 !important;
+}
+
+/* Loading spinner for button */
+.loading-text {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 11px !important;
+}
+
+.loading-spinner {
+  width: 14px !important;
+  height: 14px !important;
+  animation: spin 1s linear infinite !important;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Disabled state styling */
+.disabled-button {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
 }
 
 /* Specific styling for Add Mount and Add Variable buttons */
