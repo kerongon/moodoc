@@ -344,9 +344,14 @@
             <!-- Confirmation message -->
             <div class="mb-4 text-sm text-gray-800 dark:text-gray-200">
               <p>Are you sure you want to remove the site <span class="font-semibold">{{ siteToRemove }}</span>?</p>
-              <div class="mt-2 flex items-center">
-                <input type="checkbox" id="removeContainers" v-model="removeContainers" class="h-4 w-4 text-blue-600 rounded border-gray-300">
-                <label for="removeContainers" class="ml-2">Also remove Docker containers and volumes</label>
+              <div class="mt-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
+                <div class="flex items-center">
+                  <input type="checkbox" id="removeContainers" v-model="removeContainers" class="h-4 w-4 text-blue-600 rounded border-gray-300">
+                  <label for="removeContainers" class="ml-2 font-medium">Clean up Docker resources</label>
+                </div>
+                <p class="mt-1 text-xs text-blue-600 dark:text-blue-400 ml-6">
+                  This will stop and remove all Docker containers, volumes, and networks associated with this site.
+                </p>
               </div>
             </div>
             
@@ -584,6 +589,21 @@ export default {
       try {
         loading.value = true;
         showRemoveModal.value = false;
+        
+        // First stop the site if removeContainers is true
+        if (removeContainers.value) {
+          const siteObj = sites.value.find(s => s.name === siteToRemove.value);
+          if (siteObj && siteObj.status === 'running') {
+            try {
+              await invoke('stop_site', { name: siteToRemove.value });
+              // Brief delay to allow containers to stop
+              await new Promise(r => setTimeout(r, 1000));
+            } catch (stopErr) {
+              console.warn(`Site was running but could not be stopped: ${stopErr}`);
+              // Continue with removal anyway
+            }
+          }
+        }
         
         // Pass the removeContainers flag to the backend
         await invoke('remove_site', { 
