@@ -2,7 +2,7 @@
 
 /* Adjust the main content container */
 .create-site-container {
-  padding: 10px !important;
+  padding: 8px !important;      /* was 10px */
   border-radius: 10px !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -27,7 +27,7 @@
 /* Adjust main content padding */
 .main-content {
   padding: 8px !important;
-  padding-top: 48px !important; /* Match header height + a bit of space */
+  padding-top: 40px !important; /* Match header height + a bit of space */
 }
 
 /* Compact site header */
@@ -251,7 +251,7 @@ input[type="text"].port-input {
 
 /* Action buttons */
 .action-buttons {
-  margin-top: 12px !important;
+  margin-top: 6px !important;   /* was 12px */
   margin-bottom: 0 !important;
 }
 
