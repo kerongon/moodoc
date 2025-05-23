@@ -67,11 +67,20 @@ export default {
 </script>
 
 <style scoped>
-/* Modern clean status indicator */
+/* Modern clean status indicator with enhanced animations */
 .docker-status-container {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  transition: all 0.2s ease;
+  padding: 4px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.docker-status-container:hover {
+  transform: translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .status-dot-container {
@@ -83,6 +92,11 @@ export default {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
+.docker-status-container:hover .status-dot {
+  transform: scale(1.2);
 }
 
 .status-dot.loading {
@@ -162,13 +176,13 @@ export default {
 
 @keyframes pulse-green {
   0% { box-shadow: 0 0 4px rgba(34, 197, 94, 0.6); }
-  50% { box-shadow: 0 0 8px rgba(34, 197, 94, 0.8); }
+  50% { box-shadow: 0 0 10px rgba(34, 197, 94, 0.9); }
   100% { box-shadow: 0 0 4px rgba(34, 197, 94, 0.6); }
 }
 
 @keyframes pulse-green-outer {
   0% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.2); }
+  50% { opacity: 0.6; transform: scale(1.35); }
   100% { opacity: 0.3; transform: scale(1); }
 }
 
@@ -200,7 +214,12 @@ export default {
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0;
-  transition: color 0.3s ease;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.docker-status-container:hover .status-text {
+  transform: translateX(2px);
+  font-weight: 600;
 }
 
 .running-text {

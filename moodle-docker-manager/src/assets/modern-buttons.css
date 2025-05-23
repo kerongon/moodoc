@@ -1,4 +1,4 @@
-.modern-buttons {
+:root {
   /* Settings for the modern buttons in the header */
   --new-site-bg: #6366F1;
   --new-site-hover: #4F46E5;
@@ -31,7 +31,7 @@
 
 .new-site-button:hover {
   background-color: var(--new-site-hover) !important;
-  transform: var(--hover-translate) !important;
+  transform: translateY(-1px) !important; /* Changed back to the original effect */
   box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3) !important;
 }
 
@@ -72,7 +72,47 @@
   transform: scale(1.15) !important;
 }
 
-.settings-button {
+.modern-new-site-button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  background-color: var(--new-site-bg) !important;
+  color: white !important;
+  padding: 0.5rem 1.25rem !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  transition: var(--button-transition) !important;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  z-index: 1 !important;
+  text-decoration: none !important;
+}
+
+.modern-new-site-button:hover {
+  background-color: var(--new-site-hover) !important;
+  transform: var(--hover-translate) !important;
+  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3) !important;
+}
+
+.modern-new-site-button:active {
+  transform: translateY(1px) !important;
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3) !important;
+  transition: all 0.1s ease-out !important;
+}
+
+.modern-new-site-button .button-icon {
+  width: 20px !important;
+  height: 20px !important;
+  transition: transform 0.3s ease !important;
+}
+
+.modern-new-site-button:hover .button-icon {
+  transform: scale(1.15) !important;
+}
+
+.modern-settings-button {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -81,29 +121,30 @@
   border-radius: 8px !important;
   background-color: transparent !important;
   border: none !important;
-  transition: color 0.2s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
   color: var(--settings-color) !important;
   position: relative !important;
-  overflow: hidden !important;
+  cursor: pointer !important;
 }
 
-.settings-button:hover {
+.modern-settings-button:hover {
   color: var(--settings-hover) !important;
-  transform: rotate(90deg) !important;
+  background-color: rgba(99, 102, 241, 0.05) !important;
+  transform: translateY(-2px) !important;
 }
 
-.settings-button:active {
-  transform: rotate(180deg) !important;
-}
-
-.settings-button .button-icon {
+.modern-settings-button .button-icon {
   width: 22px !important;
   height: 22px !important;
-  transition: transform 0.3s ease !important;
+  transition: var(--spin-transition) !important;
 }
 
-.settings-button:hover .button-icon {
-  transform: scale(1.1) !important;
+.modern-settings-button:hover .button-icon {
+  transform: rotate(90deg) !important;
+  color: var(--settings-hover) !important;
+   -webkit-filter: none !important;
+           filter: none !important;
+  /* -webkit-filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.5)) !important;
+          filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.5)) !important; */
 }
 
 /* Add a subtle glow effect on hover */
@@ -114,7 +155,7 @@
   left: 50% !important;
   width: 0 !important;
   height: 0 !important;
-  background: rgba(99, 102, 241, 0.2) !important;
+  /* background: rgba(99, 102, 241, 0.2) !important; */
   border-radius: 50% !important;
   transform: translate(-50%, -50%) !important;
   transition: width 0.4s ease, height 0.4s ease !important;
@@ -133,19 +174,19 @@
 
 /* Docker status container hover effects */
 .docker-status-container {
-  transition: transform 0.3s ease !important;
+  transition: transform 0.3s ease, background-color 0.3s ease !important;
   cursor: pointer !important;
   padding: 4px !important;
   border-radius: 20px !important;
 }
 
 .docker-status-container:hover {
-  transform: scale(1.05) !important;
+  transform: translateY(-2px) !important; /* Changed to match original movement */
   background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 .docker-status-container:active {
-  transform: scale(0.98) !important;
+  transform: translateY(0) !important;
 }
 
 /* Ensure consistent animation speed across components */
