@@ -2506,6 +2506,312 @@ input:checked + .toggle-switch-label::after {
   }
 }
 
+/* Tab Transition Animations */
+.tab-transition-enter-active,
+.tab-transition-leave-active {
+  transition: all 0.3s ease;
+}
+
+.tab-transition-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.tab-transition-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+/* Enhanced Button Interactions */
+.modern-tab-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-tab-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.modern-tab-button:hover::before {
+  left: 100%;
+}
+
+/* Floating Label Animation */
+.modern-input:focus + .floating-label,
+.modern-input:not(:placeholder-shown) + .floating-label {
+  transform: translateY(-14px) scale(0.85);
+  color: #6366F1;
+}
+
+.floating-label {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  color: #9CA3AF;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  background-color: rgba(17, 24, 39, 0.9);
+  padding: 0 4px;
+}
+
+/* Micro-interactions */
+.config-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.config-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(99, 102, 241, 0.03), transparent);
+  transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+
+.config-section:hover::before {
+  transform: translateX(0) translateY(0) rotate(45deg);
+}
+
+/* Port Status Animations */
+.status-available,
+.status-error,
+.status-warning,
+.status-checking {
+  position: relative;
+  font-weight: 500;
+}
+
+.status-available::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: #34D399;
+  border-radius: 50%;
+  animation: pulse-success 2s infinite;
+}
+
+.status-error::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: #F87171;
+  border-radius: 50%;
+  animation: pulse-error 2s infinite;
+}
+
+.status-checking::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: #60A5FA;
+  border-radius: 50%;
+  animation: pulse-checking 1s infinite;
+}
+
+@keyframes pulse-success {
+  0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+  50% { opacity: 0.7; transform: translateY(-50%) scale(1.2); }
+}
+
+@keyframes pulse-error {
+  0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+  50% { opacity: 0.7; transform: translateY(-50%) scale(1.2); }
+}
+
+@keyframes pulse-checking {
+  0%, 100% { opacity: 0.5; transform: translateY(-50%) scale(0.8); }
+  50% { opacity: 1; transform: translateY(-50%) scale(1.2); }
+}
+
+/* Enhanced Focus States */
+.modern-input:focus,
+.modern-select:focus {
+  position: relative;
+  z-index: 2;
+}
+
+.modern-input:focus::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 12px;
+  background: linear-gradient(45deg, #6366F1, #8B5CF6, #6366F1);
+  background-size: 200% 200%;
+  animation: gradient-border 3s ease infinite;
+  z-index: -1;
+}
+
+@keyframes gradient-border {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Improved Toggle Animations */
+.toggle-switch-label {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+input:checked + .toggle-switch-label::after {
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+}
+
+/* Button Ripple Effect */
+.create-button,
+.cancel-button,
+.secondary-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.create-button::before,
+.cancel-button::before,
+.secondary-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.create-button:active::before,
+.cancel-button:active::before,
+.secondary-button:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Enhanced Form Section Animations */
+.form-content {
+  animation: slideInUp 0.4s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered Animation for Config Sections */
+.config-section:nth-child(1) { animation-delay: 0.1s; }
+.config-section:nth-child(2) { animation-delay: 0.2s; }
+.config-section:nth-child(3) { animation-delay: 0.3s; }
+.config-section:nth-child(4) { animation-delay: 0.4s; }
+.config-section:nth-child(5) { animation-delay: 0.5s; }
+
+.config-section {
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced Checkbox Animations */
+.modern-checkbox {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-checkbox:checked {
+  animation: checkboxPop 0.3s ease-out;
+}
+
+@keyframes checkboxPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.modern-checkbox:checked::after {
+  animation: checkmarkDraw 0.3s ease-out 0.1s both;
+}
+
+@keyframes checkmarkDraw {
+  from {
+    stroke-dasharray: 0 20;
+  }
+  to {
+    stroke-dasharray: 20 20;
+  }
+}
+
+/* Improved Tooltip Animations */
+.info-tooltip {
+  transition: all 0.2s ease;
+}
+
+.info-tooltip:hover {
+  background-color: rgba(99, 102, 241, 0.8);
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+/* Icon Glow Effects */
+.section-icon,
+.label-icon,
+.toggle-icon {
+  transition: all 0.2s ease;
+}
+
+.config-section:hover .section-icon,
+.modern-form-label:hover .label-icon {
+  filter: drop-shadow(0 0 4px currentColor);
+  transform: scale(1.1);
+}
+
+/* Enhanced Loading States */
+.loading-text {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .modern-checkbox-grid {
