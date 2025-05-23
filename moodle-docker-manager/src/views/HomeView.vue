@@ -1,7 +1,10 @@
 <template>
   <div class="home-view bg-gray-50 dark:bg-gray-900 w-full h-screen flex flex-col">
-    <div class="w-full px-4 py-1.5 flex-none">
-      <h1 class="text-base font-bold text-center text-gray-800 dark:text-gray-100 mb-0.5">Moodle Docker Manager</h1>
+    <div class="w-full px-4 py-2 flex-none flex items-center justify-center">
+      <div class="mr-2">
+        <PhSquare class="w-6 h-6 text-indigo-600" weight="fill" />
+      </div>
+      <h1 class="text-lg font-bold text-center text-indigo-500 dark:text-indigo-400">Moodle Docker Manager</h1>
     </div>
     <div class="app-container w-full flex-1 px-3 pb-2 overflow-hidden flex flex-col compact-app-container">
       <DockerStatus class="flex-none mb-2" />
@@ -16,6 +19,7 @@ import { defineComponent, ref } from 'vue';
 import DockerStatus from '../components/DockerStatus.vue';
 import CreateSite from '../components/CreateSite.vue';
 import SiteList from '../components/SiteList.vue';
+import { PhSquare } from '@phosphor-icons/vue';
 
 export default defineComponent({
   name: 'HomeView',
@@ -23,13 +27,14 @@ export default defineComponent({
     DockerStatus,
     CreateSite,
     SiteList,
+    PhSquare
   },
   setup() {
-    const siteList = ref(null);
+    const siteList = ref<any>(null);
     
     const refreshSiteList = () => {
       // Refresh the site list after creating a new site
-      if (siteList.value) {
+      if (siteList.value && typeof siteList.value.loadSites === 'function') {
         siteList.value.loadSites();
       }
     };

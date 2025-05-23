@@ -31,7 +31,7 @@
           <!-- Logo and app title -->
           <div class="app-branding">
             <div class="logo-container">
-              <PhList class="logo-icon" weight="fill" />
+              <PhSquare class="logo-icon text-white" weight="fill" />
             </div>
             <div class="title-container">
               <h1 class="app-title">Moodle Docker Manager</h1>
@@ -65,7 +65,7 @@
 <script>
 import { appWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/tauri';
-import { PhList, PhPlus, PhGear, PhArrowLeft, PhArrowRight, PhArrowClockwise } from '@phosphor-icons/vue';
+import { PhList, PhPlus, PhGear, PhArrowLeft, PhArrowRight, PhArrowClockwise, PhSquare } from '@phosphor-icons/vue';
 import SiteList from './SiteList.vue';
 import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
@@ -81,7 +81,8 @@ export default {
     PhGear,
     PhArrowLeft,
     PhArrowRight,
-    PhArrowClockwise
+    PhArrowClockwise,
+    PhSquare
   },
   data() {
     return {
@@ -144,19 +145,19 @@ export default {
 
 /* Modern macOS-style header */
 .app-header {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(17, 24, 39, 0.9);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  padding: 0.75rem 1rem; /* Adjusted padding */
-  position: fixed; /* Changed to fixed */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0.75rem 1rem;
+  position: fixed;
   top: 0;
-  left: 0; /* Added left: 0 */
-  right: 0; /* Added right: 0 */
+  left: 0;
+  right: 0;
   z-index: 10;
   transition: all 0.3s ease;
-  height: 56px; /* Fixed height for title bar */
-  display: flex; /* Added for centering content vertically */
-  align-items: center; /* Added for centering content vertically */
+  height: 56px;
+  display: flex;
+  align-items: center;
 }
 
 .main-content {
@@ -226,45 +227,39 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  /* Adjusted position to avoid overlap with Docker Status */
-  position: absolute;
-  left: 50%; /* Changed from 50% to 40% to move it left */
-  transform: translateX(-50%);
-  /* Add pointer-events: none to prevent it from blocking clicks on elements behind it */
-  pointer-events: none;
+  /* Positioned to the right of navigation controls */
+  margin-left: 20px;
+  pointer-events: auto;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px; /* Slightly smaller logo */
-  height: 32px;
+  width: 36px;
+  height: 36px;
+  pointer-events: auto;
+  background-color: #6366F1;
   border-radius: 8px;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3);
 }
 
 .logo-icon {
-  color: white;
-  width: 18px; /* Adjusted icon size */
-  height: 18px;
+  width: 24px;
+  height: 24px;
 }
 
 .title-container {
   display: flex;
   flex-direction: column;
+  pointer-events: auto;
 }
 
 .app-title {
-  font-size: 1.1rem; /* Slightly smaller title for title bar */
-  font-weight: 600; /* Adjusted font weight */
+  font-size: 1.25rem;
+  font-weight: 700;
   margin: 0;
-  background: linear-gradient(90deg, #6366F1, #D946EF, #EC4899);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  color: #FFFFFF;
 }
 
 .header-actions {
