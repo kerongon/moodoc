@@ -1,14 +1,14 @@
 <template>
   <div class="site-list-container bg-white dark:bg-gray-900 w-full dark:text-gray-100 flex flex-col">
     <!-- Header - macOS style (more compact) -->
-    <div class="flex items-center justify-between mb-3 px-4 pt-3">
+    <div class="flex items-center justify-between mb-6 px-4 pt-4">
       <div class="flex items-center">
-        <div class="bg-indigo-600 rounded-lg p-1.5 mr-3 shadow-sm site-list-icon">
-          <PhList class="text-white w-5 h-5" weight="fill" />
+        <div class="bg-indigo-600 rounded-lg p-3 mr-4 shadow-md">
+          <PhSquare class="text-white w-6 h-6" weight="fill" />
         </div>
         <div>
-          <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">Configured Sites</h2>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
+          <h2 class="text-xl font-bold text-gray-800 dark:text-white">Configured Sites</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Manage your Moodle development environments</p>
         </div>
       </div>
 
@@ -398,7 +398,7 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass, PhFileText, PhCaretUp, PhCaretDown, PhCheckSquare, PhPlus } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass, PhFileText, PhCaretUp, PhCaretDown, PhCheckSquare, PhPlus, PhSquare } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
 import { Command } from '@tauri-apps/api/shell';
 import { cleanupRecentSites } from '../utils/notifications';
@@ -420,8 +420,9 @@ export default {
     PhFileText,
     PhCaretUp,
     PhCaretDown,
-    PhCheckSquare, // Added
-    PhPlus         // Added
+    PhCheckSquare,
+    PhPlus,
+    PhSquare
   },
   emits: ['action-start', 'action-end'],
   setup(props, { expose, emit }) {
