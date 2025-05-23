@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-full hide-scrollbar bg-white dark:bg-gray-900 min-h-screen w-full p-0">
+  <div class="dashboard-full hide-scrollbar bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-900 dark:to-black min-h-screen w-full p-0">
     <!-- Modern macOS-style header (copied from Dashboard, no New Site button) -->
     <header class="app-header" data-tauri-drag-region>
       <div class="header-content">
@@ -49,521 +49,527 @@
       </div>
     </header>
     <div class="main-content px-8 pb-8 hide-scrollbar">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full mx-auto p-3 dark:text-gray-100 text-sm">
-        <h2 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Create a New Moodle Site</h2>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Configure and set up a new Moodle development environment</p>
-        <!-- Tab Navigation - more compact like MAMP -->
-    <div class="flex bg-gray-100 dark:bg-gray-700 rounded-md p-0.5 mb-2 border border-gray-200 dark:border-gray-600 macos-tab-container">
-      <button 
-        class="flex-1 py-0.5 px-2 text-xs font-medium transition-all duration-150 relative overflow-hidden" 
-        @click="activeTab = 'standard'"
-        :class="activeTab === 'standard' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
-        Standard
-      </button>
-      <button 
-        class="flex-1 py-0.5 px-2 text-xs font-medium transition-all duration-150 relative overflow-hidden" 
-        @click="activeTab = 'custom'"
-        :class="activeTab === 'custom' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
-        Custom
-      </button>
-      <button 
-        class="flex-1 py-0.5 px-2 text-xs font-medium transition-all duration-150 relative overflow-hidden" 
-        @click="activeTab = 'advanced'"
-        :class="activeTab === 'advanced' ? 'bg-white dark:bg-gray-800 rounded-md shadow-sm text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
-        Advanced
-      </button>
-    </div>
+      <div class="create-site-container">
+        <div class="site-header flex items-center mb-6">
+          <div class="icon-container bg-gradient-to-r from-indigo-600 to-blue-500 p-2.5 rounded-xl mr-4 shadow-lg shadow-indigo-500/20">
+            <PhPlus class="text-white w-6 h-6" weight="fill" />
+          </div>
+          <div>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Create a New Moodle Site</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Configure and set up a new Moodle development environment</p>
+          </div>
+        </div>
+        
+        <!-- Modern Tab Navigation -->
+        <div class="modern-tabs-container">
+          <button 
+            class="modern-tab-button" 
+            @click="activeTab = 'standard'"
+            :class="{'active-tab': activeTab === 'standard'}">
+            <span class="tab-icon">📋</span>
+            Standard
+          </button>
+          <button 
+            class="modern-tab-button" 
+            @click="activeTab = 'custom'"
+            :class="{'active-tab': activeTab === 'custom'}">
+            <span class="tab-icon">⚙️</span>
+            Custom
+          </button>
+          <button 
+            class="modern-tab-button" 
+            @click="activeTab = 'advanced'"
+            :class="{'active-tab': activeTab === 'advanced'}">
+            <span class="tab-icon">🔧</span>
+            Advanced
+          </button>
+        </div>
     
     <!-- Form Content -->
     <form @submit.prevent="createSite" class="space-y-4">
+        <!-- Tab content with transitions -->
+        <transition name="tab-transition" mode="out-in">
         <!-- Standard Tab Content -->
-        <div v-if="activeTab === 'standard'">
+        <div v-if="activeTab === 'standard'" key="standard" class="form-content">
           <!-- Site Name -->
-          <div class="mb-1.5">
-            <label for="siteName" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5 flex items-center">
-            <svg class="w-3 h-3 mr-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 10-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm-1 4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" clip-rule="evenodd" />
-            </svg>
-            Site Name
-          </label>
-          <input 
-            type="text" 
-            id="siteName" 
-            v-model="siteName" 
-            :class="['macos-input h-6 py-0.5 text-xs', { 'border-red-500 focus:ring-red-500 focus:border-red-500': siteName && !siteNameIsValid }]" 
-            required 
-            placeholder="moodle-site"
-          />
-          <p v-if="siteName && !siteNameIsValid" class="mt-0.5 text-xs text-red-600">
-            Site name can only contain lowercase letters, numbers, underscores and hyphens
-          </p>
-          <p v-if="siteName" class="mt-2 text-xs text-gray-500">
-            Site will be created at: <span class="font-mono">{{ getFullSitePath() }}</span>
-          </p>
-        </div>
+          <div class="config-section">
+            <label for="siteName" class="modern-form-label">
+              <div class="label-icon">★</div>
+              Site Name
+            </label>
+            <input 
+              type="text" 
+              id="siteName" 
+              v-model="siteName" 
+              class="modern-input" 
+              :class="{ 'error-input': siteName && !siteNameIsValid }" 
+              required 
+              placeholder="moodle-site"
+            />
+            <p v-if="siteName && !siteNameIsValid" class="error-message">
+              Site name can only contain lowercase letters, numbers, underscores and hyphens
+            </p>
+            <p v-if="siteName" class="info-message">
+              Site will be created at: <span class="font-mono">{{ getFullSitePath() }}</span>
+            </p>
+          </div>
         
-        <div class="p-1.5 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-2">
-          <div class="grid grid-cols-2 gap-1.5">
+        <div class="config-section version-config">
+          <h3 class="section-title">Version Configuration</h3>
+          <div class="grid-container">
             <!-- Moodle Version -->
-            <div>
-            <label for="moodleBranch" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center">
-                <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
-                </svg>
+            <div class="form-group">
+              <label for="moodleBranch" class="modern-form-label">
+                <div class="label-icon">⚡</div>
                 Moodle Version
               </label>
               <select 
                 id="moodleBranch" 
                 v-model="moodleBranch" 
                 @change="updatePHPVersion" 
-                class="macos-select compact-select h-7 py-0.5"
+                class="modern-select"
               >
                 <option v-for="branch in moodleBranches" :key="branch" :value="branch">{{ branch }}</option>
               </select>
             </div>
             
             <!-- PHP Version -->
-            <div>
-              <label for="phpVersion" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center">
-                <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
+            <div class="form-group">
+              <label for="phpVersion" class="modern-form-label">
+                <div class="label-icon">❯</div>
                 PHP Version
               </label>
-              <select id="phpVersion" v-model="phpVersion" class="macos-select compact-select h-7 py-0.5">
+              <select id="phpVersion" v-model="phpVersion" class="modern-select">
                 <option v-for="version in phpVersions" :key="version" :value="version">{{ version }}</option>
               </select>
             </div>
           </div>
-          <div class="mt-2">
-            <p v-if="recommendedPhpVersion" class="text-xs text-gray-500 dark:text-gray-400">
-              Recommended PHP version: <span class="font-medium">{{ recommendedPhpVersion }}</span>
+          <div class="version-info">
+            <p v-if="recommendedPhpVersion" class="recommendation-message">
+              Recommended PHP version: <span class="highlight">{{ recommendedPhpVersion }}</span>
             </p>
-            <p v-if="isPhpVersionCompatible === false" class="text-xs text-red-500">
-              Warning: This PHP version may not be compatible with the selected Moodle branch
+            <p v-if="isPhpVersionCompatible === false" class="warning-message">
+              ⚠️ This PHP version may not be compatible with the selected Moodle branch
             </p>
           </div>
         </div>
         
         <!-- Server Configuration Group -->
-        <div class="mb-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-          <h3 class="text-xs font-medium text-gray-700 dark:text-gray-200 mb-1 flex items-center">
-            <svg class="w-3.5 h-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 1.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 010-1.414zM11 12a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
-            </svg>
+        <div class="config-section server-config">
+          <h3 class="section-title">
+            <div class="section-icon">🖥️</div>
             Server Configuration
           </h3>
 
           <!-- Database Configuration -->
-          <div class="mb-4">
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center">
-                <span>Database Configuration</span>
-                <button type="button" class="ml-1 text-gray-400 hover:text-gray-500" title="Choose database type and port">
-                  <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </label>
+          <div class="config-subsection">
+            <div class="subsection-header">
+              <h4 class="subsection-title">Database Configuration</h4>
+              <div class="info-tooltip" title="Choose database type and port">ⓘ</div>
             </div>
-            <div class="flex space-x-3">
-              <div class="flex-1">
+            
+            <div class="port-config-row">
+              <div class="db-type-container">
                 <select 
                   id="dbType" 
                   v-model="dbType" 
                   @change="updateDbType" 
-                  class="macos-select compact-select h-7 py-0.5"
+                  class="modern-select"
                 >
                   <option v-for="type in dbTypes" :key="type" :value="type">{{ type }}</option>
                 </select>
               </div>
-              <div class="w-1/3 relative flex items-center">
+              <div class="port-input-container">
                 <input 
                   type="number" 
                   v-model="dbPort" 
                   :placeholder="`${currentDbPortRange}`" 
-                  :class="['macos-input h-7 py-0.5 text-xs pr-12', 
-                    { 
-                      'border-red-500 focus:ring-red-500 focus:border-red-500': dbPort && !isDbPortInRange,
-                      'border-green-500 focus:ring-green-500 focus:border-green-500': dbPort && isDbPortInRange && isPortAvailable(dbPort)
-                    }
-                  ]"
+                  class="modern-input port-input"
+                  :class="{ 
+                    'error-input': dbPort && !isDbPortInRange,
+                    'success-input': dbPort && isDbPortInRange && isPortAvailable(dbPort)
+                  }"
                 />
                 <button 
                   type="button" 
                   @click="generateDbPort" 
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-all duration-150 p-1"
+                  class="generate-button"
                   title="Generate random port"
-                  aria-label="Generate random database port"
                 >
-                  <!-- Refresh/recycle icon with improved styling -->
-                  <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-                  </svg>
+                  <span>↻</span>
                 </button>
               </div>
             </div>
-            <div class="flex justify-between mt-0.5 text-xs">
-              <span v-if="dbPort && isDbPortInRange && portAvailability[dbPort]" class="text-green-600">
+            
+            <div class="port-status">
+              <span v-if="dbPort && isDbPortInRange && portAvailability[dbPort]" class="status-available">
                 Port {{ dbPort }} is available ✓
               </span>
-              <span v-else-if="dbPort && !isDbPortInRange" class="text-red-600">
+              <span v-else-if="dbPort && !isDbPortInRange" class="status-error">
                 Port outside range {{ currentDbPortRange }}
               </span>
-              <span v-else-if="dbPort && portAvailability[dbPort] === false" class="text-amber-600">
+              <span v-else-if="dbPort && portAvailability[dbPort] === false" class="status-warning">
                 Port {{ dbPort }} is in use ⚠️
               </span>
-              <span v-else-if="dbPort && portAvailability[dbPort] === undefined" class="text-gray-400">
+              <span v-else-if="dbPort && portAvailability[dbPort] === undefined" class="status-checking">
                 Checking port availability...
               </span>
-              <span class="text-gray-400">{{ dbType }} database</span>
+              <span class="db-type-label">{{ dbType }} database</span>
             </div>
           </div>
           
           <!-- Web Server -->
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center">
-                <span>Web Server</span>
-                <button type="button" class="ml-1 text-gray-400 hover:text-gray-500" title="Configure web server port">
-                  <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </label>
+          <div class="config-subsection">
+            <div class="subsection-header">
+              <h4 class="subsection-title">Web Server</h4>
+              <div class="info-tooltip" title="Configure web server port">ⓘ</div>
             </div>
-            <div class="flex space-x-3">
-              <div class="flex-1">
-                <select class="macos-select compact-select h-7 py-0.5">
+            
+            <div class="port-config-row">
+              <div class="db-type-container">
+                <select class="modern-select">
                   <option>Apache</option>
                 </select>
               </div>
-              <div class="w-1/3 relative flex items-center">
+              <div class="port-input-container">
                 <input 
                   type="number" 
                   v-model="webPort" 
                   :placeholder="`${currentWebPortRange}`" 
-                  :class="['macos-input h-7 py-0.5 text-xs pr-12', 
-                    { 
-                      'border-red-500 focus:ring-red-500 focus:border-red-500': webPort && !isWebPortInRange,
-                      'border-green-500 focus:ring-green-500 focus:border-green-500': webPort && isWebPortInRange && isPortAvailable(webPort)
-                    }
-                  ]"
+                  class="modern-input port-input"
+                  :class="{ 
+                    'error-input': webPort && !isWebPortInRange,
+                    'success-input': webPort && isWebPortInRange && isPortAvailable(webPort)
+                  }"
                 />
                 <button 
                   type="button" 
                   @click="generateWebPort" 
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-all duration-150 p-1"
+                  class="generate-button"
                   title="Generate random port"
-                  aria-label="Generate random web server port"
                 >
-                  <!-- Refresh/recycle icon with improved styling -->
-                  <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-                  </svg>
+                  <span>↻</span>
                 </button>
               </div>
             </div>
-            <div class="flex justify-between mt-0.5 text-xs">
-              <span v-if="webPort && isWebPortInRange && portAvailability[webPort]" class="text-green-600">
+            
+            <div class="port-status">
+              <span v-if="webPort && isWebPortInRange && portAvailability[webPort]" class="status-available">
                 Port {{ webPort }} is available ✓
               </span>
-              <span v-else-if="webPort && !isWebPortInRange" class="text-red-600">
+              <span v-else-if="webPort && !isWebPortInRange" class="status-error">
                 Port outside range {{ currentWebPortRange }}
               </span>
-              <span v-else-if="webPort && portAvailability[webPort] === false" class="text-amber-600">
+              <span v-else-if="webPort && portAvailability[webPort] === false" class="status-warning">
                 Port {{ webPort }} is in use ⚠️
               </span>
-              <span v-else-if="webPort && portAvailability[webPort] === undefined" class="text-gray-400">
+              <span v-else-if="webPort && portAvailability[webPort] === undefined" class="status-checking">
                 Checking port availability...
               </span>
-              <span class="text-gray-400">Apache web server</span>
+              <span class="db-type-label">Apache web server</span>
             </div>
           </div>
         </div>
         
-        <!-- Site Directory - macOS Finder style -->
-        <div class="mb-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1 flex items-center">
-            <svg class="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h2V2zM5 5h10v10H5V5z" />
-            </svg>
+        <!-- Site Directory -->
+        <div class="config-section directory-config">
+          <h3 class="section-title">
+            <div class="section-icon">📁</div>
             Site Directory
-          </label>
-          <div class="flex shadow-sm">
+          </h3>
+          <div class="directory-input-row">
             <input 
               type="text" 
               v-model="siteDirectory" 
               :placeholder="useDefaultDirectory ? 'Using default directory' : ''" 
-              class="macos-input h-7 py-0.5 rounded-r-none focus:z-10 font-mono text-xs" 
+              class="modern-input directory-input" 
               readonly 
             />
             <button 
               type="button" 
               @click="selectCustomDirectory" 
-              class="px-3 border border-l-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 rounded-r-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 transition-all duration-150 font-medium text-xs h-7"
+              class="browse-button"
             >
               Browse...
             </button>
           </div>
-          <div class="mt-3 flex justify-between items-center">
-            <p class="text-xs text-gray-500">
+          <div class="directory-info">
+            <p class="directory-path">
               <span v-if="useDefaultDirectory">
-                Using default directory: <span class="font-mono">{{ defaultDirectory || '[App Data Directory]/sites' }}</span>
+                Using default directory: <span class="path-value">{{ defaultDirectory || '[App Data Directory]/sites' }}</span>
               </span>
               <span v-else>
-                Custom directory: <span class="font-mono">{{ siteDirectory }}</span>
+                Custom directory: <span class="path-value">{{ siteDirectory }}</span>
               </span>
             </p>
             <button 
               v-if="!useDefaultDirectory" 
               type="button" 
               @click="resetToDefaultDirectory" 
-              class="text-xs text-blue-600 hover:text-blue-800"
+              class="reset-button"
             >
               Reset to default
             </button>
           </div>
-          <p v-if="!useDefaultDirectory && !siteDirectory" class="text-xs text-red-500 mt-1">
+          <p v-if="!useDefaultDirectory && !siteDirectory" class="error-message">
             Please select an installation directory
           </p>
-          <p v-else-if="useDefaultDirectory && !defaultDirectory" class="text-xs text-amber-500 mt-1">
+          <p v-else-if="useDefaultDirectory && !defaultDirectory" class="warning-message">
             Default directory not available. Please select a custom directory.
           </p>
         </div>
         
         <!-- Redis Toggle -->
-        <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-3 flex items-center justify-between">
-          <div class="flex items-start">
-            <svg class="w-3 h-3 text-gray-700 dark:text-gray-200 mt-0.5 mr-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M13 7H7v6h6V7z" />
-              <path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd" />
-            </svg>
-            <div>
-              <label for="useRedis" class="text-xs font-medium text-gray-700 dark:text-gray-200">Enable Redis for caching and sessions</label>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Improves performance for larger Moodle sites</p>
+        <div class="config-section toggle-section">
+          <div class="toggle-container">
+            <div class="toggle-content">
+              <div class="toggle-icon">🔄</div>
+              <div class="toggle-info">
+                <h4 class="toggle-title">Enable Redis for caching and sessions</h4>
+                <p class="toggle-description">Improves performance for larger Moodle sites</p>
+              </div>
             </div>
-          </div>
-          <div class="relative inline-flex h-5 align-middle">
-            <input 
-              type="checkbox"
-              id="redisToggle" 
-              v-model="useRedis"
-              class="sr-only peer"
-            />
-            <label 
-              for="redisToggle"
-              class="flex w-9 h-5 bg-gray-200 rounded-full cursor-pointer peer-focus:ring-1 peer-focus:ring-blue-300 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"
-            ></label>
+            <div class="toggle-switch">
+              <input 
+                type="checkbox"
+                id="redisToggle" 
+                v-model="useRedis"
+                class="sr-only peer"
+              />
+              <label 
+                for="redisToggle"
+                class="toggle-switch-label"
+              ></label>
+            </div>
           </div>
         </div>
       </div>
+      </transition>
       
       <!-- Custom Tab Content -->
-      <div v-if="activeTab === 'custom'">
-        <div class="space-y-6">
+      <transition name="tab-transition" mode="out-in">
+      <div v-if="activeTab === 'custom'" key="custom" class="form-content">
+        <div class="space-y-5">
           <!-- Custom Moodle Repository -->
-          <div>
-            <label for="customRepo" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Custom Moodle Repository</label>
+          <div class="config-section">
+            <label for="customRepo" class="modern-form-label">
+              <div class="label-icon">📂</div>
+              Custom Moodle Repository
+            </label>
             <div class="flex space-x-2">
               <input 
                 type="text" 
                 id="customRepo" 
                 v-model="customRepoUrl" 
-                class="macos-input flex-1 h-6 py-0.5 text-xs" 
+                class="modern-input flex-1" 
                 placeholder="https://github.com/yourusername/moodle.git" 
               />
               <button 
                 type="button"
                 @click="resetToDefaultRepo"
-                class="macos-button macos-button-secondary text-xs px-3"
+                class="action-button secondary-button"
               >
                 Reset
               </button>
             </div>
-            <p class="mt-1 text-xs text-gray-500">
+            <p class="info-message">
               Leave empty to use the official Moodle repository
             </p>
           </div>
           
           <!-- Custom Branch -->
-          <div>
-            <label for="customBranch" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Custom Branch</label>
+          <div class="config-section">
+            <label for="customBranch" class="modern-form-label">
+              <div class="label-icon">🔀</div>
+              Custom Branch
+            </label>
             <div class="flex space-x-2">
               <input 
                 type="text" 
                 id="customBranch" 
                 v-model="customBranch" 
-                class="macos-input flex-1 h-6 py-0.5 text-xs" 
+                class="modern-input flex-1" 
                 placeholder="main" 
               />
               <button 
                 type="button"
                 @click="useSelectedStableBranch"
-                class="macos-button macos-button-secondary text-xs px-3"
+                class="action-button secondary-button"
               >
                 Use Stable
               </button>
             </div>
-            <p class="mt-1 text-xs text-gray-500">
+            <p class="info-message">
               Custom branch to checkout (overrides Moodle version selected in Standard tab)
             </p>
           </div>
           
           <!-- Database Prefix -->
-          <div>
-            <label for="dbPrefix" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Database Table Prefix</label>
+          <div class="config-section">
+            <label for="dbPrefix" class="modern-form-label">
+              <div class="label-icon">🔤</div>
+              Database Table Prefix
+            </label>
             <input 
               type="text" 
               id="dbPrefix" 
               v-model="dbPrefix" 
-              class="macos-input w-full h-6 py-0.5 text-xs" 
+              class="modern-input w-full" 
               placeholder="mdl_" 
             />
-            <p class="mt-1 text-xs text-gray-500">
+            <p class="info-message">
               Default: mdl_
             </p>
           </div>
           
           <!-- Custom Site Config -->
-          <div>
-            <label for="siteConfig" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Site Configuration</label>
-            <div class="flex space-x-4 mb-2">
-              <div class="flex items-center">
+          <div class="config-section">
+            <h3 class="section-title">
+              <div class="section-icon">🛠️</div>
+              Site Configuration
+            </h3>
+            <div class="modern-checkbox-grid">
+              <div class="modern-checkbox-item">
                 <input
                   type="checkbox"
                   id="siteDebug"
                   v-model="siteConfig.debug"
-                  class="h-4 w-4 text-blue-600 rounded border-gray-300"
+                  class="modern-checkbox"
                 />
-                <label for="siteDebug" class="ml-2 text-sm text-gray-700">Debug Mode</label>
+                <label for="siteDebug" class="modern-checkbox-label">Debug Mode</label>
               </div>
-              <div class="flex items-center">
+              <div class="modern-checkbox-item">
                 <input
                   type="checkbox"
                   id="siteDevLib"
                   v-model="siteConfig.devLibs"
-                  class="h-4 w-4 text-blue-600 rounded border-gray-300"
+                  class="modern-checkbox"
                 />
-                <label for="siteDevLib" class="ml-2 text-sm text-gray-700">Development Libraries</label>
+                <label for="siteDevLib" class="modern-checkbox-label">Development Libraries</label>
               </div>
-            </div>
-            <div class="flex space-x-4">
-              <div class="flex items-center">
+              <div class="modern-checkbox-item">
                 <input
                   type="checkbox"
                   id="siteCaching"
                   v-model="siteConfig.disableCaching"
-                  class="h-4 w-4 text-blue-600 rounded border-gray-300"
+                  class="modern-checkbox"
                 />
-                <label for="siteCaching" class="ml-2 text-sm text-gray-700">Disable Caching</label>
+                <label for="siteCaching" class="modern-checkbox-label">Disable Caching</label>
               </div>
-              <div class="flex items-center">
+              <div class="modern-checkbox-item">
                 <input
                   type="checkbox"
                   id="siteThemeCaching"
                   v-model="siteConfig.disableThemeCaching"
-                  class="h-4 w-4 text-blue-600 rounded border-gray-300"
+                  class="modern-checkbox"
                 />
-                <label for="siteThemeCaching" class="ml-2 text-sm text-gray-700">Disable Theme Caching</label>
+                <label for="siteThemeCaching" class="modern-checkbox-label">Disable Theme Caching</label>
               </div>
             </div>
           </div>
           
           <!-- Admin Account -->
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 mb-3">Admin Account</h3>
+          <div class="config-section">
+            <h3 class="section-title">
+              <div class="section-icon">👤</div>
+              Admin Account
+            </h3>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label for="adminUsername" class="block text-xs font-medium text-gray-600 mb-1">Username</label>
+                <label for="adminUsername" class="modern-form-label">Username</label>
                 <input 
                   type="text" 
                   id="adminUsername" 
                   v-model="adminAccount.username" 
-                  class="macos-input" 
+                  class="modern-input" 
                   placeholder="admin" 
                 />
               </div>
               <div>
-                <label for="adminPassword" class="block text-xs font-medium text-gray-600 mb-1">Password</label>
+                <label for="adminPassword" class="modern-form-label">Password</label>
                 <input 
                   type="text" 
                   id="adminPassword" 
                   v-model="adminAccount.password" 
-                  class="macos-input" 
+                  class="modern-input" 
                   placeholder="admin" 
                 />
               </div>
               <div>
-                <label for="adminEmail" class="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                <label for="adminEmail" class="modern-form-label">Email</label>
                 <input 
                   type="email" 
                   id="adminEmail" 
                   v-model="adminAccount.email" 
-                  class="macos-input" 
+                  class="modern-input" 
                   placeholder="admin@example.com" 
                 />
               </div>
               <div>
-                <label for="adminFullname" class="block text-xs font-medium text-gray-600 mb-1">Full Name</label>
+                <label for="adminFullname" class="modern-form-label">Full Name</label>
                 <input 
                   type="text" 
                   id="adminFullname" 
                   v-model="adminAccount.fullname" 
-                  class="macos-input" 
+                  class="modern-input" 
                   placeholder="Admin User" 
                 />
               </div>
             </div>
-            <p class="mt-1 text-xs text-gray-500">
+            <p class="info-message">
               Default credentials will be used if left empty
             </p>
           </div>
         </div>
       </div>
+      </transition>
       
       <!-- Advanced Tab Content -->
-      <div v-if="activeTab === 'advanced'">
-        <div class="space-y-6">
+      <transition name="tab-transition" mode="out-in">
+      <div v-if="activeTab === 'advanced'" key="advanced" class="form-content">
+        <div class="space-y-5">
           <!-- Docker Configuration -->
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 mb-3">Docker Configuration</h3>
+          <div class="config-section">
+            <h3 class="section-title">
+              <div class="section-icon">🐳</div>
+              Docker Configuration
+            </h3>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label for="dockerNetwork" class="block text-xs font-medium text-gray-600 mb-1">Docker Network</label>
+                <label for="dockerNetwork" class="modern-form-label">Docker Network</label>
                 <input 
                   type="text" 
                   id="dockerNetwork" 
                   v-model="dockerConfig.network" 
-                  class="macos-input" 
+                  class="modern-input" 
                   placeholder="moodle-network" 
                 />
               </div>
               <div>
-                <label for="dockerPrefix" class="block text-xs font-medium text-gray-600 mb-1">Container Prefix</label>
+                <label for="dockerPrefix" class="modern-form-label">Container Prefix</label>
                 <input 
                   type="text" 
                   id="dockerPrefix" 
                   v-model="dockerConfig.containerPrefix" 
-                  class="macos-input" 
+                  class="modern-input" 
                   placeholder="moodle-" 
                 />
               </div>
             </div>
             <div class="mt-3">
-              <label for="dockerComposePath" class="block text-xs font-medium text-gray-600 mb-1">Docker Compose Path</label>
+              <label for="dockerComposePath" class="modern-form-label">Docker Compose Path</label>
               <div class="flex space-x-2">
                 <input 
                   type="text" 
                   id="dockerComposePath" 
                   v-model="dockerConfig.composePath" 
-                  class="macos-input flex-1" 
+                  class="modern-input flex-1" 
                   placeholder="/usr/local/bin/docker-compose" 
                 />
                 <button 
                   type="button"
                   @click="detectDockerComposePath"
-                  class="macos-button macos-button-secondary text-xs px-3"
+                  class="action-button secondary-button"
                 >
                   Detect
                 </button>
@@ -572,129 +578,149 @@
           </div>
 
           <!-- PHP Configuration -->
-          <div>
-            <h3 class="text-sm font-medium text-gray-700 mb-3">PHP Configuration</h3>
+          <div class="config-section">
+            <h3 class="section-title">
+              <div class="section-icon">❯</div>
+              PHP Configuration
+            </h3>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label for="phpVersion" class="block text-xs font-medium text-gray-600 mb-1">PHP Version</label>
-                <select id="phpVersion" v-model="phpVersion" class="macos-select compact-select">
-                  <option value="7.4">PHP 7.4</option>
-                  <option value="8.0">PHP 8.0</option>
-                  <option value="8.1">PHP 8.1</option>
-                  <option value="8.2">PHP 8.2</option>
+                <label for="phpVersion" class="modern-form-label">PHP Version</label>
+                <select id="phpVersion" v-model="phpVersion" class="modern-select">
+                  <option v-for="version in phpVersions" :key="version" :value="version">{{ version }}</option>
                 </select>
               </div>
               <div>
-                <label for="phpMemoryLimit" class="block text-xs font-medium text-gray-600 mb-1">Memory Limit</label>
+                <label for="phpMemoryLimit" class="modern-form-label">Memory Limit</label>
                 <input 
                   type="text" 
                   id="phpMemoryLimit" 
                   v-model="phpConfig.memoryLimit" 
-                  class="macos-input" 
+                  class="modern-input" 
                   placeholder="512M" 
                 />
               </div>
             </div>
             <div class="mt-3">
-              <label for="phpModules" class="block text-xs font-medium text-gray-600 mb-1">Additional PHP Modules (comma-separated)</label>
+              <label for="phpModules" class="modern-form-label">Additional PHP Modules</label>
               <input 
                 type="text" 
                 id="phpModules" 
                 v-model="phpConfig.additionalModules" 
-                class="macos-input w-full" 
+                class="modern-input w-full" 
                 placeholder="xdebug, opcache, etc." 
               />
+              <p class="info-message">Comma-separated list of modules to install</p>
             </div>
-            <div class="mt-3 flex items-center">
-              <input
-                type="checkbox"
-                id="enableXdebug"
-                v-model="phpConfig.xdebug"
-                class="h-4 w-4 text-blue-600 rounded border-gray-300"
-              />
-              <label for="enableXdebug" class="ml-2 text-sm text-gray-700">Enable Xdebug</label>
+            <div class="toggle-container mt-3">
+              <div class="toggle-content">
+                <div class="toggle-icon">🐞</div>
+                <div class="toggle-info">
+                  <h4 class="toggle-title">Enable Xdebug</h4>
+                  <p class="toggle-description">Adds PHP debugging capabilities</p>
+                </div>
+              </div>
+              <div class="toggle-switch">
+                <input 
+                  type="checkbox"
+                  id="enableXdebug" 
+                  v-model="phpConfig.xdebug"
+                  class="sr-only peer"
+                />
+                <label 
+                  for="enableXdebug"
+                  class="toggle-switch-label"
+                ></label>
+              </div>
             </div>
           </div>
 
           <!-- Volume Mounts -->
-          <div>
-            <div class="flex justify-between items-center mb-3">
-              <h3 class="text-sm font-medium text-gray-700">Additional Volume Mounts</h3>
+          <div class="config-section">
+            <div class="section-header">
+              <h3 class="section-title">
+                <div class="section-icon">📁</div>
+                Additional Volume Mounts
+              </h3>
               <button 
                 type="button"
                 @click="addVolumeMount"
-                class="macos-button macos-button-secondary text-xs px-3"
+                class="add-item-button"
               >
-                Add Mount
+                <span>+</span> Add Mount
               </button>
             </div>
-            <div v-for="(mount, index) in volumeMounts" :key="index" class="flex space-x-2 mb-2">
+            <div v-for="(mount, index) in volumeMounts" :key="index" class="mount-row">
               <input 
                 type="text" 
                 v-model="mount.source" 
-                class="macos-input flex-1" 
+                class="modern-input flex-1" 
                 placeholder="Local path" 
               />
-              <span class="flex items-center text-gray-500">:</span>
+              <span class="mount-separator">:</span>
               <input 
                 type="text" 
                 v-model="mount.target" 
-                class="macos-input flex-1" 
+                class="modern-input flex-1" 
                 placeholder="Container path" 
               />
               <button 
                 type="button"
                 @click="removeVolumeMount(index)"
-                class="macos-button macos-button-danger text-xs px-3"
+                class="remove-item-button"
               >
-                Remove
+                <span>✕</span>
               </button>
             </div>
-            <p class="text-xs text-gray-500 mt-1">
+            <p class="info-message">
               Add custom volume mounts for development plugins, themes, etc.
             </p>
           </div>
 
           <!-- Environment Variables -->
-          <div>
-            <div class="flex justify-between items-center mb-3">
-              <h3 class="text-sm font-medium text-gray-700">Environment Variables</h3>
+          <div class="config-section">
+            <div class="section-header">
+              <h3 class="section-title">
+                <div class="section-icon">🔧</div>
+                Environment Variables
+              </h3>
               <button 
                 type="button"
                 @click="addEnvironmentVariable"
-                class="macos-button macos-button-secondary text-xs px-3"
+                class="add-item-button"
               >
-                Add Variable
+                <span>+</span> Add Variable
               </button>
             </div>
-            <div v-for="(envVar, index) in environmentVariables" :key="index" class="flex space-x-2 mb-2">
+            <div v-for="(envVar, index) in environmentVariables" :key="index" class="env-var-row">
               <input 
                 type="text" 
                 v-model="envVar.key" 
-                class="macos-input flex-1" 
+                class="modern-input flex-1" 
                 placeholder="VARIABLE_NAME" 
               />
-              <span class="flex items-center text-gray-500">=</span>
+              <span class="env-var-separator">=</span>
               <input 
                 type="text" 
                 v-model="envVar.value" 
-                class="macos-input flex-1" 
+                class="modern-input flex-1" 
                 placeholder="value" 
               />
               <button 
                 type="button"
                 @click="removeEnvironmentVariable(index)"
-                class="macos-button macos-button-danger text-xs px-3"
+                class="remove-item-button"
               >
-                Remove
+                <span>✕</span>
               </button>
             </div>
-            <p class="text-xs text-gray-500 mt-1">
+            <p class="info-message">
               Add custom environment variables for containers
             </p>
           </div>
         </div>
       </div>
+      </transition>
       
       <!-- Docker Status - more compact - commented out since it's already in the header -->
       <!--
@@ -715,26 +741,26 @@
         </ul>
       </div>
       
-      <!-- Action Buttons - macOS style -->
-      <div class="flex justify-end space-x-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+      <!-- Action Buttons - modern style -->
+      <div class="action-buttons">
         <button 
           type="button" 
-          class="px-3 py-1 text-xs font-medium bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200 shadow-sm" 
+          class="cancel-button" 
           @click="$router.push('/')"
         >
           Cancel
         </button>
         <button 
           type="submit" 
-          class="px-3 py-1 text-xs font-medium bg-blue-600 border border-blue-700 rounded-md text-white hover:bg-blue-700 transition-all duration-200 shadow-sm relative"
-          :class="{ 'opacity-50 cursor-not-allowed hover:bg-blue-600': !formIsValid || formErrors.length > 0 || createSiteInProgress }"
+          class="create-button"
+          :class="{ 'disabled-button': !formIsValid || formErrors.length > 0 || createSiteInProgress }"
           :disabled="!formIsValid || formErrors.length > 0 || createSiteInProgress"
         >
           <span v-if="!createSiteInProgress">Create Site</span>
-          <span v-else class="flex items-center">
-            <svg class="animate-spin -ml-0.5 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          <span v-else class="loading-text">
+            <svg class="loading-spinner" viewBox="0 0 24 24">
+              <circle class="spinner-track" cx="12" cy="12" r="10"></circle>
+              <circle class="spinner-circle" cx="12" cy="12" r="10"></circle>
             </svg>
             Starting creation...
           </span>
@@ -1495,44 +1521,70 @@ export default {
     },
 
     useSelectedStableBranch() {
-      if (this.version) {
-        this.customBranch = `MOODLE_${this.version.replace('.', '')}_STABLE`;
-      } else {
-        this.customBranch = '';
-      }
+      this.customBranch = this.moodleBranch;
     },
 
     // Advanced tab methods
     addVolumeMount() {
-      this.volumeMounts.push({ source: '', target: '' });
+      this.volumeMounts.push({
+        source: '',
+        target: ''
+      });
     },
     
     removeVolumeMount(index) {
       this.volumeMounts.splice(index, 1);
+      
+      // Always ensure there's at least one empty mount for better UX
+      if (this.volumeMounts.length === 0) {
+        this.addVolumeMount();
+      }
     },
     
     addEnvironmentVariable() {
-      this.environmentVariables.push({ key: '', value: '' });
+      this.environmentVariables.push({
+        key: '',
+        value: ''
+      });
     },
     
     removeEnvironmentVariable(index) {
       this.environmentVariables.splice(index, 1);
+      
+      // Always ensure there's at least one empty env var for better UX
+      if (this.environmentVariables.length === 0) {
+        this.addEnvironmentVariable();
+      }
     },
     
-    detectDockerComposePath() {
-      // In a real implementation, this would detect the docker-compose path
-      // For now, just set a default value
-      this.dockerConfig.composePath = '/usr/local/bin/docker-compose';
-      this.addLogMessage('Docker Compose path detected: /usr/local/bin/docker-compose');
+    async detectDockerComposePath() {
+      try {
+        // Show loading state
+        this.dockerConfig.composePath = 'Detecting...';
+        
+        // Call backend to detect path (using Tauri invoke)
+        const composePath = await invoke('detect_docker_compose_path');
+        
+        if (composePath) {
+          this.dockerConfig.composePath = composePath;
+        } else {
+          this.dockerConfig.composePath = '/usr/local/bin/docker-compose';
+          this.addLogMessage('⚠️ Could not auto-detect Docker Compose path, using default');
+        }
+      } catch (error) {
+        console.error('Error detecting Docker Compose path:', error);
+        this.dockerConfig.composePath = '/usr/local/bin/docker-compose';
+        this.addLogMessage(`⚠️ Error detecting Docker Compose path: ${error.message || error}`);
+      }
     },
-    
+
     // Validate a Git URL
     isValidGitUrl(url) {
       if (!url) return true; // Empty is valid (will use default)
       
-      // Check for common git URL formats
-      const gitUrlRegex = /^(https?:\/\/|git@)([^\s:]+)(:|\/)([\w\-\.]+)\/([\w\-\.]+)(\.git)?$/;
-      return gitUrlRegex.test(url);
+      // Basic validation for Git URLs
+      const gitUrlPattern = /^(https?:\/\/|git@)([^\s:]+)(:|\/)([\w.-]+)\/([\w.-]+)(\.git)?$/;
+      return gitUrlPattern.test(url);
     },
 
     // Check if a port is available using the Tauri function
@@ -1611,17 +1663,22 @@ export default {
 </script>
 
 <style scoped>
-
+/* Common Styles */
 .dashboard-full {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  width: 100vw;
-  background: inherit;
-  padding: 0;
 }
 
-/* Modern macOS-style header */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* App Header */
 .app-header {
   background: rgba(17, 24, 39, 0.9);
   backdrop-filter: blur(10px);
@@ -1638,18 +1695,6 @@ export default {
   align-items: center;
 }
 
-.main-content {
-  padding-top: 72px;
-  flex-grow: 1;
-  overflow-y: auto;
-}
-
-.dark .app-header {
-  background: rgba(17, 24, 39, 0.8);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
 .header-content {
   display: flex;
   align-items: center;
@@ -1659,6 +1704,13 @@ export default {
   padding: 0 0.5rem;
 }
 
+.main-content {
+  padding-top: 72px;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+/* Window Controls */
 .titlebar-left-controls {
   display: flex;
   align-items: center;
@@ -1684,66 +1736,10 @@ export default {
   cursor: default;
 }
 
-/* Specific styles for each button to mimic macOS traffic lights */
-.close-button svg circle { fill: #FF5F57; stroke: #E0443E; }
-.minimize-button svg circle { fill: #FFBD2E; stroke: #DEA123; }
-.maximize-button svg circle { fill: #27C93F; stroke: #1AAB29; }
-
-/* Always display the macOS traffic-light icons */
-.window-control-button svg {
-  opacity: 1 !important;
-  transition: opacity 0.1s ease-in-out;
-}
-
 .navigation-controls {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.app-branding {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  /* Positioned to the right of navigation controls */
-  margin-left: 12px;
-  pointer-events: auto;
-}
-
-.logo-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  pointer-events: auto;
-  background-color: #6366F1;
-  border-radius: 6px;
-}
-
-.logo-icon {
-  color: white;
-  width: 18px;
-  height: 18px;
-}
-
-.title-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.app-title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0;
-  letter-spacing: -0.025em;
-  color: #FFFFFF;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .header-nav-button {
@@ -1762,11 +1758,6 @@ export default {
   transition: background-color 0.2s ease;
 }
 
-.header-nav-button .button-icon {
-  width: 16px;
-  height: 16px;
-}
-
 .header-nav-button:hover {
   background: rgba(50, 56, 74, 0.95);
 }
@@ -1776,277 +1767,757 @@ export default {
   font-weight: bold;
 }
 
+/* App Branding */
+.app-branding {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 12px;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background-color: #6366F1;
+  border-radius: 6px;
+}
+
+.logo-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.title-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.025em;
+  color: #FFFFFF;
+}
+
+.button-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Modern Settings Button */
 .modern-settings-button {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 8px;
-  background-color: transparent;
-  transition: all 0.2s ease;
-  color: #9ca3af;
+  border-radius: 10px;
+  background-color: rgba(31, 41, 55, 0.5);
+  color: #F9FAFB;
   border: none;
-}
-
-.dark .modern-settings-button {
-  color: #d1d5db;
+  transition: all 0.2s ease;
 }
 
 .modern-settings-button:hover {
-  color: #6366F1;
-  transform: rotate(15deg);
+  background-color: rgba(55, 65, 81, 0.7);
+  transform: rotate(30deg);
 }
 
-.dark .settings-button:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+/* Create Site Container */
+.create-site-container {
+  background-color: #111827;
+  background-image: radial-gradient(circle at top right, rgba(79, 70, 229, 0.1), transparent 70%),
+                    radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.1), transparent 70%);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.docker-status-button {
+.site-header {
+  margin-bottom: 20px;
+}
+
+.icon-container {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.25rem 0.6rem;
-  border-radius: 50px;
-  font-weight: 500;
-  font-size: 0.75rem;
-  background-color: #F3F4F6;
-  color: #374151;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  min-height: 24px;
-  margin-right: 4px;
-}
-.dark .docker-status-button {
-  background-color: #1F2937;
-  color: #D1D5DB;
+  justify-content: center;
 }
 
-@media (max-width: 768px) {
-  .app-branding {
-    position: static;
-    transform: none;
-    margin-left: 10px;
-  }
-  .app-title {
-    font-size: 1rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .app-header {
-    padding: 0.5rem 0.75rem;
-    height: 52px;
-  }
-  .main-content {
-    padding-top: 60px;
-  }
-  .app-title {
-    font-size: 0.9rem;
-  }
-  .header-actions {
-    gap: 0.25rem;
-  }
-  .header-nav-button {
-    width: 26px;
-    height: 26px;
-  }
-  .header-nav-button .button-icon {
-    width: 14px;
-    height: 14px;
-  }
-  .window-controls {
-    gap: 6px;
-    margin-right: 8px;
-  }
-  .titlebar-left-controls {
-    gap: 8px;
-  }
-}
-/* Additional component styles - these complement Tailwind classes */
-.macos-window {
-  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
-  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-}
-
-.macos-traffic-lights {
-  position: absolute;
-  top: 12px;
-  left: 12px;
+/* Modern Tabs */
+.modern-tabs-container {
   display: flex;
+  background-color: rgba(31, 41, 55, 0.3);
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 28px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.modern-tab-button {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: #9CA3AF;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
-.traffic-light {
-  width: 12px;
-  height: 12px;
+.tab-icon {
+  font-size: 16px;
+  opacity: 0.8;
+  transition: all 0.25s ease;
+}
+
+.modern-tab-button:hover:not(.active-tab) {
+  color: #E5E7EB;
+  background-color: rgba(55, 65, 81, 0.3);
+}
+
+.modern-tab-button:hover:not(.active-tab) .tab-icon {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.active-tab {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(79, 70, 229, 0.9));
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+}
+
+.active-tab .tab-icon {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Form Content */
+.form-content {
+  padding: 4px;
+}
+
+.config-section {
+  background: linear-gradient(to bottom, rgba(31, 41, 55, 0.5), rgba(31, 41, 55, 0.4));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.config-section:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.modern-form-label {
+  display: flex;
+  align-items: center;
+  color: #E5E7EB;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.label-icon {
+  margin-right: 8px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  color: #F3F4F6;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.section-icon {
+  margin-right: 10px;
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+/* Modern Form Inputs */
+.modern-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  background-color: rgba(17, 24, 39, 0.7);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 10px;
+  color: #F9FAFB;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.modern-input:focus {
+  border-color: rgba(99, 102, 241, 0.8);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  outline: none;
+  background-color: rgba(17, 24, 39, 0.6);
+}
+
+.modern-input:hover:not(:focus) {
+  border-color: rgba(75, 85, 99, 0.8);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.modern-select {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  background-color: rgba(17, 24, 39, 0.7);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 8px;
+  color: #F9FAFB;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 30px;
+  transition: all 0.2s ease;
+}
+
+.modern-select:focus {
+  border-color: rgba(99, 102, 241, 0.8);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+  outline: none;
+}
+
+.modern-checkbox-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modern-checkbox-item {
+  display: flex;
+  align-items: center;
+}
+
+.modern-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background-color: rgba(31, 41, 55, 0.7);
+  border: 1px solid rgba(107, 114, 128, 0.6);
+  position: relative;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.modern-checkbox:checked {
+  background-color: #6366F1;
+  border-color: #6366F1;
+}
+
+.modern-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.modern-checkbox-label {
+  color: #E5E7EB;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Message Styles */
+.info-message {
+  color: #9CA3AF;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.error-message {
+  color: #F87171;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.warning-message {
+  color: #FBBF24;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.recommendation-message {
+  color: #34D399;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.highlight {
+  color: #6366F1;
+  font-weight: 500;
+}
+
+/* Toggle Switch */
+.toggle-section {
+  padding: 8px 12px;
+}
+
+.toggle-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: rgba(31, 41, 55, 0.4);
+  border-radius: 12px;
+}
+
+.toggle-content {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-icon {
+  font-size: 18px;
+  margin-right: 12px;
+}
+
+.toggle-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.toggle-title {
+  color: #F3F4F6;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.toggle-description {
+  color: #9CA3AF;
+  font-size: 12px;
+}
+
+.toggle-switch {
+  position: relative;
+  min-width: 42px;
+  height: 22px;
+}
+
+.toggle-switch-label {
+  position: absolute;
+  width: 42px;
+  height: 22px;
+  background-color: rgba(31, 41, 55, 0.8);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch-label::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
+  background-color: #9CA3AF;
+  top: 2px;
+  left: 2px;
+  transition: all 0.3s ease;
 }
 
-.traffic-light-red {
-  background-color: #ff5f56;
-  border: 0.5px solid #e0443e;
+input:checked + .toggle-switch-label {
+  background-color: #6366F1;
 }
 
-.traffic-light-yellow {
-  background-color: #ffbd2e;
-  border: 0.5px solid #dea123;
+input:checked + .toggle-switch-label::after {
+  left: 22px;
+  background-color: white;
 }
 
-.traffic-light-green {
-  background-color: #27c93f;
-  border: 0.5px solid #1aab29;
+/* Volume Mounts and Environment Variables */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 640px) {
-  .macos-traffic-lights {
-    display: none;
-  }
+.add-item-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: rgba(79, 70, 229, 0.2);
+  border: 1px solid rgba(79, 70, 229, 0.5);
+  color: #C7D2FE;
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
-/* Make form field labels bold */
-.space-y-6 label,
-.mb-4 > label,
-.mb-5 > label,
-.mb-3,
-h3.text-sm {
-  font-weight: 700 !important;
+.add-item-button:hover {
+  background-color: rgba(79, 70, 229, 0.3);
+  border-color: rgba(79, 70, 229, 0.7);
 }
 
-/* Make subheadings and section titles bold too */
-.text-sm.font-medium.text-gray-700 {
-  font-weight: 700 !important;
+.add-item-button span {
+  font-size: 14px;
+  font-weight: bold;
 }
 
-/* Dark mode styles */
-@media (prefers-color-scheme: dark) {
-  .macos-input,
-  .macos-select {
-    background-color: #374151 !important;
-    border-color: #4b5563 !important;
-    color: white !important;
-  }
-  
-  .macos-button-secondary {
-    background-color: #374151 !important;
-    border-color: #4b5563 !important;
-    color: #e5e7eb !important;
-  }
-  
-  .macos-button-primary {
-    background-color: #2563eb !important;
-  }
-  
-  .bg-gray-50 {
-    background-color: #1f2937 !important;
-  }
-  
-  .bg-gray-100 {
-    background-color: #1f2937 !important;
-  }
-  
-  .border-gray-200 {
-    border-color: #374151 !important;
-  }
-  
-  .text-gray-700 {
-    color: #e5e7eb !important;
-  }
-  
-  .text-gray-600 {
-    color: #d1d5db !important;
-  }
-  
-  .text-gray-500 {
-    color: #9ca3af !important;
-  }
+.mount-row, .env-var-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-/* Transition styles for collapsible logs */
+.mount-separator, .env-var-separator {
+  color: #9CA3AF;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.remove-item-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background-color: rgba(220, 38, 38, 0.2);
+  border: 1px solid rgba(220, 38, 38, 0.5);
+  color: #FCA5A5;
+  transition: all 0.2s ease;
+}
+
+.remove-item-button:hover {
+  background-color: rgba(220, 38, 38, 0.3);
+  border-color: rgba(220, 38, 38, 0.7);
+}
+
+/* Server Configuration Styles */
+.server-config {
+  padding-bottom: 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.subsection-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #E5E7EB;
+}
+
+.info-tooltip {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: rgba(75, 85, 99, 0.4);
+  color: #F3F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-style: italic;
+  cursor: help;
+}
+
+.port-config-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.db-type-container {
+  width: 140px;
+}
+
+.port-input-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+}
+
+.port-input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.generate-button {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #9CA3AF;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.generate-button:hover {
+  color: #F9FAFB;
+  background-color: rgba(75, 85, 99, 0.3);
+}
+
+.port-status {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.status-available {
+  color: #34D399;
+}
+
+.status-error {
+  color: #F87171;
+}
+
+.status-warning {
+  color: #FBBF24;
+}
+
+.status-checking {
+  color: #60A5FA;
+}
+
+.db-type-label {
+  color: #9CA3AF;
+}
+
+/* Directory Configuration */
+.directory-config {
+  padding-bottom: 12px;
+}
+
+.directory-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.directory-input {
+  background-color: rgba(17, 24, 39, 0.4);
+  border-color: rgba(75, 85, 99, 0.3);
+  color: #9CA3AF;
+}
+
+.browse-button {
+  padding: 0 12px;
+  background-color: rgba(75, 85, 99, 0.4);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  color: #F3F4F6;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.browse-button:hover {
+  background-color: rgba(75, 85, 99, 0.6);
+}
+
+.directory-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.directory-path {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+.path-value {
+  color: #C7D2FE;
+  font-family: monospace;
+}
+
+.reset-button {
+  font-size: 12px;
+  color: #93C5FD;
+  background: transparent;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.reset-button:hover {
+  color: #60A5FA;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancel-button {
+  padding: 10px 20px;
+  background-color: rgba(75, 85, 99, 0.4);
+  border: 1px solid rgba(75, 85, 99, 0.6);
+  color: #F3F4F6;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background-color: rgba(75, 85, 99, 0.6);
+}
+
+.create-button {
+  flex: 1;
+  padding: 10px 24px;
+  background-color: #6366F1;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.create-button:hover {
+  background-color: #4F46E5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.secondary-button {
+  padding: 8px 12px;
+  background-color: rgba(75, 85, 99, 0.4);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  color: #F3F4F6;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.secondary-button:hover {
+  background-color: rgba(75, 85, 99, 0.6);
+}
+
+.action-button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+/* Form Validation */
+.error-input {
+  border-color: rgba(239, 68, 68, 0.7);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
+}
+
+.success-input {
+  border-color: rgba(16, 185, 129, 0.7);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3);
+}
+
+/* Animation for collapsed elements */
 .collapse-enter-active,
 .collapse-leave-active {
-  transition: all 0.3s ease;
+  transition: height 0.3s ease-out;
   overflow: hidden;
-  max-height: 500px; /* Increased maximum height to ensure all content is visible */
 }
 
 .collapse-enter-from,
 .collapse-leave-to {
-  height: 0 !important;
-  opacity: 0;
-  margin-top: 0;
-  padding: 0;
-  overflow: hidden;
+  height: 0;
 }
 
-/* Hide scrollbar when not needed */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Loading Spinner */
+.disabled-button {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
+.disabled-button:hover {
+  background-color: #6366F1;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+.loading-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+.spinner-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.3);
+  stroke-width: 2;
 }
 
-/* Hide scrollbar styles */
-.hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+.spinner-circle {
+  fill: none;
+  stroke: white;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 62.83;
+  stroke-dashoffset: 50;
+  transform-origin: center;
 }
 
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
-}
-
-/* Hide scrollbar when not scrolling */
-::-webkit-scrollbar-thumb {
-  transition: background 0.3s;
-}
-
-/* macOS style animations */
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.7; }
-  100% { opacity: 1; }
-}
-
-.pulse-animation {
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-/* Add macOS-style smooth focus transitions */
-input:focus, select:focus, button:focus {
-  transition: all 0.2s ease-in-out;
-}
-
-/* Responsive tweaks for full-width layout */
-@media (min-width: 1024px) {
-  .form-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-/* Fixed height for create site container to ensure app-like feel */
-.create-site-container {
-  /* No fixed height constraint, show all content */
-  width: 100%;
-  display: block;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modern-checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
 }
 </style>
