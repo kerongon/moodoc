@@ -238,9 +238,9 @@
                     <button @click="viewBackups(site.name)" class="icon-action-btn bg-gray-500 hover:bg-gray-600" title="Backups">
                       <PhArchiveBox class="w-5 h-5" />
                     </button>
-                    <button @click="showUpdateModal(site.name)" class="icon-action-btn bg-orange-600 text-white p-1.5 rounded-lg hover:bg-orange-700 transition-colors shadow-sm" title="Update">
+                    <!-- <button @click="showUpdateModal(site.name)" class="icon-action-btn bg-orange-600 text-white p-1.5 rounded-lg hover:bg-orange-700 transition-colors shadow-sm" title="Update">
                       <PhRecycle class="w-5 h-5" weight="fill" />
-                    </button>
+                    </button> -->
                     <button @click="removeSite(site.name)" class="icon-action-btn bg-gray-800 hover:bg-red-700" title="Remove">
                       <PhTrash class="w-5 h-5 text-red-400" />
                     </button>
