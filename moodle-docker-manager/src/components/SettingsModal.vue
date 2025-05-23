@@ -86,7 +86,7 @@
       </div>
       
       <div class="modal-footer">
-        <button @click="closeModal" class="cancel-button text-xs py-1 px-3">Cancel</button>
+        <!-- <button @click="closeModal" class="cancel-button text-xs py-1 px-3">Cancel</button> -->
         <button 
           @click="resetSettings" 
           class="reset-button text-xs py-1 px-3"
