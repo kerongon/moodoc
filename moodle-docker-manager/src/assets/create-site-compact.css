@@ -394,3 +394,58 @@ input[type="text"].port-input {
   opacity: 0 !important;
   transform: translateY(15px) !important;
 }
+
+/* Additional styles to fix toggle switch issues */
+
+/* Fix Toggle Switch Appearance */
+.toggle-switch {
+  position: relative;
+  min-width: 50px !important; /* Force width */
+  height: 26px !important; /* Force height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px; /* Add more spacing between text and toggle */
+}
+
+.toggle-switch-label {
+  position: absolute;
+  width: 46px !important; /* Exact width */
+  height: 22px !important; /* Exact height */
+  background-color: rgba(31, 41, 55, 0.8);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch-label::after {
+  content: "";
+  position: absolute;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50%;
+  background-color: #9CA3AF;
+  top: 2px !important;
+  left: 2px !important;
+  transition: all 0.3s ease;
+}
+
+input:checked + .toggle-switch-label::after {
+  left: 26px !important; /* Adjusted to account for new width */
+}
+
+/* Ensure toggle container has enough spacing */
+.toggle-container {
+  min-height: 65px !important; /* Force height to be consistent */
+  padding: 12px 15px !important; /* Add more horizontal padding */
+}
+
+/* Fix alignment issues */
+.toggle-content {
+  gap: 10px !important; /* Add spacing between icon and text */
+}
+
+/* Override any scaling */
+.toggle-section .toggle-switch {
+  transform: none !important; /* Remove any scaling that might be applied */
+}

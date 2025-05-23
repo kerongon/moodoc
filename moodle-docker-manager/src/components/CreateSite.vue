@@ -1664,4 +1664,5 @@ export default {
 
 <style>
 @import '../assets/create-site.css';
+@import '../assets/create-site-compact.css'; /* Add this new import for fixes */
 </style>

@@ -429,7 +429,7 @@
   font-weight: 500;
 }
 
-/* Toggle Switch */
+/* Toggle Switch - Complete Redesign */
 .toggle-section {
   padding: 8px 12px;
 }
@@ -441,39 +441,54 @@
   padding: 12px;
   background-color: rgba(31, 41, 55, 0.4);
   border-radius: 12px;
+  min-height: 60px; /* Ensure consistent height */
 }
 
 .toggle-content {
   display: flex;
   align-items: center;
+  flex: 1; /* Take available space */
 }
 
 .toggle-icon {
   font-size: 18px;
   margin-right: 12px;
-  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; /* Fixed width for consistent alignment */
+  height: 24px;
 }
 
 .toggle-info {
   display: flex;
   flex-direction: column;
+  justify-content: center; /* Center the text vertically */
+  gap: 2px; /* Small gap between title and description */
 }
 
 .toggle-title {
   color: #F3F4F6;
   font-size: 14px;
   font-weight: 500;
+  margin: 0; /* Remove default margins */
+  line-height: 1.2;
 }
 
 .toggle-description {
   color: #9CA3AF;
   font-size: 12px;
+  margin: 0; /* Remove default margins */
+  line-height: 1.2;
 }
 
 .toggle-switch {
   position: relative;
   min-width: 42px;
   height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .toggle-switch-label {
