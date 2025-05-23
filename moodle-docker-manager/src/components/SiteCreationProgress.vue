@@ -323,7 +323,7 @@ export default {
 
 <template>
   <div class="modal-backdrop" ref="modalBackdrop" @click.self="handleBackdropClick">
-    <div class="modal-content">
+    <div class="modal-content" data-tauri-drag-region>
       <h2>Creating site: {{ siteName }}</h2>
       
       <div class="progress-container">
