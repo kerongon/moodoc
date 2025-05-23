@@ -1,6 +1,6 @@
 <template>
   <div class="home-view bg-gray-50 dark:bg-gray-900 w-full h-screen flex flex-col">
-    <div class="w-full px-4 py-2 flex-none flex items-center justify-center" data-tauri-drag-region>
+    <div class="title-bar w-full px-4 py-2 flex-none flex items-center justify-center" data-tauri-drag-region>
       <div class="mr-2">
         <PhSquare class="w-6 h-6 text-indigo-600" weight="fill" />
       </div>
@@ -57,5 +57,9 @@ export default defineComponent({
 .app-container {
   /* Ensure content doesn't cause a scrollbar on the main view */
   height: calc(100vh - 60px); /* Slightly smaller to account for header */
+}
+
+.title-bar {
+  user-select: none;
 }
 </style>

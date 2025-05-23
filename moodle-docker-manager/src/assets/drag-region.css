@@ -1,0 +1,13 @@
+/* Styles for window drag regions */
+[data-tauri-drag-region] {
+  user-select: none;
+  cursor: default;
+}
+
+/* Make sure buttons and interactive elements in drag regions are still clickable */
+[data-tauri-drag-region] button,
+[data-tauri-drag-region] select,
+[data-tauri-drag-region] input,
+[data-tauri-drag-region] a {
+  pointer-events: auto;
+}

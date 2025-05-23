@@ -47,6 +47,29 @@ export default defineComponent({
     const settingsStore = useSettingsStore();
     const route = useRoute();
     const showCreationProgress = ref(false);
+
+    // Window drag handler setup
+    onMounted(async () => {
+      try {
+        // Set up drag regions programmatically when app is mounted
+        document.addEventListener('mousedown', (e) => {
+          // Check if the clicked element or any of its parents has data-tauri-drag-region
+          let el = e.target as HTMLElement | null;
+          while (el) {
+            if (el.hasAttribute && el.hasAttribute('data-tauri-drag-region')) {
+              // Start dragging the window
+              appWindow.startDragging();
+              break;
+            }
+            el = el.parentElement;
+          }
+        });
+        
+        console.log('Window drag handlers initialized');
+      } catch (error) {
+        console.error('Error setting up window drag handlers:', error);
+      }
+    });
     
     // Check if this is a log window based on the route path
     const isLogWindow = computed(() => {
