@@ -62,7 +62,7 @@ export class MoodleService {
     // Older versions (3.9, 3.10) need PHP 7.x
     if (branch.includes('39') || branch.includes('310')) {
       recommendedVersion = '7.4';
-      isCompatible = false;
+      isCompatible = true; // Will be properly checked in isPhpVersionCompatible method
     } 
     // 3.11 and 4.0 can use PHP 8.0
     else if (branch.includes('311') || branch.includes('400')) {
@@ -105,6 +105,61 @@ export class MoodleService {
       isCompatible,
       currentVersion: recommendedVersion
     };
+  }
+
+  /**
+   * Checks if a specific PHP version is compatible with a Moodle branch
+   */
+  static isPhpVersionCompatible(phpVersion: string, moodleBranch: string): boolean {
+    const php = parseFloat(phpVersion);
+    
+    // Moodle 3.9: PHP 7.2 - 7.4
+    if (moodleBranch.includes('39')) {
+      return php >= 7.2 && php <= 7.4;
+    }
+    
+    // Moodle 3.10: PHP 7.2 - 7.4
+    if (moodleBranch.includes('310')) {
+      return php >= 7.2 && php <= 7.4;
+    }
+    
+    // Moodle 3.11: PHP 7.4 - 8.0
+    if (moodleBranch.includes('311')) {
+      return php >= 7.4 && php <= 8.0;
+    }
+    
+    // Moodle 4.0: PHP 7.4 - 8.1
+    if (moodleBranch.includes('400')) {
+      return php >= 7.4 && php <= 8.1;
+    }
+    
+    // Moodle 4.1: PHP 8.0 - 8.2
+    if (moodleBranch.includes('401')) {
+      return php >= 8.0 && php <= 8.2;
+    }
+    
+    // Moodle 4.2, 4.3: PHP 8.0 - 8.2
+    if (moodleBranch.includes('402') || moodleBranch.includes('403')) {
+      return php >= 8.0 && php <= 8.2;
+    }
+    
+    // Moodle 4.4, 4.5: PHP 8.1 - 8.3
+    if (moodleBranch.includes('404') || moodleBranch.includes('405')) {
+      return php >= 8.1 && php <= 8.3;
+    }
+    
+    // Moodle 5.0: PHP 8.2 - 8.4
+    if (moodleBranch.includes('500')) {
+      return php >= 8.2 && php <= 8.4;
+    }
+    
+    // Master branch: PHP 8.1+
+    if (moodleBranch === 'master') {
+      return php >= 8.1;
+    }
+    
+    // Default: assume compatible for unknown versions
+    return true;
   }
 
   /**

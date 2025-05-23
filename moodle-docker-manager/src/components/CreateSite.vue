@@ -1035,6 +1035,11 @@ export default {
         // If a port is already set, check its availability with new DB type
         this.onDbPortChanged(this.dbPort);
       }
+    },
+    
+    // Watch for PHP version changes to check compatibility
+    phpVersion() {
+      this.isPhpVersionCompatible = MoodleService.isPhpVersionCompatible(this.phpVersion, this.moodleBranch);
     }
   },
   methods: {
@@ -1082,8 +1087,9 @@ export default {
     updatePHPVersion() {
       const versionInfo = MoodleService.updatePhpVersionForBranch(this.moodleBranch);
       this.recommendedPhpVersion = versionInfo.recommendedVersion;
-      this.isPhpVersionCompatible = versionInfo.isCompatible;
       this.phpVersion = versionInfo.recommendedVersion;
+      // Check compatibility with the current/new PHP version
+      this.isPhpVersionCompatible = MoodleService.isPhpVersionCompatible(this.phpVersion, this.moodleBranch);
     },
     
     selectFolder() {

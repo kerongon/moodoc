@@ -125,6 +125,9 @@
                   <p v-if="recommendedPhpVersion" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Recommended PHP version: <span class="font-medium">{{ recommendedPhpVersion }}</span>
                   </p>
+                  <p v-if="!isPhpVersionCompatible" class="text-xs text-red-500 mt-1">
+                    ⚠️ This PHP version may not be compatible with the selected Moodle branch
+                  </p>
                 </div>
                 
                 <div v-if="!isProcessing" class="text-xs text-amber-500 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-md">
@@ -204,6 +207,7 @@ export default {
       newMoodleBranch: '',
       newPhpVersion: '',
       recommendedPhpVersion: '',
+      isPhpVersionCompatible: true,
       loading: false,
       isProcessing: false,
       progress: 0,
@@ -255,9 +259,11 @@ export default {
         const versionInfo = MoodleService.updatePhpVersionForBranch(this.newMoodleBranch);
         this.recommendedPhpVersion = versionInfo.recommendedVersion;
         this.newPhpVersion = versionInfo.recommendedVersion;
+        this.isPhpVersionCompatible = MoodleService.isPhpVersionCompatible(this.newPhpVersion, this.newMoodleBranch);
       } else {
         this.recommendedPhpVersion = this.currentPhpVersion;
         this.newPhpVersion = this.currentPhpVersion;
+        this.isPhpVersionCompatible = true;
       }
     },
     
@@ -346,6 +352,13 @@ export default {
     show(newVal) {
       if (newVal) {
         this.loadSiteInfo();
+      }
+    },
+    
+    // Watch for PHP version changes to check compatibility
+    newPhpVersion() {
+      if (this.newMoodleBranch) {
+        this.isPhpVersionCompatible = MoodleService.isPhpVersionCompatible(this.newPhpVersion, this.newMoodleBranch);
       }
     }
   },
