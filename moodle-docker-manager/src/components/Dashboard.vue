@@ -226,9 +226,9 @@ export default {
 .app-branding {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   /* Positioned to the right of navigation controls */
-  margin-left: 20px;
+  margin-left: 12px;
   pointer-events: auto;
 }
 
@@ -236,16 +236,16 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   pointer-events: auto;
   background-color: #6366F1;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .logo-icon {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
 }
 
 .title-container {
@@ -255,8 +255,8 @@ export default {
 }
 
 .app-title {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   margin: 0;
   letter-spacing: -0.025em;
   color: #FFFFFF;
