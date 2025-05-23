@@ -20,10 +20,10 @@
             <!-- Navigation Controls -->
             <div class="navigation-controls">
               <button @click="goBack" class="header-nav-button" title="Go Back">
-                <PhArrowLeft class="button-icon" />
+                <span class="chevron">&lt;</span>
               </button>
               <button @click="goForward" class="header-nav-button" title="Go Forward">
-                <PhArrowRight class="button-icon" />
+                <span class="chevron">&gt;</span>
               </button>
               <button @click="reloadPage" class="header-nav-button" title="Reload Page">
                 <PhArrowClockwise class="button-icon" />
@@ -262,7 +262,7 @@ import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
 import { invoke } from '@tauri-apps/api/tauri';
 import { appWindow } from '@tauri-apps/api/window';
-import { PhArchiveBox, PhPlus, PhArrowClockwise, PhFolderNotch, PhFolderOpen, PhTrash, PhArrowLeft, PhArrowRight, PhGear, PhList } from '@phosphor-icons/vue';
+import { PhArchiveBox, PhPlus, PhArrowClockwise, PhFolderNotch, PhFolderOpen, PhTrash, PhGear, PhList, PhSquare } from '@phosphor-icons/vue';
 
 export default {
   name: 'SiteBackups',
@@ -275,10 +275,9 @@ export default {
     PhFolderNotch,
     PhFolderOpen,
     PhTrash,
-    PhArrowLeft,
-    PhArrowRight,
     PhGear,
-    PhList
+    PhList,
+    PhSquare
   },
   props: {
     siteName: {
@@ -664,9 +663,9 @@ export default {
 }
 
 .app-header {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(17, 24, 39, 0.9);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   padding: 0.75rem 1rem;
   position: fixed;
   top: 0;
@@ -745,26 +744,24 @@ export default {
 .app-branding {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  pointer-events: none;
+  gap: 0.5rem;
+  /* Positioned to the right of navigation controls */
+  margin-left: 12px;
+  pointer-events: auto;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3);
+  width: 28px;
+  height: 28px;
+  pointer-events: auto;
+  background-color: #6366F1;
+  border-radius: 6px;
 }
 
 .logo-icon {
-  color: white;
   width: 18px;
   height: 18px;
 }
@@ -772,17 +769,15 @@ export default {
 .title-container {
   display: flex;
   flex-direction: column;
+  pointer-events: auto;
 }
 
 .app-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   margin: 0;
-  background: linear-gradient(90deg, #6366F1, #D946EF, #EC4899);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  color: #FFFFFF;
 }
 
 .header-actions {
@@ -814,55 +809,60 @@ export default {
   background: rgba(50, 56, 74, 0.95);
 }
 
+.chevron {
+  font-size: 16px;
+  font-weight: bold;
+}
+
 .settings-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.05);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: transparent;
   transition: all 0.2s ease;
-  color: #4b5563;
+  color: #9ca3af;
+  border: none;
 }
 
 .dark .settings-button {
-  background-color: rgba(255, 255, 255, 0.1);
   color: #d1d5db;
 }
 
 .settings-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  transform: rotate(15deg);
+  color: #6366F1;
+  transform: rotate(15deg); /* Added back rotation */
 }
 
 .dark .settings-button:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+  color: #d1d5db; /* This is light gray, not purple, and matches default dark mode color */
 }
 
 .docker-status-button {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.25rem 0.6rem;
-  border-radius: 50px;
-  font-weight: 500;
-  font-size: 0.75rem;
-  background-color: #F3F4F6;
-  color: #374151;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  gap: 0.3rem;
+  padding: 0;
+  border-radius: 0;
+  font-weight: 500; 
+  font-size: 0.875rem;
+  background-color: transparent;
+  color: #22c55e;
   min-height: 24px;
-  margin-right: 4px;
+  margin-right: 8px;
+  box-shadow: none;
 }
 
 .dark .docker-status-button {
-  background-color: #1F2937;
-  color: #D1D5DB;
+  color: #4ade80;
 }
 
 .button-icon {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
 }
 
 /* Responsive adjustments */
