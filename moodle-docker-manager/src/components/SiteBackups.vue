@@ -41,9 +41,15 @@
             </div>
           </div>
           <!-- Header actions -->
-          <div class="header-actions">
-            <DockerStatus class="docker-status-button" />
-            <button @click="openSettings" class="settings-button" title="Settings">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <DockerStatus />
+            
+            <router-link to="/create" title="Create New Site" class="modern-new-site-button">
+              <PhPlus class="button-icon" weight="fill" />
+              <span>New Site</span>
+            </router-link>
+            
+            <button @click="openSettings" title="Settings" class="modern-settings-button">
               <PhGear class="button-icon" />
             </button>
           </div>
@@ -814,7 +820,7 @@ export default {
   font-weight: bold;
 }
 
-.settings-button {
+.modern-settings-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -827,17 +833,37 @@ export default {
   border: none;
 }
 
-.dark .settings-button {
+.dark .modern-settings-button {
   color: #d1d5db;
 }
 
-.settings-button:hover {
+.modern-settings-button:hover {
   color: #6366F1;
   transform: rotate(15deg); /* Added back rotation */
 }
 
-.dark .settings-button:hover {
+.dark .modern-settings-button:hover {
   color: #d1d5db; /* This is light gray, not purple, and matches default dark mode color */
+}
+
+.modern-new-site-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #6366F1;
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+  text-decoration: none;
+}
+
+.modern-new-site-button:hover {
+  background-color: #4F46E5;
+  transform: translateY(-1px);
 }
 
 .docker-status-button {
