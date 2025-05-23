@@ -2,10 +2,18 @@
 
 /* Adjust the main content container */
 .create-site-container {
-  padding: 12px !important;
-  border-radius: 12px !important;
+  padding: 10px !important;
+  border-radius: 10px !important;
   width: 100% !important;
   max-width: 100% !important;
+  max-height: calc(100vh - 60px) !important; /* Ensure it fits in the viewport */
+  overflow-y: auto !important;
+}
+
+/* Make the form container more compact */
+.create-site-container form {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Reduce header size */
@@ -50,23 +58,83 @@ form.space-y-4 {
 
 /* Reduce section spacing */
 .config-section {
-  padding: 12px !important;
-  margin-bottom: 12px !important;
-  border-radius: 10px !important;
+  padding: 10px !important;
+  margin-bottom: 10px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Make the server configuration section more compact */
+.server-config {
+  padding: 8px !important;
+}
+
+/* Port configuration */
+.config-subsection {
+  margin-bottom: 8px !important;
+}
+
+.subsection-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 4px !important;
+}
+
+.subsection-title {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+}
+
+.port-config-row {
+  gap: 6px !important;
+  display: grid !important;
+  grid-template-columns: 120px 1fr !important; /* Fixed width for db type */
+  margin-bottom: 2px !important;
+}
+
+.db-type-container {
+  width: auto !important;
+}
+
+.port-input-container {
+  position: relative !important;
+}
+
+.port-status {
+  display: flex !important;
+  justify-content: space-between !important;
+  font-size: 10px !important;
+  margin-top: 2px !important;
+  line-height: 1.2 !important;
+}
+
+.info-tooltip {
+  width: 14px !important;
+  height: 14px !important;
+  font-size: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* Smaller form controls */
 .modern-form-label {
   font-size: 12px !important;
-  margin-bottom: 4px !important;
+  margin-bottom: 3px !important;
+  line-height: 1.2 !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 .modern-input, .modern-select {
   font-size: 12px !important;
-  padding: 6px 8px !important;
+  padding: 4px 8px !important;
   height: auto !important;
-  min-height: 30px !important;
-  border-radius: 6px !important;
+  min-height: 28px !important;
+  border-radius: 5px !important;
+  line-height: 1.2 !important;
 }
 
 /* Smaller section titles */
@@ -85,19 +153,43 @@ form.space-y-4 {
 }
 
 /* Make toggle containers more compact */
+.toggle-section {
+  padding: 6px !important;
+}
+
 .toggle-container {
-  padding: 8px !important;
-  border-radius: 8px !important;
+  padding: 6px !important;
+  border-radius: 6px !important;
+}
+
+.toggle-content {
+  display: flex !important;
+}
+
+.toggle-icon {
+  font-size: 12px !important;
+  margin-right: 6px !important;
+  line-height: 1.2 !important;
+}
+
+.toggle-info {
+  line-height: 1.2 !important;
 }
 
 .toggle-title {
-  font-size: 13px !important;
+  font-size: 12px !important;
   margin-bottom: 0 !important;
+  line-height: 1.2 !important;
 }
 
 .toggle-description {
-  font-size: 11px !important;
+  font-size: 10px !important;
   line-height: 1.2 !important;
+}
+
+/* Toggle switch */
+.toggle-switch {
+  transform: scale(0.8) !important;
 }
 
 /* Info messages */
@@ -108,12 +200,20 @@ form.space-y-4 {
 
 /* Tab styling */
 .modern-tabs-container {
-  margin-bottom: 10px !important;
+  margin-bottom: 8px !important;
+  padding: 3px !important;
+  border-radius: 10px !important;
 }
 
 .modern-tab-button {
-  font-size: 13px !important;
-  padding: 6px 10px !important;
+  font-size: 12px !important;
+  padding: 5px 8px !important;
+  border-radius: 8px !important;
+}
+
+.tab-icon {
+  font-size: 10px !important;
+  margin-right: 4px !important;
 }
 
 /* Action buttons */
@@ -135,8 +235,53 @@ form.space-y-4 {
 }
 
 /* Modify grid container for version config */
-.grid-container.compact {
+.grid-container {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important; /* Two equal columns */
   gap: 8px !important; 
+}
+
+/* Version Configuration section specific styling */
+.version-config {
+  padding: 10px !important; /* Even more compact padding */
+}
+
+.version-config .section-title {
+  margin-bottom: 6px !important; /* Less space below the title */
+  font-size: 13px !important; /* Smaller font for title */
+}
+
+.version-config .grid-container {
+  display: grid !important;
+  grid-template-columns: 6fr 6fr !important; /* 6x6 grid layout as requested */
+  margin-bottom: 4px !important;
+  column-gap: 12px !important; /* Space between the columns */
+}
+
+.version-config .form-group {
+  margin-bottom: 0 !important;
+}
+
+.version-config .modern-form-label {
+  font-size: 11px !important; /* Smaller font for labels */
+  margin-bottom: 2px !important; /* Less space below label */
+}
+
+.version-config .modern-select {
+  height: 28px !important; /* Smaller height */
+  min-height: 28px !important;
+  padding: 2px 6px !important; /* Smaller padding */
+}
+
+.version-info {
+  margin-top: 2px !important;
+  padding: 0 4px !important;
+}
+
+.version-info p {
+  font-size: 10px !important;
+  margin-bottom: 0 !important;
+  line-height: 1.2 !important;
 }
 
 /* Remove any overhanging margins */
@@ -165,6 +310,44 @@ form.space-y-4 {
 .mount-row, .env-var-row {
   gap: 6px !important;
   margin-bottom: 6px !important;
+}
+
+/* Directory Configuration styling */
+.directory-config {
+  padding: 8px !important;
+}
+
+.directory-input-row {
+  gap: 4px !important;
+  margin-bottom: 4px !important;
+}
+
+.browse-button {
+  padding: 0 8px !important;
+  font-size: 11px !important;
+  height: 28px !important;
+}
+
+.directory-info {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.directory-path {
+  font-size: 10px !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  max-width: 90% !important;
+}
+
+.reset-button {
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  height: auto !important;
 }
 
 /* Better form transitions */

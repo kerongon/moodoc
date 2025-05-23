@@ -16,8 +16,6 @@ import './assets/compact-ui-fix.css';
 import './assets/modern-buttons.css';
 // Import create site compact styles
 import './assets/create-site-compact.css';
-// Import create site compact styles
-import './assets/create-site-compact.css';
 
 // Import icons
 import * as PhosphorIcons from '@phosphor-icons/vue';
