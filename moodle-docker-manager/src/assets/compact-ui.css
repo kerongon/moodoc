@@ -44,7 +44,9 @@ body select.macos-select.compact-select {
   font-size: 0.7rem !important; /* Slightly smaller text than regular inputs */
   height: 1.6rem !important; /* Shorter height for dropdowns */
   padding: 0 0.5rem !important;
-  appearance: none !important;
+  -webkit-appearance: none !important;
+     -moz-appearance: none !important;
+          appearance: none !important;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
   background-position: right 0.5rem center !important;
   background-repeat: no-repeat !important;
@@ -119,7 +121,9 @@ body.dark select.macos-select.compact-select {
 
 /* Custom macOS style for select elements with compact sizing */
 .macos-compact-select {
-  appearance: none !important;
+  -webkit-appearance: none !important;
+     -moz-appearance: none !important;
+          appearance: none !important;
   border-radius: 4px !important;
   border: 1px solid #d1d5db !important;
   background-color: white !important;
@@ -325,7 +329,7 @@ body.dark select.macos-select.compact-select {
 /* Ensure docker status is as compact as possible */
 .docker-status-container {
   padding: 0.5rem !important;
-  margin-bottom: 0.5rem !important;
+  margin-bottom: 0.3rem !important;
 }
 
 /* Additional compact rules for native app feel */
