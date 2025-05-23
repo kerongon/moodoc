@@ -13,7 +13,7 @@
       </div>
 
       <!-- search box -->
-      <div class="relative">
+      <div v-if="sites.length > 0" class="relative">
         <input
           type="search"
           v-model="searchQuery"
