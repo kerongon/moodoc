@@ -589,34 +589,38 @@ export default {
       try {
         loading.value = true;
         showRemoveModal.value = false;
-        
-        // First stop the site if removeContainers is true
+        activeActionSite.value = siteToRemove.value;
+
+        // Use docker-compose down for full Docker cleanup if requested
         if (removeContainers.value) {
-          const siteObj = sites.value.find(s => s.name === siteToRemove.value);
-          if (siteObj && siteObj.status === 'running') {
-            try {
-              await invoke('stop_site', { name: siteToRemove.value });
-              // Brief delay to allow containers to stop
-              await new Promise(r => setTimeout(r, 1000));
-            } catch (stopErr) {
-              console.warn(`Site was running but could not be stopped: ${stopErr}`);
-              // Continue with removal anyway
-            }
+          console.log(`Cleaning up Docker resources for ${siteToRemove.value}...`);
+          try {
+            await invoke('docker_compose_down', {
+              name: siteToRemove.value,
+              removeVolumes: true,
+              removeOrphans: true
+            });
+            // Wait a bit for Docker operations to complete
+            await new Promise(res => setTimeout(res, 2000));
+          } catch (err) {
+            console.warn(`docker-compose down failed: ${err}`);
           }
         }
-        
-        // Pass the removeContainers flag to the backend
-        await invoke('remove_site', { 
+
+        // Now remove the site from the system
+        await invoke('remove_site', {
           name: siteToRemove.value,
-          removeContainers: removeContainers.value 
+          removeContainers: false
         });
-        
-        await loadSites(); // Refresh site list
+        console.log(`Site ${siteToRemove.value} removed successfully`);
+
+        await loadSites();
       } catch (err) {
         console.error(`Failed to remove site ${siteToRemove.value}:`, err);
         showError(`Failed to remove site: ${siteToRemove.value}`, String(err));
       } finally {
         loading.value = false;
+        activeActionSite.value = null;
         siteToRemove.value = '';
       }
     };
