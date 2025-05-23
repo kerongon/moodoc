@@ -1,23 +1,22 @@
 <template>
-  <div class="docker-status-card flex items-center gap-2" 
-       style="display: flex; align-items: center; gap: 0.5rem;"
+  <div style="display: flex; align-items: center; gap: 0.5rem; background: transparent;"
        :title="loading ? 'Checking Docker status...' : 
                dockerInstalled && dockerRunning ? 'Docker is installed and running' : 
                dockerInstalled ? 'Docker is installed but not running' : 
                'Docker is not installed'">
-    <!-- Status indicator -->
-    <div v-if="!loading" class="status-indicator-compact" style="display: flex; align-items: center;">
-      <div v-if="dockerInstalled && dockerRunning" class="status-dot running" 
-           style="width: 6px; height: 6px; border-radius: 50%; background-color: #22c55e; box-shadow: 0 0 4px rgba(34, 197, 94, 0.6);"></div>
-      <div v-else-if="dockerInstalled && !dockerRunning" class="status-dot stopped"
-           style="width: 6px; height: 6px; border-radius: 50%; background-color: #ef4444; box-shadow: 0 0 4px rgba(239, 68, 68, 0.6);"></div>
-      <div v-else class="status-dot not-installed"
-           style="width: 6px; height: 6px; border-radius: 50%; background-color: #f59e0b; box-shadow: 0 0 4px rgba(245, 158, 11, 0.6);"></div>
+    <!-- Status indicator dot -->
+    <div v-if="!loading" style="display: flex; align-items: center;">
+      <div v-if="dockerInstalled && dockerRunning"
+           style="width: 8px; height: 8px; border-radius: 50%; background-color: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);"></div>
+      <div v-else-if="dockerInstalled && !dockerRunning"
+           style="width: 8px; height: 8px; border-radius: 50%; background-color: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);"></div>
+      <div v-else
+           style="width: 8px; height: 8px; border-radius: 50%; background-color: #f59e0b; box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);"></div>
     </div>
 
     <!-- Text content -->
     <div>
-      <p class="status-text" style="font-size: 0.7rem; font-weight: 500; margin: 0;">
+      <p style="font-size: 0.875rem; font-weight: 500; margin: 0; color: #22c55e;">
         {{ loading ? '...' : dockerRunning ? 'Running' : 'Stopped' }}
       </p>
     </div>

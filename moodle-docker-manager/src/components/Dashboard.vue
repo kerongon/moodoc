@@ -39,16 +39,20 @@
           </div>
           
           <!-- Header actions -->
-          <div class="header-actions">
-            <DockerStatus class="docker-status-button" />
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <DockerStatus />
             
-            <router-link to="/create" class="new-site-button" title="Create New Site">
-              <PhPlus class="button-icon" weight="fill" />
+            <router-link to="/create" title="Create New Site"
+                     class="modern-new-site-button"
+                     style="display: flex; align-items: center; gap: 0.5rem; background-color: #6366F1; color: white; padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600; font-size: 1rem; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);">
+              <PhPlus style="width: 20px; height: 20px;" weight="fill" />
               <span>New Site</span>
             </router-link>
             
-            <button @click="openSettings" class="settings-button" title="Settings">
-              <PhGear class="button-icon" />
+            <button @click="openSettings" title="Settings"
+                   class="modern-settings-button"
+                   style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; background-color: transparent; transition: all 0.2s ease; color: #9ca3af; border: none;">
+              <PhGear style="width: 22px; height: 22px;" />
             </button>
           </div>
         </div>
@@ -87,7 +91,13 @@ export default {
   data() {
     return {
       dockerInstalled: false,
-      dockerRunning: false
+      dockerRunning: false,
+      newSiteButtonStyle: {
+        transform: 'translateY(0px)'
+      },
+      settingsButtonStyle: {
+        transform: 'rotate(0deg)'
+      }
     };
   },
   methods: {
@@ -304,50 +314,50 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #4f46e5;
+  background-color: #6366F1;
   color: white;
-  padding: 0.4rem 1rem; /* Adjusted padding */
-  border-radius: 6px;
-  font-weight: 500; /* Adjusted font weight */
-  font-size: 0.85rem; /* Adjusted font size */
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
 }
 
 .new-site-button:hover {
-  background-color: #4338ca;
+  background-color: #4F46E5;
   transform: translateY(-1px);
 }
 
 .button-icon {
-  width: 16px; /* Adjusted default icon size */
-  height: 16px;
+  width: 20px;
+  height: 20px;
 }
 
 .settings-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px; /* Smaller settings button */
-  height: 32px;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.05);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background-color: transparent;
   transition: all 0.2s ease;
-  color: #4b5563;
+  color: #9ca3af;
+  border: none;
 }
 
 .dark .settings-button {
-  background-color: rgba(255, 255, 255, 0.1);
   color: #d1d5db;
 }
 
 .settings-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  color: #6366F1;
   transform: rotate(15deg);
 }
 
 .dark .settings-button:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+  color: #a5b4fc;
 }
 
 .docker-status-button {
