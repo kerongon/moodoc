@@ -275,7 +275,7 @@ export default {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* Reduced gap */
+  gap: 0.75rem;
 }
 
 .header-nav-button {
@@ -364,19 +364,18 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.25rem 0.6rem; /* Reduced padding */
-  border-radius: 50px; /* Pill shape */
+  padding: 0;
+  border-radius: 0;
   font-weight: 500; 
-  font-size: 0.75rem; /* Smaller font */
-  background-color: #F3F4F6;
-  color: #374151;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  min-height: 24px; /* Smaller height */
-  margin-right: 4px;
+  font-size: 0.875rem;
+  background-color: transparent;
+  color: #22c55e;
+  min-height: 24px;
+  margin-right: 8px;
+  box-shadow: none;
 }
 .dark .docker-status-button {
-  background-color: #1F2937;
-  color: #D1D5DB;
+  color: #4ade80;
 }
 
 @media (max-width: 768px) { /* Adjusted breakpoint */

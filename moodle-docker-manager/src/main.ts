@@ -12,6 +12,8 @@ import './assets/compact-ui.css';
 import './assets/hide-scrollbar.css';
 // Import compact UI fixes
 import './assets/compact-ui-fix.css';
+// Import modern button styles
+import './assets/modern-buttons.css';
 
 // Import icons
 import * as PhosphorIcons from '@phosphor-icons/vue';

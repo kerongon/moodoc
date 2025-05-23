@@ -1,0 +1,99 @@
+<template>
+  <div class="docker-status-container" 
+       :title="loading ? 'Checking Docker status...' : 
+               dockerInstalled && dockerRunning ? 'Docker is installed and running' : 
+               dockerInstalled ? 'Docker is installed but not running' : 
+               'Docker is not installed'">
+    <!-- Status indicator dot -->
+    <div v-if="!loading" class="status-dot-container">
+      <div v-if="dockerInstalled && dockerRunning" class="status-dot running"></div>
+      <div v-else-if="dockerInstalled && !dockerRunning" class="status-dot stopped"></div>
+      <div v-else class="status-dot not-installed"></div>
+    </div>
+
+    <!-- Text content -->
+    <div>
+      <p class="status-text">
+        {{ loading ? '...' : dockerRunning ? 'Running' : 'Stopped' }}
+      </p>
+    </div>
+  </div>
+</template>
+
+<script>
+import { invoke } from '@tauri-apps/api/tauri';
+
+export default {
+  name: 'DockerStatus',
+  data() {
+    return {
+      loading: true,
+      dockerInstalled: false,
+      dockerRunning: false
+    };
+  },
+  methods: {
+    async fetchDockerStatus() {
+      try {
+        this.dockerInstalled = await invoke('check_docker_installed');
+        this.dockerRunning = await invoke('check_docker_running');
+      } catch (error) {
+        console.error('Error checking Docker status:', error);
+      } finally {
+        this.loading = false;
+      }
+    }
+  },
+  mounted() {
+    console.log('DockerStatus component mounted');
+    this.fetchDockerStatus();
+    
+    // Re-check status every 10 seconds
+    setInterval(() => {
+      this.fetchDockerStatus();
+    }, 10000);
+  }
+};
+</script>
+
+<style scoped>
+/* Modern clean status indicator */
+.docker-status-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-dot-container {
+  display: flex;
+  align-items: center;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.running {
+  background-color: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+}
+
+.status-dot.stopped {
+  background-color: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+
+.status-dot.not-installed {
+  background-color: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+}
+
+.status-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+  color: #22c55e;
+}
+</style>

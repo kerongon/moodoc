@@ -1,22 +1,29 @@
 <template>
-  <div style="display: flex; align-items: center; gap: 0.5rem; background: transparent;"
+  <div class="docker-status-container" 
        :title="loading ? 'Checking Docker status...' : 
                dockerInstalled && dockerRunning ? 'Docker is installed and running' : 
                dockerInstalled ? 'Docker is installed but not running' : 
                'Docker is not installed'">
     <!-- Status indicator dot -->
-    <div v-if="!loading" style="display: flex; align-items: center;">
-      <div v-if="dockerInstalled && dockerRunning"
-           style="width: 8px; height: 8px; border-radius: 50%; background-color: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);"></div>
-      <div v-else-if="dockerInstalled && !dockerRunning"
-           style="width: 8px; height: 8px; border-radius: 50%; background-color: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);"></div>
-      <div v-else
-           style="width: 8px; height: 8px; border-radius: 50%; background-color: #f59e0b; box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);"></div>
+    <div v-if="!loading" class="status-dot-container">
+      <div v-if="dockerInstalled && dockerRunning" class="status-dot running"></div>
+      <div v-else-if="dockerInstalled && !dockerRunning" class="status-dot stopped"></div>
+      <div v-else class="status-dot not-installed"></div>
+    </div>
+    <div v-else class="status-dot-container">
+      <!-- Loading animation -->
+      <div class="status-dot loading"></div>
     </div>
 
     <!-- Text content -->
     <div>
-      <p style="font-size: 0.875rem; font-weight: 500; margin: 0; color: #22c55e;">
+      <p class="status-text" 
+         :class="{
+           'loading-text': loading,
+           'running-text': !loading && dockerRunning,
+           'stopped-text': !loading && dockerInstalled && !dockerRunning,
+           'not-installed-text': !loading && !dockerInstalled
+         }">
         {{ loading ? '...' : dockerRunning ? 'Running' : 'Stopped' }}
       </p>
     </div>
@@ -60,87 +67,99 @@ export default {
 </script>
 
 <style scoped>
-/* Modern macOS-style component - more compact version */
-.docker-status-card {
-  background: linear-gradient(to bottom, #ffffff, #f8f9fb);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.02);
-  border-radius: 50px;
-  padding: 3px 8px;
-  transition: all 0.2s ease;
+/* Modern clean status indicator */
+.docker-status-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.dark .docker-status-card {
-  background: linear-gradient(to bottom, #1f2937, #1a2332);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05);
-}
-
-.docker-status-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
-}
-
-.dark .docker-status-card:hover {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.07);
-}
-
-.status-indicator-compact {
+.status-dot-container {
   display: flex;
   align-items: center;
 }
 
 .status-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
+}
+
+.status-dot.loading {
+  background-color: #9ca3af;
+  box-shadow: 0 0 6px rgba(156, 163, 175, 0.6);
+  animation: pulse-loading 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-loading {
+  0% { transform: scale(0.8); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.7; }
+}
+
+.status-dot.running {
+  background-color: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+  animation: pulse-green 2s infinite;
   position: relative;
 }
 
-.status-dot::after {
+.status-dot.running::after {
   content: '';
   position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
   border-radius: 50%;
+  background-color: #22c55e;
   opacity: 0.4;
   z-index: -1;
-}
-
-.status-text {
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: #374151;
-  margin: 0;
-}
-
-.dark .status-text {
-  color: #e5e7eb;
-}
-
-/* Status variants */
-.status-dot.running {
-  background-color: #22c55e;
-  box-shadow: 0 0 4px rgba(34, 197, 94, 0.6);
-  animation: pulse-green 2s infinite;
-}
-
-.status-dot.running::after {
-  background-color: #22c55e;
   animation: pulse-green-outer 2s infinite;
 }
 
 .status-dot.stopped {
   background-color: #ef4444;
-  box-shadow: 0 0 4px rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+  animation: pulse-red 2s infinite;
+  position: relative;
+}
+
+.status-dot.stopped::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  opacity: 0.4;
+  z-index: -1;
+  animation: pulse-red-outer 2s infinite;
 }
 
 .status-dot.not-installed {
   background-color: #f59e0b;
-  box-shadow: 0 0 4px rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+  animation: pulse-orange 2s infinite;
+  position: relative;
 }
 
-/* Pulse animations for status indicators */
+.status-dot.not-installed::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+  opacity: 0.4;
+  z-index: -1;
+  animation: pulse-orange-outer 2s infinite;
+}
+
 @keyframes pulse-green {
   0% { box-shadow: 0 0 4px rgba(34, 197, 94, 0.6); }
   50% { box-shadow: 0 0 8px rgba(34, 197, 94, 0.8); }
@@ -153,14 +172,57 @@ export default {
   100% { opacity: 0.3; transform: scale(1); }
 }
 
-/* Responsive adjustments */
-@media (max-width: 640px) {
-  .docker-status-card {
-    padding: 3px 8px;
-  }
-  
-  .status-text {
-    font-size: 0.75rem;
-  }
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.6); }
+  50% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.8); }
+  100% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.6); }
+}
+
+@keyframes pulse-red-outer {
+  0% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+  100% { opacity: 0.3; transform: scale(1); }
+}
+
+@keyframes pulse-orange {
+  0% { box-shadow: 0 0 4px rgba(245, 158, 11, 0.6); }
+  50% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.8); }
+  100% { box-shadow: 0 0 4px rgba(245, 158, 11, 0.6); }
+}
+
+@keyframes pulse-orange-outer {
+  0% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+  100% { opacity: 0.3; transform: scale(1); }
+}
+
+.status-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+  transition: color 0.3s ease;
+}
+
+.running-text {
+  color: #22c55e;
+}
+
+.stopped-text {
+  color: #ef4444;
+}
+
+.not-installed-text {
+  color: #f59e0b;
+}
+
+.loading-text {
+  color: #9ca3af;
+  animation: text-pulse 1.5s infinite;
+}
+
+@keyframes text-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 </style>
