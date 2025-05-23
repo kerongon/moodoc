@@ -75,13 +75,13 @@
 .modern-new-site-button {
   display: flex !important;
   align-items: center !important;
-  gap: 0.5rem !important;
+  gap: 0.4rem !important; /* Reduced from 0.5rem */
   background-color: var(--new-site-bg) !important;
   color: white !important;
-  padding: 0.5rem 1.25rem !important;
+  padding: 0.4rem 1rem !important; /* Reduced from 0.5rem 1.25rem */
   border-radius: 8px !important;
   font-weight: 600 !important;
-  font-size: 1rem !important;
+  font-size: 0.8125rem !important; /* Reduced from 0.875rem */
   transition: var(--button-transition) !important;
   box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2) !important;
   position: relative !important;
@@ -103,8 +103,8 @@
 }
 
 .modern-new-site-button .button-icon {
-  width: 20px !important;
-  height: 20px !important;
+  width: 18px !important; /* Reduced from 20px */
+  height: 18px !important; /* Reduced from 20px */
   transition: transform 0.3s ease !important;
 }
 
