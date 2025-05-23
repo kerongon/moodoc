@@ -1,7 +1,7 @@
 <template>
   <div class="logs-viewer bg-white dark:bg-gray-800 min-h-screen w-full p-4">
     <!-- Minimal header with just the essential controls -->
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-4" data-tauri-drag-region>
       <div class="flex items-center gap-2">
         <div class="bg-blue-600 rounded-lg p-1.5 shadow-sm">
           <PhTerminal class="text-white w-5 h-5" weight="fill" />

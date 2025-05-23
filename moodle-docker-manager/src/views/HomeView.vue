@@ -1,6 +1,6 @@
 <template>
   <div class="home-view bg-gray-50 dark:bg-gray-900 w-full h-screen flex flex-col">
-    <div class="w-full px-4 py-2 flex-none flex items-center justify-center">
+    <div class="w-full px-4 py-2 flex-none flex items-center justify-center" data-tauri-drag-region>
       <div class="mr-2">
         <PhSquare class="w-6 h-6 text-indigo-600" weight="fill" />
       </div>
