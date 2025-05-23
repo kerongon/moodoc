@@ -914,16 +914,28 @@ export default {
   .app-title {
     font-size: 0.9rem;
   }
-  .header-actions {
-    gap: 0.25rem;
+  
+  .modern-new-site-button span {
+    display: none;
   }
+  
+  .modern-new-site-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+  
   .header-nav-button {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
   }
   .header-nav-button .button-icon {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
   }
   .window-controls {
     gap: 6px;
