@@ -8,13 +8,31 @@
             <!-- Window Controls -->
             <div class="window-controls">
               <button @click="closeWindow" class="window-control-button close-button" title="Close">
-                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FF5F57" stroke="#E0443E" stroke-width="1"></circle></svg>
+                <!-- default red circle -->
+                <svg class="icon-default" width="12" height="12" viewBox="0 0 12 12">
+                  <circle cx="6" cy="6" r="5.5" fill="#FF5F57" stroke="#E0443E" stroke-width="1" />
+                </svg>
+                <!-- hover X icon -->
+                <svg class="icon-hover" width="8" height="8" viewBox="0 0 24 24">
+                  <path stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
-              <!-- <button @click="minimizeWindow" class="window-control-button minimize-button" title="Minimize">
-                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FFBD2E" stroke="#DEA123" stroke-width="1"></circle></svg>
-              </button> -->
+              <button @click="minimizeWindow" class="window-control-button minimize-button" title="Minimize">
+                <!-- default yellow circle -->
+                <svg class="icon-default" width="12" height="12" viewBox="0 0 12 12">
+                  <circle cx="6" cy="6" r="5.5" fill="#FFBD2E" stroke="#DEA123" stroke-width="1" />
+                </svg>
+                <!-- hover minus icon -->
+                <svg class="icon-hover" width="8" height="2" viewBox="0 0 12 12">
+                  <rect x="2" y="5" width="8" height="2" fill="white" />
+                </svg>
+              </button>
               <button @click="toggleMaximizeWindow" class="window-control-button maximize-button" title="Maximize">
-                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#27C93F" stroke="#1AAB29" stroke-width="1"></circle></svg>
+                <!-- default green circle -->
+                <svg class="icon-default" width="12" height="12" viewBox="0 0 12 12">
+                  <circle cx="6" cy="6" r="5.5" fill="#27C93F" stroke="#1AAB29" stroke-width="1" />
+                </svg>
+                <PhArrowsOut class="icon-hover w-2 h-2 text-white" weight="fill" />
               </button>
             </div>
             <!-- Navigation Controls -->
@@ -68,7 +86,7 @@
 <script>
 import { appWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/tauri';
-import { PhList, PhPlus, PhGear, PhArrowClockwise, PhSquare } from '@phosphor-icons/vue';
+import { PhList, PhPlus, PhGear, PhArrowClockwise, PhSquare, PhArrowsOut } from '@phosphor-icons/vue';
 import SiteList from './SiteList.vue';
 import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
@@ -83,7 +101,8 @@ export default {
     PhPlus,
     PhGear,
     PhArrowClockwise,
-    PhSquare
+    PhSquare,
+    PhArrowsOut
   },
   data() {
     return {
@@ -199,15 +218,23 @@ export default {
 }
 
 .window-control-button {
+  position: relative;
   width: 12px;
   height: 12px;
-  border-radius: 50%;
-  border: none;
   padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: default; /* Changed from pointer to default for native feel */
+}
+
+.window-control-button svg.icon-hover {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.window-control-button:hover svg.icon-hover {
+  display: block;
 }
 
 /* Specific styles for each button to mimic macOS traffic lights */
