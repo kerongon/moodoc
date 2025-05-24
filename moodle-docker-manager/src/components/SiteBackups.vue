@@ -698,7 +698,7 @@ export default {
       try {
         const result = await invoke('restore_site_backup', { 
           name: this.siteName,
-          backup_timestamp: this.selectedBackupTimestamp
+          backupTimestamp: this.selectedBackupTimestamp
         });
         
         this.showSuccessMessage = true;

@@ -1650,17 +1650,38 @@ pub fn restore_site_backup(app_handle: AppHandle, name: String, backup_timestamp
         return Err(format!("Backup '{}' not found", backup_name));
     }
     
+    // Get the absolute path to the moodle directory
+    let moodle_www_root = site.path.join("moodle");
+    let abs_moodle_path = moodle_www_root.canonicalize()
+        .unwrap_or_else(|_| moodle_www_root.clone());
+        
     // Check if site is running and stop it if needed
     let stop_script = format!(r#"#!/bin/bash
 cd {}
 export COMPOSE_PROJECT_NAME={}
-export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_WWWROOT={}
+export MOODLE_DOCKER_DB={}
+export MOODLE_DOCKER_WEB_PORT={}
+export MOODLE_DOCKER_PHP_VERSION={}
+export MOODLE_DOCKER_DB_PORT={}
+
+# Echo environment for debugging
+echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
+echo "MOODLE_DOCKER_WWWROOT=$MOODLE_DOCKER_WWWROOT"
+echo "MOODLE_DOCKER_DB=$MOODLE_DOCKER_DB"
+echo "MOODLE_DOCKER_WEB_PORT=$MOODLE_DOCKER_WEB_PORT"
+echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
 
 # Stop containers if running
 ./bin/moodle-docker-compose down
 "#, 
         site.path.to_str().unwrap_or(""),
         name,
+        abs_moodle_path.to_str().unwrap_or(""),
+        site.db_type.to_lowercase(),
+        site.web_port.unwrap_or(8000),
+        site.php_version,
+        site.db_port.unwrap_or(3306),
     );
     
     // Write the stop script
@@ -1682,6 +1703,23 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
         return Err(format!("Failed to make stop script executable"));
     }
     
+    // Print debugging information
+    println!("Stopping site for restore: {}", name);
+    println!("Site path: {:?}", site.path);
+    
+    // Check if directory exists
+    if !site.path.exists() {
+        let _ = fs::remove_file(&stop_script_path);
+        return Err(format!("Site directory does not exist: {:?}", site.path));
+    }
+    
+    // Check if moodle-docker-compose exists
+    let compose_script = site.path.join("bin").join("moodle-docker-compose");
+    if !compose_script.exists() {
+        let _ = fs::remove_file(&stop_script_path);
+        return Err(format!("Docker compose script not found at: {:?}", compose_script));
+    }
+    
     // Execute the stop script
     let output = Command::new(stop_script_path.to_str().unwrap_or("./stop_for_restore.sh"))
         .output()
@@ -1694,8 +1732,11 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
     let _ = fs::remove_file(stop_script_path);
     
     if !output.status.success() {
-        let error = String::from_utf8_lossy(&output.stderr).to_string();
-        return Err(format!("Failed to stop site for restore: {}", error));
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        println!("Stop script stdout: {}", stdout);
+        println!("Stop script stderr: {}", stderr);
+        return Err(format!("Failed to stop site for restore: {}", stderr));
     }
     
     // Create restore script
@@ -1703,7 +1744,7 @@ export MOODLE_DOCKER_WWWROOT=$PWD/moodle
 set -e
 cd {site_path}
 export COMPOSE_PROJECT_NAME={name}
-export MOODLE_DOCKER_WWWROOT=$PWD/moodle
+export MOODLE_DOCKER_WWWROOT={abs_moodle_path}
 export MOODLE_DOCKER_DB={db_type}
 export MOODLE_DOCKER_PHP_VERSION={php_version}
 export MOODLE_DOCKER_WEB_PORT={web_port}
@@ -1743,7 +1784,20 @@ if [ "{db_type}" == "pgsql" ] || [ "{db_type}" == "postgres" ] || [ "{db_type}" 
     cat {backup_dir}/database/moodle_db.sql | ./bin/moodle-docker-compose exec -T db bash -c "PGPASSWORD=moodle psql -U postgres"
 else
     echo "Using MySQL/MariaDB restore command..."
-    cat {backup_dir}/database/moodle_db.sql | ./bin/moodle-docker-compose exec -T db bash -c "mysql -u root -pm@0dl3ing moodle"
+    # First check if the SQL file contains non-SQL content at the beginning
+    echo "Checking SQL file for valid content..."
+    
+    # Create a temp file for cleaned SQL
+    CLEAN_SQL_FILE="{backup_dir}/database/clean_moodle_db.sql"
+    
+    # Filter out any non-SQL content from the backup file
+    grep -v "^Including" {backup_dir}/database/moodle_db.sql | grep -v "^Warning" > "$CLEAN_SQL_FILE"
+    
+    # Use the cleaned file with the -f flag to force execution even if minor errors occur
+    cat "$CLEAN_SQL_FILE" | ./bin/moodle-docker-compose exec -T db bash -c "mysql -f -u root -pm@0dl3ing moodle"
+    
+    # Remove temporary file
+    rm -f "$CLEAN_SQL_FILE"
 fi
 
 echo "Starting remaining containers..."
@@ -1754,6 +1808,7 @@ echo "Site restored successfully"
 "#, 
         site_path = site.path.to_str().unwrap_or(""),
         name = name,
+        abs_moodle_path = abs_moodle_path.to_str().unwrap_or(""),
         db_type = site.db_type.to_lowercase(),
         php_version = site.php_version,
         web_port = site.web_port.unwrap_or(8000),
