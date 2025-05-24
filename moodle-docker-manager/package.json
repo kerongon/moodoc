@@ -7,19 +7,26 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
+    "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "css:build": "npx postcss src/index.css -o public/build.css"
   },
   "dependencies": {
     "@phosphor-icons/vue": "^2.2.1",
-    "@tauri-apps/api": "^1.4.0",
+    "@tauri-apps/api": "^2.5.0",
+    "@tauri-apps/plugin-clipboard-manager": "^2.2.2",
+    "@tauri-apps/plugin-dialog": "^2.2.2",
+    "@tauri-apps/plugin-fs": "^2.3.0",
+    "@tauri-apps/plugin-notification": "^2.2.2",
+    "@tauri-apps/plugin-shell": "^2.2.1",
+    "@tauri-apps/plugin-store": "^2.2.0",
     "pinia": "^2.3.1",
     "vue": "^3.2.0",
     "vue-router": "^4.0.0"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.6.3",
+    "@tauri-apps/cli": "^2.5.0",
     "@vitejs/plugin-vue": "^5.2.4",
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.24",

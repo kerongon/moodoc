@@ -1,6 +1,6 @@
 // Functions for handling windows in the application
-import { WebviewWindow } from '@tauri-apps/api/window';
-import { invoke } from '@tauri-apps/api/tauri';
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { invoke } from '@tauri-apps/api/core';
 
 /**
  * Opens a logs window for a specific site in a separate process

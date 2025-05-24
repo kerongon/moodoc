@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { appConfigDir } from '@tauri-apps/api/path';
-import { readTextFile, writeTextFile, createDir, exists } from '@tauri-apps/api/fs';
+import { readTextFile, writeTextFile, mkdir, exists } from '@tauri-apps/plugin-fs';
 
 // Define a type for the window extension
 declare global {
@@ -85,7 +85,7 @@ export const useSettingsStore = defineStore('settings', {
         } else {
           console.log('No settings file found, creating one with current values');
           // Create the config directory if it doesn't exist
-          await createDir(configDir, { recursive: true });
+          await mkdir(configDir, { recursive: true });
           
           // Use current state values (which might be from localStorage)
           // and create the initial settings file
@@ -150,7 +150,7 @@ export const useSettingsStore = defineStore('settings', {
         const dirExists = await exists(configDir);
         if (!dirExists) {
           console.log(`Creating config directory: ${configDir}`);
-          await createDir(configDir, { recursive: true });
+          await mkdir(configDir, { recursive: true });
         }
         
         // Prepare settings object with current values

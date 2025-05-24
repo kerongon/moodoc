@@ -109,9 +109,9 @@
  */
 import { ref, computed, onMounted, watch } from 'vue';
 import { useSettingsStore } from '../stores/settings';
-import { open, confirm } from '@tauri-apps/api/dialog';
+import { open, confirm } from '@tauri-apps/plugin-dialog';
 import { listen } from '@tauri-apps/api/event';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 export default {
   setup() {

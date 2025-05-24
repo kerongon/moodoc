@@ -8,42 +8,55 @@ use tauri::{command, AppHandle, Manager};
 use super::SiteState;
 
 #[command]
-pub fn get_docker_logs(app_handle: AppHandle, name: String, service: String) -> Result<String, String> {
+pub fn get_docker_logs(
+    app_handle: AppHandle,
+    name: String,
+    service: String,
+) -> Result<String, String> {
     let state = app_handle.state::<SiteState>();
-    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
-    
+    let sites = state
+        .0
+        .lock()
+        .map_err(|_| "Failed to lock sites state".to_string())?;
+
     // Check if site exists
     let site = match sites.get(&name) {
         Some(site) => site.clone(),
         None => return Err(format!("Site '{}' not found", name)),
     };
-    
+
     // Validate service name
     let valid_services = ["webserver", "db", "mailpit", "selenium", "exttests"];
     if !valid_services.contains(&service.as_str()) {
-        return Err(format!("Invalid service '{}'. Valid services are: {}", service, valid_services.join(", ")));
+        return Err(format!(
+            "Invalid service '{}'. Valid services are: {}",
+            service,
+            valid_services.join(", ")
+        ));
     }
-    
+
     let moodle_docker_dir = &site.path;
-    let moodle_docker_dir_str = moodle_docker_dir.to_str()
+    let moodle_docker_dir_str = moodle_docker_dir
+        .to_str()
         .ok_or_else(|| "Failed to convert site path to string".to_string())?;
 
     // MOODLE_DOCKER_WWWROOT should be the absolute path to the moodle subdirectory within moodle_docker_dir
     let moodle_www_root = moodle_docker_dir.join("moodle");
-    let moodle_www_root_str = moodle_www_root.to_str()
-        .ok_or_else(|| format!("Failed to convert moodle www root path to string. Base path: {:?}, Joined path: {:?}", moodle_docker_dir, moodle_www_root))?;
+    let moodle_www_root_str = moodle_www_root.to_str().ok_or_else(|| {
+        format!(
+            "Failed to convert moodle www root path to string. Base path: {:?}, Joined path: {:?}",
+            moodle_docker_dir, moodle_www_root
+        )
+    })?;
 
     let web_port_str = site.web_port.map_or("8000".to_string(), |p| p.to_string());
     let db_port_str = site.db_port.map_or("3306".to_string(), |p| p.to_string());
 
-    println!(
-        "Fetching logs for service '{}' in site '{}'", 
-        service,
-        name
-    );
+    println!("Fetching logs for service '{}' in site '{}'", service, name);
 
     // Create environment script for this operation
-    let docker_env_script = format!(r#"#!/bin/bash
+    let docker_env_script = format!(
+        r#"#!/bin/bash
 export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT={}
 export MOODLE_DOCKER_DB={}
@@ -58,37 +71,40 @@ export MOODLE_DOCKER_DB_PORT={}
         web_port_str,
         db_port_str
     );
-    
+
     let docker_env_path = site.path.join("docker-env-temp.sh");
     fs::write(&docker_env_path, docker_env_script)
         .map_err(|e| format!("Failed to create temporary environment script: {}", e))?;
-        
+
     // Make it executable
     Command::new("chmod")
-        .args(["+x", docker_env_path.to_str().unwrap_or("docker-env-temp.sh")])
+        .args([
+            "+x",
+            docker_env_path.to_str().unwrap_or("docker-env-temp.sh"),
+        ])
         .current_dir(&site.path)
         .output()
         .map_err(|e| format!("Failed to make environment script executable: {}", e))?;
-    
+
     // Execute logs command with the environment variables
-    let logs_cmd = format!(r#"cd {} && source ./docker-env-temp.sh && ./bin/moodle-docker-compose logs --tail=500 --timestamps {}"#,
-        moodle_docker_dir_str,
-        service
+    let logs_cmd = format!(
+        r#"cd {} && source ./docker-env-temp.sh && ./bin/moodle-docker-compose logs --tail=500 --timestamps {}"#,
+        moodle_docker_dir_str, service
     );
-    
+
     let output = Command::new("sh")
         .arg("-c")
         .arg(&logs_cmd)
         .output()
         .map_err(|e| format!("Failed to execute log command: {}", e))?;
-    
+
     // Clean up the temporary script
     let _ = fs::remove_file(&docker_env_path);
 
     if output.status.success() {
         let logs = String::from_utf8(output.stdout)
             .map_err(|e| format!("Failed to parse logs from stdout: {}", e))?;
-        
+
         println!("Successfully fetched logs for {}/{}", name, service);
         Ok(logs)
     } else {
@@ -100,13 +116,18 @@ export MOODLE_DOCKER_DB_PORT={}
             error_description.push_str(&format!("Stderr: {}", stderr_output));
         }
         if !stdout_output.is_empty() {
-            if !error_description.is_empty() { error_description.push_str("; "); }
+            if !error_description.is_empty() {
+                error_description.push_str("; ");
+            }
             error_description.push_str(&format!("Stdout: {}", stdout_output));
         }
-        
+
         // If both stderr and stdout are empty, provide a generic message with status
         if error_description.is_empty() {
-            error_description = format!("Command failed with status {} but produced no output to stderr or stdout.", output.status);
+            error_description = format!(
+                "Command failed with status {} but produced no output to stderr or stdout.",
+                output.status
+            );
         } else {
             error_description = format!("Details: {}", error_description);
         }
@@ -121,5 +142,3 @@ export MOODLE_DOCKER_DB_PORT={}
         ))
     }
 }
-
-

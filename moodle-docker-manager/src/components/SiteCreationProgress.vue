@@ -1,8 +1,8 @@
 <script>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 import { listen } from '@tauri-apps/api/event';
-import { invoke } from '@tauri-apps/api/tauri';
-import { confirm } from '@tauri-apps/api/dialog';
+import { invoke } from '@tauri-apps/api/core';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import { useRouter } from 'vue-router';
 import { eventBus } from '../utils/event-bus';
 import { checkNotificationPermission, sendAppNotification, trackRecentSite } from '../utils/notifications';

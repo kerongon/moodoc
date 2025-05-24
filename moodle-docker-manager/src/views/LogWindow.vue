@@ -69,10 +69,11 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { invoke } from '@tauri-apps/api/tauri';
-import { writeText } from '@tauri-apps/api/clipboard';
+import { invoke } from '@tauri-apps/api/core';
+import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { PhTerminal, PhCopy, PhArrowClockwise } from '@phosphor-icons/vue';
-import { appWindow } from '@tauri-apps/api/window';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+const appWindow = getCurrentWebviewWindow()
 
 // Reactive references
 const logs = ref(null);

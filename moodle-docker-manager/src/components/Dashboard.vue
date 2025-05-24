@@ -84,12 +84,13 @@
 </template>
 
 <script>
-import { appWindow } from '@tauri-apps/api/window';
-import { invoke } from '@tauri-apps/api/tauri';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { invoke } from '@tauri-apps/api/core';
 import { PhList, PhPlus, PhGear, PhArrowClockwise, PhSquare, PhArrowsOut } from '@phosphor-icons/vue';
 import SiteList from './SiteList.vue';
 import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
+const appWindow = getCurrentWebviewWindow()
 
 export default {
   name: 'Dashboard',

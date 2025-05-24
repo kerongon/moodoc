@@ -1,16 +1,16 @@
 // Backup management functionality
 // This module contains functions for backing up, restoring, and managing Moodle site backups
 
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use tauri::{command, AppHandle, Manager};
-use chrono::{DateTime, Utc};
-use serde::{Serialize, Deserialize};
 
-use super::{SiteState, safe_emit};
+use super::{safe_emit, SiteState};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BackupInfo {
@@ -26,37 +26,54 @@ pub struct BackupInfo {
 #[command]
 pub async fn backup_site(app_handle: AppHandle, name: String) -> Result<String, String> {
     let state = app_handle.state::<SiteState>();
-    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
-    
+    let sites = state
+        .0
+        .lock()
+        .map_err(|_| "Failed to lock sites state".to_string())?;
+
     // Check if site exists
     let site = match sites.get(&name) {
         Some(site) => site.clone(),
         None => return Err(format!("Site '{}' not found", name)),
     };
-    
+
     // Validate site directory and required files
     if !site.path.exists() {
-        return Err(format!("Site directory does not exist: {}", site.path.display()));
+        return Err(format!(
+            "Site directory does not exist: {}",
+            site.path.display()
+        ));
     }
-    
+
     let docker_compose_script = site.path.join("bin/moodle-docker-compose");
     if !docker_compose_script.exists() {
-        return Err(format!("moodle-docker-compose script not found at: {}", docker_compose_script.display()));
+        return Err(format!(
+            "moodle-docker-compose script not found at: {}",
+            docker_compose_script.display()
+        ));
     }
-    
+
     let moodle_dir = site.path.join("moodle");
     if !moodle_dir.exists() {
-        return Err(format!("Moodle directory not found at: {}", moodle_dir.display()));
+        return Err(format!(
+            "Moodle directory not found at: {}",
+            moodle_dir.display()
+        ));
     }
-    
-    safe_emit(&app_handle, "backup_progress", serde_json::json!({
-        "site": name,
-        "percent": 0,
-        "step": "validating"
-    }));
+
+    safe_emit(
+        &app_handle,
+        "backup_progress",
+        serde_json::json!({
+            "site": name,
+            "percent": 0,
+            "step": "validating"
+        }),
+    );
 
     // First, check if the site is currently running
-    let status_script = format!(r#"#!/bin/bash
+    let status_script = format!(
+        r#"#!/bin/bash
 cd {}
 export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
@@ -64,53 +81,56 @@ export MOODLE_DOCKER_DB_PORT={}
 
 # Check if containers are running
 ./bin/moodle-docker-compose ps -q webserver
-"#, 
+"#,
         site.path.to_str().unwrap_or(""),
         name,
         site.db_port.unwrap_or(3306)
     );
-    
+
     // Write the status check script to a temporary file
     let status_script_path = site.path.join("check_status.sh");
     let mut file = File::create(&status_script_path)
         .map_err(|e| format!("Failed to create status check script: {}", e))?;
-    
+
     file.write_all(status_script.as_bytes())
         .map_err(|e| format!("Failed to write status check script: {}", e))?;
-    
+
     // Make the script executable
     let chmod_output = Command::new("chmod")
-        .args(["+x", status_script_path.to_str().unwrap_or("check_status.sh")])
+        .args([
+            "+x",
+            status_script_path.to_str().unwrap_or("check_status.sh"),
+        ])
         .output()
         .map_err(|e| format!("Failed to make script executable: {}", e))?;
-    
+
     if !chmod_output.status.success() {
         let _ = fs::remove_file(&status_script_path);
         return Err(format!("Failed to make status script executable"));
     }
-    
+
     // Execute the script
     let output = Command::new(status_script_path.to_str().unwrap_or("./check_status.sh"))
         .output()
         .map_err(|e| format!("Failed to execute status script: {}", e))?;
-    
+
     // Delete the temporary script
     let _ = fs::remove_file(status_script_path);
-    
+
     let is_running = output.status.success() && !output.stdout.is_empty();
-    
+
     // Create timestamp for backup name
     let now = chrono::Utc::now();
     let timestamp = now.format("%Y%m%d_%H%M%S").to_string();
     let backup_name = format!("backup_{}_{}", name, timestamp);
-    
+
     // Create backup directory in the site directory (not app data dir)
     let backups_dir = site.path.join("backups");
     if !backups_dir.exists() {
         fs::create_dir_all(&backups_dir)
             .map_err(|e| format!("Failed to create backups directory: {}", e))?;
     }
-    
+
     let backup_dir = backups_dir.join(&backup_name);
     fs::create_dir_all(&backup_dir)
         .map_err(|e| format!("Failed to create backup directory: {}", e))?;
@@ -120,8 +140,9 @@ export MOODLE_DOCKER_DB_PORT={}
     let script_path = site.path.to_str().unwrap_or("");
     let backup_path = backup_dir.to_str().unwrap_or("");
     let run_status = if is_running { "running" } else { "stopped" };
-    
-    let backup_script = format!(r#"#!/bin/bash
+
+    let backup_script = format!(
+        r#"#!/bin/bash
 set -e
 cd {script_path}
 export COMPOSE_PROJECT_NAME={name}
@@ -187,7 +208,7 @@ cat << EOF > {backup_path}/manifest.json
 EOF
 
 echo "Backup completed successfully"
-"#, 
+"#,
         script_path = script_path,
         name = name,
         db_type = db_type,
@@ -200,36 +221,36 @@ echo "Backup completed successfully"
         web_port = site.web_port.unwrap_or(8000),
         db_port = site.db_port.unwrap_or(3306)
     );
-    
+
     // Write the backup script
     let backup_script_path = site.path.join("backup.sh");
-    
+
     // Create and execute within a block to ensure cleanup
     let backup_result = (|| -> Result<String, String> {
         // First prepare the script
         let mut file = File::create(&backup_script_path)
             .map_err(|e| format!("Failed to create backup script: {}", e))?;
-        
+
         file.write_all(backup_script.as_bytes())
             .map_err(|e| format!("Failed to write backup script: {}", e))?;
-        
+
         // Make the script executable
         let chmod_output = Command::new("chmod")
             .args(["+x", backup_script_path.to_str().unwrap_or("backup.sh")])
             .output()
             .map_err(|e| format!("Failed to make backup script executable: {}", e))?;
-        
+
         if !chmod_output.status.success() {
             return Err(format!("Failed to make backup script executable"));
         }
-        
+
         // Execute the backup script and stream stdout for progress
         let mut child = Command::new("bash")
             .arg(backup_script_path.to_str().unwrap_or("./backup.sh"))
             .stdout(Stdio::piped())
             .spawn()
             .map_err(|e| format!("Failed to execute backup script: {}", e))?;
-            
+
         // read output lines
         if let Some(stdout) = child.stdout.take() {
             let reader = BufReader::new(stdout);
@@ -247,48 +268,67 @@ echo "Backup completed successfully"
                         continue;
                     };
                     // emit progress event
-                    safe_emit(&app_handle, "backup_progress", serde_json::json!({
-                        "site": name,
-                        "percent": pct,
-                        "step": step
-                    }));
+                    safe_emit(
+                        &app_handle,
+                        "backup_progress",
+                        serde_json::json!({
+                            "site": name,
+                            "percent": pct,
+                            "step": step
+                        }),
+                    );
                 }
             }
         }
-        let status = child.wait().map_err(|e| format!("Error waiting for backup script: {}", e))?;
+        let status = child
+            .wait()
+            .map_err(|e| format!("Error waiting for backup script: {}", e))?;
         if !status.success() {
-            return Err(format!("Backup script exited with status {:?}", status.code()));
+            return Err(format!(
+                "Backup script exited with status {:?}",
+                status.code()
+            ));
         }
-        
-        Ok(format!("Site '{}' backed up successfully to {}", name, backup_dir.to_str().unwrap_or("")))
+
+        Ok(format!(
+            "Site '{}' backed up successfully to {}",
+            name,
+            backup_dir.to_str().unwrap_or("")
+        ))
     })();
-    
+
     // Always clean up the temporary script
     let _ = fs::remove_file(&backup_script_path);
-    
+
     backup_result
 }
 
 #[command]
-pub fn list_site_backups(app_handle: AppHandle, name: String) -> Result<Vec<HashMap<String, String>>, String> {
+pub fn list_site_backups(
+    app_handle: AppHandle,
+    name: String,
+) -> Result<Vec<HashMap<String, String>>, String> {
     let state = app_handle.state::<SiteState>();
-    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
-    
+    let sites = state
+        .0
+        .lock()
+        .map_err(|_| "Failed to lock sites state".to_string())?;
+
     // Check if site exists
     let site = match sites.get(&name) {
         Some(site) => site.clone(),
         None => return Err(format!("Site '{}' not found", name)),
     };
-    
+
     // Path to backups directory in the site directory (not app data dir)
     let backups_dir = site.path.join("backups");
     if !backups_dir.exists() {
         return Ok(Vec::new()); // No backups yet
     }
-    
+
     // List all backup directories and read their manifests
     let mut backups = Vec::new();
-    
+
     if let Ok(entries) = fs::read_dir(&backups_dir) {
         for entry in entries {
             if let Ok(entry) = entry {
@@ -298,7 +338,9 @@ pub fn list_site_backups(app_handle: AppHandle, name: String) -> Result<Vec<Hash
                     let manifest_path = path.join("manifest.json");
                     if manifest_path.exists() {
                         if let Ok(manifest_content) = fs::read_to_string(&manifest_path) {
-                            if let Ok(manifest) = serde_json::from_str::<HashMap<String, String>>(&manifest_content) {
+                            if let Ok(manifest) =
+                                serde_json::from_str::<HashMap<String, String>>(&manifest_content)
+                            {
                                 backups.push(manifest);
                             }
                         }
@@ -307,7 +349,7 @@ pub fn list_site_backups(app_handle: AppHandle, name: String) -> Result<Vec<Hash
             }
         }
     }
-    
+
     // Sort backups by timestamp (most recent first)
     backups.sort_by(|a, b| {
         let empty_string = "".to_string();
@@ -315,37 +357,46 @@ pub fn list_site_backups(app_handle: AppHandle, name: String) -> Result<Vec<Hash
         let b_time = b.get("timestamp").unwrap_or(&empty_string);
         b_time.cmp(a_time)
     });
-    
+
     Ok(backups)
 }
 
 #[command]
-pub fn restore_site_backup(app_handle: AppHandle, name: String, backup_timestamp: String) -> Result<String, String> {
+pub fn restore_site_backup(
+    app_handle: AppHandle,
+    name: String,
+    backup_timestamp: String,
+) -> Result<String, String> {
     let state = app_handle.state::<SiteState>();
-    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
-    
+    let sites = state
+        .0
+        .lock()
+        .map_err(|_| "Failed to lock sites state".to_string())?;
+
     // Check if site exists
     let site = match sites.get(&name) {
         Some(site) => site.clone(),
         None => return Err(format!("Site '{}' not found", name)),
     };
-    
+
     // Find the backup directory
     let backup_name = format!("backup_{}_{}", name, backup_timestamp);
     let backups_dir = site.path.join("backups");
     let backup_dir = backups_dir.join(&backup_name);
-    
+
     if !backup_dir.exists() {
         return Err(format!("Backup '{}' not found", backup_name));
     }
-    
+
     // Get the absolute path to the moodle directory
     let moodle_www_root = site.path.join("moodle");
-    let abs_moodle_path = moodle_www_root.canonicalize()
+    let abs_moodle_path = moodle_www_root
+        .canonicalize()
         .unwrap_or_else(|_| moodle_www_root.clone());
-        
+
     // Check if site is running and stop it if needed
-    let stop_script = format!(r#"#!/bin/bash
+    let stop_script = format!(
+        r#"#!/bin/bash
 cd {}
 export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT={}
@@ -363,7 +414,7 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
 
 # Stop containers if running
 ./bin/moodle-docker-compose down
-"#, 
+"#,
         site.path.to_str().unwrap_or(""),
         name,
         abs_moodle_path.to_str().unwrap_or(""),
@@ -372,39 +423,45 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
         site.php_version,
         site.db_port.unwrap_or(3306),
     );
-    
+
     // Write the stop script
     let stop_script_path = site.path.join("stop_for_restore.sh");
     let mut file = File::create(&stop_script_path)
         .map_err(|e| format!("Failed to create stop script: {}", e))?;
-    
+
     file.write_all(stop_script.as_bytes())
         .map_err(|e| format!("Failed to write stop script: {}", e))?;
-    
+
     // Make the script executable
     let chmod_output = Command::new("chmod")
-        .args(["+x", stop_script_path.to_str().unwrap_or("stop_for_restore.sh")])
+        .args([
+            "+x",
+            stop_script_path.to_str().unwrap_or("stop_for_restore.sh"),
+        ])
         .output()
         .map_err(|e| format!("Failed to make script executable: {}", e))?;
-    
+
     if !chmod_output.status.success() {
         let _ = fs::remove_file(&stop_script_path);
         return Err(format!("Failed to make stop script executable"));
     }
-    
+
     // Check if directory exists
     if !site.path.exists() {
         let _ = fs::remove_file(&stop_script_path);
         return Err(format!("Site directory does not exist: {:?}", site.path));
     }
-    
+
     // Check if moodle-docker-compose exists
     let compose_script = site.path.join("bin").join("moodle-docker-compose");
     if !compose_script.exists() {
         let _ = fs::remove_file(&stop_script_path);
-        return Err(format!("Docker compose script not found at: {:?}", compose_script));
+        return Err(format!(
+            "Docker compose script not found at: {:?}",
+            compose_script
+        ));
     }
-    
+
     // Execute the stop script
     let output = Command::new(stop_script_path.to_str().unwrap_or("./stop_for_restore.sh"))
         .output()
@@ -412,10 +469,10 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
             let _ = fs::remove_file(&stop_script_path);
             format!("Failed to execute stop script: {}", e)
         })?;
-    
+
     // Delete the script
     let _ = fs::remove_file(stop_script_path);
-    
+
     if !output.status.success() {
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -423,9 +480,10 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
         println!("Stop script stderr: {}", stderr);
         return Err(format!("Failed to stop site for restore: {}", stderr));
     }
-    
+
     // Create restore script
-    let restore_script = format!(r#"#!/bin/bash
+    let restore_script = format!(
+        r#"#!/bin/bash
 set -e
 cd {site_path}
 export COMPOSE_PROJECT_NAME={name}
@@ -490,7 +548,7 @@ echo "Starting remaining containers..."
 ./bin/moodle-docker-compose up -d
 
 echo "Site restored successfully"
-"#, 
+"#,
         site_path = site.path.to_str().unwrap_or(""),
         name = name,
         abs_moodle_path = abs_moodle_path.to_str().unwrap_or(""),
@@ -500,26 +558,26 @@ echo "Site restored successfully"
         db_port = site.db_port.unwrap_or(3306),
         backup_dir = backup_dir.to_str().unwrap_or("")
     );
-    
+
     // Write the restore script
     let restore_script_path = site.path.join("restore.sh");
     let mut file = File::create(&restore_script_path)
         .map_err(|e| format!("Failed to create restore script: {}", e))?;
-    
+
     file.write_all(restore_script.as_bytes())
         .map_err(|e| format!("Failed to write restore script: {}", e))?;
-    
+
     // Make the script executable
     let chmod_output = Command::new("chmod")
         .args(["+x", restore_script_path.to_str().unwrap_or("restore.sh")])
         .output()
         .map_err(|e| format!("Failed to make script executable: {}", e))?;
-    
+
     if !chmod_output.status.success() {
         let _ = fs::remove_file(&restore_script_path);
         return Err(format!("Failed to make restore script executable"));
     }
-    
+
     // Execute the restore script
     let output = Command::new(restore_script_path.to_str().unwrap_or("./restore.sh"))
         .output()
@@ -527,37 +585,47 @@ echo "Site restored successfully"
             let _ = fs::remove_file(&restore_script_path);
             format!("Failed to execute restore script: {}", e)
         })?;
-    
+
     // Delete the script
     let _ = fs::remove_file(restore_script_path);
-    
+
     if !output.status.success() {
         let error = String::from_utf8_lossy(&output.stderr).to_string();
         return Err(format!("Failed to restore site: {}", error));
     }
-    
+
     // Update site status in state
     drop(sites); // Release the lock from earlier
     let state = app_handle.state::<SiteState>();
-    let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
-    
+    let mut sites = state
+        .0
+        .lock()
+        .map_err(|_| "Failed to lock sites state".to_string())?;
+
     if let Some(site) = sites.get_mut(&name) {
         site.status = "running".to_string();
     }
-    
+
     drop(sites);
-    
+
     // Return success message
-    Ok(format!("Site '{}' restored successfully from backup {}", name, backup_timestamp))
+    Ok(format!(
+        "Site '{}' restored successfully from backup {}",
+        name, backup_timestamp
+    ))
 }
 
 #[command]
-pub async fn restore_site_backup_async(app_handle: AppHandle, name: String, backup_timestamp: String) -> Result<String, String> {
+pub async fn restore_site_backup_async(
+    app_handle: AppHandle,
+    name: String,
+    backup_timestamp: String,
+) -> Result<String, String> {
     // Create copies of parameters for the spawned thread
     let app = app_handle.clone();
     let name_clone = name.clone();
     let timestamp_clone = backup_timestamp.clone();
-    
+
     // Run the restore process in a separate blocking thread
     let res = tokio::task::spawn_blocking(move || {
         // Create a helper function to emit progress events
@@ -869,33 +937,39 @@ echo "Site restored successfully"
     })
     .await
     .map_err(|e| format!("Thread panicked during site restoration: {}", e))?;
-    
+
     res
 }
 
 #[command]
-pub fn delete_site_backup(app_handle: AppHandle, name: String, backup_timestamp: String) -> Result<String, String> {
+pub fn delete_site_backup(
+    app_handle: AppHandle,
+    name: String,
+    backup_timestamp: String,
+) -> Result<String, String> {
     let state = app_handle.state::<SiteState>();
-    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
-    
+    let sites = state
+        .0
+        .lock()
+        .map_err(|_| "Failed to lock sites state".to_string())?;
+
     // Check if site exists
     let site = match sites.get(&name) {
         Some(site) => site.clone(),
         None => return Err(format!("Site '{}' not found", name)),
     };
-    
+
     // Find the backup directory
     let backup_name = format!("backup_{}_{}", name, backup_timestamp);
     let backups_dir = site.path.join("backups");
     let backup_dir = backups_dir.join(&backup_name);
-    
+
     if !backup_dir.exists() {
         return Err(format!("Backup '{}' not found", backup_name));
     }
-    
+
     // Delete the backup directory
-    fs::remove_dir_all(&backup_dir)
-        .map_err(|e| format!("Failed to delete backup: {}", e))?;
-    
+    fs::remove_dir_all(&backup_dir).map_err(|e| format!("Failed to delete backup: {}", e))?;
+
     Ok(format!("Backup '{}' deleted successfully", backup_name))
 }

@@ -1,4 +1,4 @@
-import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/api/notification';
+import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 
 /**
  * Utility functions for handling notifications in the application

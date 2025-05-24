@@ -4,7 +4,7 @@
 use std::process::Command;
 use tauri::{command, AppHandle, Manager};
 
-use super::{SiteState, RunningUpdates, safe_emit};
+use super::{safe_emit, RunningUpdates, SiteState};
 
 // Helper function to clean up running update state
 fn cleanup_running_update(running_updates: &RunningUpdates, name: &str) {
@@ -15,18 +15,20 @@ fn cleanup_running_update(running_updates: &RunningUpdates, name: &str) {
 
 #[command]
 pub async fn update_moodle_version(
-    app_handle: AppHandle, 
-    name: String, 
-    new_branch: String, 
-    new_php_version: Option<String>
+    app_handle: AppHandle,
+    name: String,
+    new_branch: String,
+    new_php_version: Option<String>,
 ) -> Result<String, String> {
     let handle = app_handle.clone();
-    
+
     // Run the blocking update function in a separate thread
     let result = tokio::task::spawn_blocking(move || {
         update_moodle_version_blocking(handle, name, new_branch, new_php_version)
-    }).await.map_err(|e| format!("Task execution error: {}", e))?;
-    
+    })
+    .await
+    .map_err(|e| format!("Task execution error: {}", e))?;
+
     result
 }
 
@@ -34,27 +36,36 @@ fn update_moodle_version_blocking(
     app_handle: AppHandle,
     name: String,
     new_branch: String,
-    new_php_version: Option<String>
+    new_php_version: Option<String>,
 ) -> Result<String, String> {
     let state = app_handle.state::<SiteState>();
     let running_updates = app_handle.state::<RunningUpdates>();
-    
+
     // Check if an update is already running for this site
     {
-        let updates = running_updates.0.lock().map_err(|_| "Failed to lock running updates state".to_string())?;
+        let updates = running_updates
+            .0
+            .lock()
+            .map_err(|_| "Failed to lock running updates state".to_string())?;
         if updates.get(&name) == Some(&true) {
             return Err(format!("Update is already running for site '{}'", name));
         }
     }
-    
+
     // Mark update as running
     {
-        let mut updates = running_updates.0.lock().map_err(|_| "Failed to lock running updates state".to_string())?;
+        let mut updates = running_updates
+            .0
+            .lock()
+            .map_err(|_| "Failed to lock running updates state".to_string())?;
         updates.insert(name.clone(), true);
     }
-    
-    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
-    
+
+    let sites = state
+        .0
+        .lock()
+        .map_err(|_| "Failed to lock sites state".to_string())?;
+
     // Check if site exists
     let mut site = match sites.get(&name) {
         Some(site) => site.clone(),
@@ -63,23 +74,38 @@ fn update_moodle_version_blocking(
             return Err(format!("Site '{}' not found", name));
         }
     };
-    
+
     // Drop the sites lock to avoid deadlock
     drop(sites);
-    
-    safe_emit(&app_handle, "update_progress", format!("Starting update for site '{}' to branch '{}'", name, new_branch));
-    
+
+    safe_emit(
+        &app_handle,
+        "update_progress",
+        format!(
+            "Starting update for site '{}' to branch '{}'",
+            name, new_branch
+        ),
+    );
+
     // Stop the site before updating
-    safe_emit(&app_handle, "update_progress", format!("Stopping site '{}'", name));
+    safe_emit(
+        &app_handle,
+        "update_progress",
+        format!("Stopping site '{}'", name),
+    );
     if let Err(e) = super::site_management::stop_site(app_handle.clone(), name.clone()) {
         cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to stop site before update: {}", e));
     }
-    
+
     // Update Moodle branch
-    safe_emit(&app_handle, "update_progress", format!("Updating Moodle to branch '{}'", new_branch));
+    safe_emit(
+        &app_handle,
+        "update_progress",
+        format!("Updating Moodle to branch '{}'", new_branch),
+    );
     let moodle_dir = site.path.join("moodle");
-    
+
     // Backup current branch info (in case we need to rollback)
     let current_branch_output = Command::new("git")
         .current_dir(&moodle_dir)
@@ -89,11 +115,17 @@ fn update_moodle_version_blocking(
             cleanup_running_update(&running_updates, &name);
             format!("Failed to get current branch: {}", e)
         })?;
-    
-    let _current_branch = String::from_utf8_lossy(&current_branch_output.stdout).trim().to_string();
-    
+
+    let _current_branch = String::from_utf8_lossy(&current_branch_output.stdout)
+        .trim()
+        .to_string();
+
     // Fetch latest changes
-    safe_emit(&app_handle, "update_progress", format!("Fetching latest changes from repository"));
+    safe_emit(
+        &app_handle,
+        "update_progress",
+        format!("Fetching latest changes from repository"),
+    );
     let fetch_output = Command::new("git")
         .current_dir(&moodle_dir)
         .args(["fetch", "origin"])
@@ -102,15 +134,19 @@ fn update_moodle_version_blocking(
             cleanup_running_update(&running_updates, &name);
             format!("Failed to fetch repository: {}", e)
         })?;
-    
+
     if !fetch_output.status.success() {
         let error = String::from_utf8_lossy(&fetch_output.stderr);
         cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to fetch repository: {}", error));
     }
-    
+
     // Switch to new branch
-    safe_emit(&app_handle, "update_progress", format!("Switching to branch '{}'", new_branch));
+    safe_emit(
+        &app_handle,
+        "update_progress",
+        format!("Switching to branch '{}'", new_branch),
+    );
     let checkout_output = Command::new("git")
         .current_dir(&moodle_dir)
         .args(["checkout", &new_branch])
@@ -119,15 +155,22 @@ fn update_moodle_version_blocking(
             cleanup_running_update(&running_updates, &name);
             format!("Failed to checkout branch: {}", e)
         })?;
-    
+
     if !checkout_output.status.success() {
         let error = String::from_utf8_lossy(&checkout_output.stderr);
         cleanup_running_update(&running_updates, &name);
-        return Err(format!("Failed to checkout branch '{}': {}", new_branch, error));
+        return Err(format!(
+            "Failed to checkout branch '{}': {}",
+            new_branch, error
+        ));
     }
-    
+
     // Pull latest changes for the new branch
-    safe_emit(&app_handle, "update_progress", format!("Pulling latest changes for branch '{}'", new_branch));
+    safe_emit(
+        &app_handle,
+        "update_progress",
+        format!("Pulling latest changes for branch '{}'", new_branch),
+    );
     let pull_output = Command::new("git")
         .current_dir(&moodle_dir)
         .args(["pull", "origin", &new_branch])
@@ -136,44 +179,55 @@ fn update_moodle_version_blocking(
             cleanup_running_update(&running_updates, &name);
             format!("Failed to pull latest changes: {}", e)
         })?;
-    
+
     if !pull_output.status.success() {
         let error = String::from_utf8_lossy(&pull_output.stderr);
         cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to pull latest changes: {}", error));
     }
-    
+
     // Update site configuration
     site.moodle_branch = new_branch.clone();
     if let Some(php_version) = new_php_version {
         site.php_version = php_version;
     }
-    
+
     // Save updated site configuration
     if let Err(e) = super::save_site_config(app_handle.clone(), site.clone()) {
         cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to save updated site configuration: {}", e));
     }
-    
+
     // Store the site path before moving site into state
     let site_path = site.path.clone();
-    
+
     // Update the in-memory state
     {
         let state = app_handle.state::<SiteState>();
-        let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+        let mut sites = state
+            .0
+            .lock()
+            .map_err(|_| "Failed to lock sites state".to_string())?;
         sites.insert(name.clone(), site);
     }
-    
+
     // Restart the site with updated configuration
-    safe_emit(&app_handle, "update_progress", format!("Restarting site '{}' with updated configuration", name));
+    safe_emit(
+        &app_handle,
+        "update_progress",
+        format!("Restarting site '{}' with updated configuration", name),
+    );
     if let Err(e) = super::site_management::start_site(app_handle.clone(), name.clone()) {
         cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to restart site after update: {}", e));
     }
-    
+
     // Run database upgrade if needed
-    safe_emit(&app_handle, "update_progress", format!("Running database upgrade for site '{}'", name));
+    safe_emit(
+        &app_handle,
+        "update_progress",
+        format!("Running database upgrade for site '{}'", name),
+    );
     let upgrade_output = Command::new("sh")
         .current_dir(&site_path)
         .args([
@@ -185,41 +239,68 @@ fn update_moodle_version_blocking(
             cleanup_running_update(&running_updates, &name);
             format!("Failed to run database upgrade: {}", e)
         })?;
-    
+
     if !upgrade_output.status.success() {
         let error = String::from_utf8_lossy(&upgrade_output.stderr);
-        safe_emit(&app_handle, "update_warning", format!("Database upgrade may have encountered issues: {}", error));
+        safe_emit(
+            &app_handle,
+            "update_warning",
+            format!("Database upgrade may have encountered issues: {}", error),
+        );
     }
-    
+
     // Remove from running updates
     {
-        let mut updates = running_updates.0.lock().map_err(|_| "Failed to lock running updates state".to_string())?;
+        let mut updates = running_updates
+            .0
+            .lock()
+            .map_err(|_| "Failed to lock running updates state".to_string())?;
         updates.remove(&name);
     }
-    
-    safe_emit(&app_handle, "update_completed", format!("Update completed successfully for site '{}'", name));
-    Ok(format!("Site '{}' updated successfully to branch '{}'", name, new_branch))
+
+    safe_emit(
+        &app_handle,
+        "update_completed",
+        format!("Update completed successfully for site '{}'", name),
+    );
+    Ok(format!(
+        "Site '{}' updated successfully to branch '{}'",
+        name, new_branch
+    ))
 }
 
 #[command]
 pub fn cancel_update(app_handle: AppHandle, name: String) -> Result<String, String> {
     let running_updates = app_handle.state::<RunningUpdates>();
-    
+
     // Check if an update is running for this site
     {
-        let updates = running_updates.0.lock().map_err(|_| "Failed to lock running updates state".to_string())?;
+        let updates = running_updates
+            .0
+            .lock()
+            .map_err(|_| "Failed to lock running updates state".to_string())?;
         if updates.get(&name) != Some(&true) {
-            return Err(format!("No update is currently running for site '{}'", name));
+            return Err(format!(
+                "No update is currently running for site '{}'",
+                name
+            ));
         }
     }
-    
+
     // For now, we'll just mark the update as cancelled
     // In a more sophisticated implementation, we could send a signal to the running task
     {
-        let mut updates = running_updates.0.lock().map_err(|_| "Failed to lock running updates state".to_string())?;
+        let mut updates = running_updates
+            .0
+            .lock()
+            .map_err(|_| "Failed to lock running updates state".to_string())?;
         updates.remove(&name);
     }
-    
-    safe_emit(&app_handle, "update_cancelled", format!("Update cancelled for site '{}'", name));
+
+    safe_emit(
+        &app_handle,
+        "update_cancelled",
+        format!("Update cancelled for site '{}'", name),
+    );
     Ok(format!("Update cancelled for site '{}'", name))
 }

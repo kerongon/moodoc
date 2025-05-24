@@ -850,16 +850,17 @@
 </template>
 
 <script>
-import { invoke } from '@tauri-apps/api/tauri';
-import { open } from '@tauri-apps/api/dialog';
+import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
 import { useSettingsStore } from '../stores/settings';
 import { computed, watch } from 'vue';
 import { PhSquare, PhList, PhGear, PhArrowClockwise, PhArrowsOut } from '@phosphor-icons/vue';
 import { eventBus } from '../utils/event-bus';
-import { appWindow } from '@tauri-apps/api/window';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
 import { MoodleService } from '../services/moodleService';
+const appWindow = getCurrentWebviewWindow()
 
 export default {
   components: {

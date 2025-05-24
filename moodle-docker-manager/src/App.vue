@@ -30,12 +30,13 @@
 <script lang="ts">
 import { defineComponent, onMounted, onBeforeUnmount, ref, provide, computed } from 'vue';
 import { listen } from '@tauri-apps/api/event';
-import { appWindow } from '@tauri-apps/api/window';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import SettingsModal from './components/SettingsModal.vue';
 import SiteCreationProgress from './components/SiteCreationProgress.vue';
 import { useSettingsStore } from './stores/settings';
 import { eventBus } from './utils/event-bus';
 import { useRoute } from 'vue-router';
+const appWindow = getCurrentWebviewWindow()
 
 export default defineComponent({
   name: 'App',

@@ -460,13 +460,13 @@
 </template>
 
 <script>
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass, PhFileText, PhCaretUp, PhCaretDown, PhCheckSquare, PhPlus, PhSquare } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
-import { Command } from '@tauri-apps/api/shell';
+import { Command } from '@tauri-apps/plugin-shell';
 import { cleanupRecentSites } from '../utils/notifications';
 
 export default {

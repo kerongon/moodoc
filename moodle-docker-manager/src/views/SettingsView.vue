@@ -100,7 +100,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import { open } from '@tauri-apps/api/dialog';
+import { open } from '@tauri-apps/plugin-dialog';
 import { PhGear } from '@phosphor-icons/vue';
 import { useSettingsStore } from '../stores/settings';
 

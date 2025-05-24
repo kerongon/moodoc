@@ -6,7 +6,8 @@
 
 <script setup>
 import { onMounted } from 'vue';
-import { appWindow } from '@tauri-apps/api/window';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+const appWindow = getCurrentWebviewWindow()
 
 // Apply theme when the log window is first loaded
 onMounted(() => {

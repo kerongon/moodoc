@@ -551,9 +551,9 @@
 <script>
 import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { appWindow } from '@tauri-apps/api/window';
+import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { 
   PhArchiveBox, 
   PhPlus, 
@@ -576,6 +576,7 @@ import {
   PhWarningCircle,
   PhArrowsOut
 } from '@phosphor-icons/vue';
+const appWindow = getCurrentWebviewWindow()
 
 export default {
   name: 'SiteBackups',

@@ -82,7 +82,7 @@
 </template>
 
 <script>
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { PhTerminal, PhList, PhPlus, PhGear, PhSquaresFour } from '@phosphor-icons/vue';
 import DockerStatus from './DockerStatus.vue';
 import { openLogsWindow } from '../utils/window-manager';
