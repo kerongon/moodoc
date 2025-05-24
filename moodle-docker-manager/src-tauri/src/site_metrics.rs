@@ -10,6 +10,9 @@ pub struct SiteSizeInfo {
     pub total_size: u64,
     pub db_size: u64,
     pub files_size: u64,
+    pub moodle_size: u64,
+    pub moodledata_size: u64,
+    pub other_files_size: u64,
 }
 
 // Struct to hold storage information
@@ -39,17 +42,61 @@ pub fn get_site_size(app_handle: AppHandle, name: String) -> Result<SiteSizeInfo
     // Get database size using docker exec
     let db_size = get_database_size(&db_container)?;
     
-    // Get the moodle files size
-    let moodle_path = site.path.join("moodle");
-    let files_size = get_directory_size(&moodle_path)?;
+    // Calculate different file size components
+    let mut moodle_size = 0u64;
+    let mut moodledata_size = 0u64;
+    let mut other_files_size = 0u64;
     
-    // Calculate total size
+    // Main moodle directory
+    let moodle_path = site.path.join("moodle");
+    if moodle_path.exists() {
+        moodle_size = get_directory_size(&moodle_path)?;
+    }
+    
+    // Moodle data directory (often the largest component)
+    let moodledata_path = site.path.join("moodledata");
+    if moodledata_path.exists() {
+        moodledata_size = get_directory_size(&moodledata_path)?;
+    }
+    
+    // Include other common directories
+    let additional_paths = [
+        "backup",               // Backup directory  
+        "uploads",              // Additional uploads
+        "plugins",              // Custom plugins
+        "themes",               // Custom themes
+        "config",               // Configuration files
+    ];
+    
+    for dir_name in &additional_paths {
+        let dir_path = site.path.join(dir_name);
+        if dir_path.exists() {
+            other_files_size += get_directory_size(&dir_path)?;
+        }
+    }
+    
+    // Also check for any docker-compose related files
+    let docker_compose_path = site.path.join("docker-compose.yml");
+    if docker_compose_path.exists() {
+        other_files_size += get_directory_size(&docker_compose_path)?;
+    }
+    
+    let env_path = site.path.join(".env");
+    if env_path.exists() {
+        other_files_size += get_directory_size(&env_path)?;
+    }
+    
+    // Calculate totals
+    let files_size = moodle_size + moodledata_size + other_files_size;
     let total_size = db_size + files_size;
     
     let result = SiteSizeInfo {
         total_size,
         db_size,
         files_size,
+        moodle_size,
+        moodledata_size,
+        other_files_size,
     };
     
     Ok(result)
@@ -138,18 +185,41 @@ fn get_directory_size(path: &PathBuf) -> Result<u64, String> {
         return Ok(0);
     }
     
-    // Use du command for more efficient directory size calculation
+    // Check if it's a directory
+    if !path.is_dir() {
+        // If it's a file, get its size
+        match std::fs::metadata(path) {
+            Ok(metadata) => return Ok(metadata.len()),
+            Err(_) => return Ok(0),
+        }
+    }
+    
+    // Try using du command first (more efficient for large directories)
+    match get_directory_size_with_du(path) {
+        Ok(size) if size > 0 => Ok(size),
+        _ => {
+            // Fallback to manual traversal if du fails or returns 0
+            get_directory_size_manual(path)
+        }
+    }
+}
+
+// Helper function to get directory size using du command
+fn get_directory_size_with_du(path: &PathBuf) -> Result<u64, String> {
+    let path_str = path.to_str().ok_or("Invalid path encoding")?;
+    
     let output = Command::new("du")
-        .args(&["-sb", path.to_str().unwrap_or("")])
+        .args(&["-sb", path_str])
         .output()
         .map_err(|e| format!("Failed to execute du command: {}", e))?;
     
     if !output.status.success() {
-        return Err("du command failed".to_string());
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("du command failed: {}", stderr));
     }
     
     let output_str = String::from_utf8_lossy(&output.stdout);
-    let parts: Vec<&str> = output_str.trim().split('\t').collect();
+    let parts: Vec<&str> = output_str.trim().split_whitespace().collect();
     
     if parts.is_empty() {
         return Ok(0);
@@ -158,20 +228,35 @@ fn get_directory_size(path: &PathBuf) -> Result<u64, String> {
     parts[0].parse::<u64>().map_err(|e| format!("Failed to parse size: {}", e))
 }
 
-// Utility function to format bytes to human readable format
-pub fn format_bytes(bytes: u64) -> String {
-    if bytes == 0 {
-        return "0 B".to_string();
+// Manual directory traversal as fallback
+fn get_directory_size_manual(path: &PathBuf) -> Result<u64, String> {
+    use std::fs;
+    
+    let mut total_size = 0u64;
+    
+    let entries = fs::read_dir(path)
+        .map_err(|e| format!("Failed to read directory {}: {}", path.display(), e))?;
+    
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Failed to read directory entry: {}", e))?;
+        let entry_path = entry.path();
+        
+        let metadata = entry.metadata()
+            .map_err(|e| format!("Failed to get metadata for {}: {}", entry_path.display(), e))?;
+        
+        if metadata.is_file() {
+            total_size += metadata.len();
+        } else if metadata.is_dir() {
+            // Recursive call for subdirectories
+            match get_directory_size_manual(&entry_path) {
+                Ok(sub_size) => total_size += sub_size,
+                Err(_) => {
+                    // Skip directories we can't read (permissions, etc.)
+                    continue;
+                }
+            }
+        }
     }
     
-    const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB"];
-    let base = 1024_f64;
-    let log = (bytes as f64).log(base).floor() as usize;
-    let size = bytes as f64 / base.powi(log as i32);
-    
-    if log == 0 {
-        format!("{} {}", bytes, UNITS[log])
-    } else {
-        format!("{:.1} {}", size, UNITS[log])
-    }
+    Ok(total_size)
 }

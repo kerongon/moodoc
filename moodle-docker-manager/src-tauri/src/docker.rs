@@ -18,39 +18,6 @@ fn safe_emit<T: serde::Serialize + Clone>(app_handle: &AppHandle, event: &str, p
 }
 
 // Helper function to safely execute a temporary script with cleanup
-fn run_temp_script(path: &PathBuf, script_content: &str, use_bash: bool) -> Result<std::process::Output, String> {
-    (|| -> Result<std::process::Output, String> {
-        // Create and write the file
-        let mut file = File::create(path)
-            .map_err(|e| format!("Failed to create script at {}: {}", path.display(), e))?;
-        
-        file.write_all(script_content.as_bytes())
-            .map_err(|e| format!("Failed to write script at {}: {}", path.display(), e))?;
-        
-        // Make executable
-        let chmod_output = Command::new("chmod")
-            .args(["+x", path.to_str().unwrap_or("script.sh")])
-            .output()
-            .map_err(|e| format!("Failed to make script executable: {}", e))?;
-        
-        if !chmod_output.status.success() {
-            return Err("Failed to make script executable".to_string());
-        }
-        
-        // Run the script
-        if use_bash {
-            Command::new("bash")
-                .arg(path.to_str().unwrap_or("./script.sh"))
-                .output()
-                .map_err(|e| format!("Failed to execute script: {}", e))
-        } else {
-            Command::new(path.to_str().unwrap_or("./script.sh"))
-                .output()
-                .map_err(|e| format!("Failed to execute script: {}", e))
-        }
-    })()
-}
-
 // Define data structures for site configuration
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Site {
@@ -2360,7 +2327,7 @@ echo "Moodle site updated and started successfully"
     
     // We need to get the lock again since we dropped it earlier
     let state = app_handle.state::<SiteState>();
-    let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    let sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
     
     // Update site in state again (with the most up-to-date information)
     let mut updated_site = site.clone();

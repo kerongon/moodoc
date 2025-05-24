@@ -146,7 +146,11 @@
                 <div class="stat-title text-gray-400 text-xs">Site Size</div>
               </div>
               <div class="stat-value text-lg font-bold text-white">{{ siteSize.total }}</div>
-              <div class="stat-desc text-xs text-gray-400">Database: {{ siteSize.database }} • Files: {{ siteSize.files }}</div>
+              <div class="stat-desc text-xs text-gray-400">
+                Database: {{ siteSize.database }} • Files: {{ siteSize.files }}
+                <br v-if="siteSize.moodledata !== '0 B' && siteSize.moodledata !== '0 MB'">
+                <span v-if="siteSize.moodledata !== '0 B' && siteSize.moodledata !== '0 MB'">Data: {{ siteSize.moodledata }} • Code: {{ siteSize.moodle }}</span>
+              </div>
             </div>
             
             <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-lg p-2.5 transition-all duration-300 hover:border-red-500/30 hover:translate-y-[-2px]">
@@ -538,7 +542,10 @@ export default {
       siteSize: {
         total: '0 MB',
         database: '0 MB',
-        files: '0 MB'
+        files: '0 MB',
+        moodle: '0 MB',
+        moodledata: '0 MB',
+        other: '0 MB'
       },
       storageInfo: {
         available: '0 GB',
@@ -790,7 +797,11 @@ export default {
           this.siteSize = {
             total: this.formatSize(sizeData.total_size || 0),
             database: this.formatSize(sizeData.db_size || 0),
-            files: this.formatSize(sizeData.files_size || 0)
+            files: this.formatSize(sizeData.files_size || 0),
+            // Store additional details for potential future use
+            moodle: this.formatSize(sizeData.moodle_size || 0),
+            moodledata: this.formatSize(sizeData.moodledata_size || 0),
+            other: this.formatSize(sizeData.other_files_size || 0)
           };
         }
       } catch (err) {
