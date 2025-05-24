@@ -76,7 +76,7 @@
               </div>
               <div class="header-text">
                 <h2 class="text-base font-medium text-white">Site Backups: {{ siteName }}</h2>
-                <p class="text-2xs text-gray-300">Manage backups for this Moodle site • Last activity: 2 hours ago</p>
+                <p class="text-2xs text-gray-300">Manage backups for this Moodle site • Last activity: {{ formatRelativeTime(lastActivityTimestamp) }}</p>
               </div>
             </div>
             
@@ -553,12 +553,15 @@ export default {
         percentAvailable: 0,
         percentUsed: 0
       },
+      lastActivityTimestamp: Date.now(),
+      lastRefreshTimestamp: Date.now()
     };
   },
   mounted() {
     this.refreshBackups();
     this.fetchSiteSize();
     this.fetchStorageInfo();
+    this.lastRefreshTimestamp = Date.now();
   },
   methods: {
     // Window control methods
@@ -603,6 +606,12 @@ export default {
         this.backups = await invoke('list_site_backups', { 
           name: this.siteName 
         });
+        
+        // Update activity timestamp based on most recent backup
+        this.updateActivityTimestamp();
+        
+        // Update refresh timestamp
+        this.lastRefreshTimestamp = Date.now();
         
         // Also refresh site size and storage info
         await Promise.all([
@@ -753,25 +762,31 @@ export default {
         // Check if the timestamp is in format YYYYMMDD_HHMMSS
         if (typeof timestamp === 'string' && timestamp.match(/^\d{8}_\d{6}$/)) {
           // Extract date parts: YYYYMMDD_HHMMSS
-          const year = timestamp.substring(0, 4);
-          const month = timestamp.substring(4, 6);
-          const day = timestamp.substring(6, 8);
-          const hour = timestamp.substring(9, 11);
-          const minute = timestamp.substring(11, 13);
-          const second = timestamp.substring(13, 15);
+          const year = parseInt(timestamp.substring(0, 4));
+          const month = parseInt(timestamp.substring(4, 6)) - 1; // Month is 0-indexed in JS
+          const day = parseInt(timestamp.substring(6, 8));
+          const hour = parseInt(timestamp.substring(9, 11));
+          const minute = parseInt(timestamp.substring(11, 13));
+          const second = parseInt(timestamp.substring(13, 15));
           
-          // Create a date object with the extracted parts
-          const date = new Date(
-            parseInt(year),
-            parseInt(month) - 1, // Month is 0-indexed in JS
-            parseInt(day),
-            parseInt(hour),
-            parseInt(minute),
-            parseInt(second)
-          );
+          // Create a UTC date object since backup timestamps are likely in UTC
+          const date = new Date(Date.UTC(year, month, day, hour, minute, second));
           
-          // Format the date using locale settings
-          return date.toLocaleString();
+          // Check if date is valid
+          if (isNaN(date.getTime())) {
+            return "Invalid date format";
+          }
+          
+          // Format the date using locale settings (will automatically convert to local time)
+          return date.toLocaleString(undefined, {
+            year: 'numeric',
+            month: '2-digit', 
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZoneName: 'short'
+          });
         } else {
           // For normal timestamps, use the previous logic
           const ts = typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp;
@@ -782,7 +797,15 @@ export default {
             return "Invalid date format";
           }
           
-          return date.toLocaleString();
+          return date.toLocaleString(undefined, {
+            year: 'numeric',
+            month: '2-digit', 
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZoneName: 'short'
+          });
         }
       } catch (e) {
         console.error("Date formatting error:", e, timestamp);
@@ -855,6 +878,76 @@ export default {
     configSettings() {
       // To be implemented
       alert('Configure backup settings functionality coming soon');
+    },
+    
+    // Helper method to update activity timestamp based on most recent backup
+    updateActivityTimestamp() {
+      // Update activity timestamp based on the most recent backup
+      if (this.backups.length > 0 && this.backups[0].timestamp) {
+        try {
+          if (typeof this.backups[0].timestamp === 'string' && 
+              this.backups[0].timestamp.match(/^\d{8}_\d{6}$/)) {
+            // Parse YYYYMMDD_HHMMSS format
+            const timestamp = this.backups[0].timestamp;
+            const year = parseInt(timestamp.substring(0, 4));
+            const month = parseInt(timestamp.substring(4, 6)) - 1; // Month is 0-indexed in JS
+            const day = parseInt(timestamp.substring(6, 8));
+            const hour = parseInt(timestamp.substring(9, 11));
+            const minute = parseInt(timestamp.substring(11, 13));
+            const second = parseInt(timestamp.substring(13, 15));
+            
+            // Create a UTC date object since backup timestamps are likely in UTC
+            const date = new Date(Date.UTC(year, month, day, hour, minute, second));
+            
+            if (!isNaN(date.getTime())) {
+              this.lastActivityTimestamp = date.getTime();
+            } else {
+              this.lastActivityTimestamp = Date.now();
+            }
+          } else {
+            // For standard timestamp format
+            const ts = parseInt(this.backups[0].timestamp);
+            if (!isNaN(ts)) {
+              this.lastActivityTimestamp = ts < 10000000000 ? ts * 1000 : ts;
+            } else {
+              this.lastActivityTimestamp = Date.now();
+            }
+          }
+        } catch (e) {
+          console.error("Failed to parse backup timestamp:", e);
+          this.lastActivityTimestamp = Date.now();
+        }
+      } else {
+        // No backups, use current time
+        this.lastActivityTimestamp = Date.now();
+      }
+    },
+    
+    // Format relative time for display
+    formatRelativeTime(timestamp) {
+      if (!timestamp) return 'Never';
+      
+      const now = Date.now();
+      const diff = now - timestamp;
+      
+      if (diff < 60000) { // Less than 1 minute
+        return 'Just now';
+      } else if (diff < 3600000) { // Less than 1 hour
+        const minutes = Math.floor(diff / 60000);
+        return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+      } else if (diff < 86400000) { // Less than 24 hours
+        const hours = Math.floor(diff / 3600000);
+        return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+      } else if (diff < 2592000000) { // Less than 30 days
+        const days = Math.floor(diff / 86400000);
+        return `${days} day${days === 1 ? '' : 's'} ago`;
+      } else if (diff < 31536000000) { // Less than 1 year
+        const months = Math.floor(diff / 2592000000);
+        return `${months} month${months === 1 ? '' : 's'} ago`;
+      } else {
+        const years = Math.floor(diff / 31536000000);
+        return `${years} year${years === 1 ? '' : 's'} ago`;
+      }
     }
   }
 };
