@@ -258,6 +258,7 @@
                       <tr v-for="backup in backups" :key="backup.timestamp" class="hover:bg-gray-700/40 transition-colors duration-150">
                         <td class="px-2 py-1 text-2xs text-gray-200">
                           {{ formatDate(backup.timestamp) }}
+                          <span v-if="backup.timestamp && isNaN(new Date(backup.timestamp).getTime())" class="text-red-300 text-opacity-70 ml-1">(Raw: {{ backup.timestamp }})</span>
                         </td>
                         <td class="px-2 py-1 text-2xs text-gray-200">{{ backup.moodle_branch }}</td>
                         <td class="px-2 py-1 text-2xs text-gray-200">{{ backup.php_version }}</td>
@@ -715,7 +716,50 @@ export default {
     },
     
     formatDate(timestamp) {
-      return new Date(timestamp * 1000).toLocaleString();
+      // Check if timestamp is valid before formatting
+      if (!timestamp) {
+        return "Unknown date";
+      }
+      
+      try {
+        // Check if the timestamp is in format YYYYMMDD_HHMMSS
+        if (typeof timestamp === 'string' && timestamp.match(/^\d{8}_\d{6}$/)) {
+          // Extract date parts: YYYYMMDD_HHMMSS
+          const year = timestamp.substring(0, 4);
+          const month = timestamp.substring(4, 6);
+          const day = timestamp.substring(6, 8);
+          const hour = timestamp.substring(9, 11);
+          const minute = timestamp.substring(11, 13);
+          const second = timestamp.substring(13, 15);
+          
+          // Create a date object with the extracted parts
+          const date = new Date(
+            parseInt(year),
+            parseInt(month) - 1, // Month is 0-indexed in JS
+            parseInt(day),
+            parseInt(hour),
+            parseInt(minute),
+            parseInt(second)
+          );
+          
+          // Format the date using locale settings
+          return date.toLocaleString();
+        } else {
+          // For normal timestamps, use the previous logic
+          const ts = typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp;
+          const date = new Date(ts < 10000000000 ? ts * 1000 : ts);
+          
+          // Check if date is valid
+          if (isNaN(date.getTime())) {
+            return "Invalid date format";
+          }
+          
+          return date.toLocaleString();
+        }
+      } catch (e) {
+        console.error("Date formatting error:", e, timestamp);
+        return "Date error";
+      }
     },
     
     formatErrorMessage(errorMsg) {
