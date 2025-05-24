@@ -293,7 +293,8 @@
                               :disabled="isProcessing" 
                               class="btn-icon bg-red-600 hover:bg-red-700 text-white p-1 rounded transition-colors duration-150 w-7 h-6 flex items-center justify-center"
                               title="Delete this backup">
-                              <PhTrash class="w-3 h-3" />
+                              <div v-if="isDeletingBackup && deletingBackupTimestamp === backup.timestamp" class="custom-spinner w-3 h-3"></div>
+                              <PhTrash v-else class="w-3 h-3" />
                             </button>
                           </div>
                         </td>
@@ -378,19 +379,19 @@
                 <p class="text-2xs text-gray-300 mb-1">Learn more about backing up your Moodle site</p>
                 
                 <div class="grid grid-cols-2 gap-x-2 gap-y-1">
-                  <a href="#" class="text-blue-400 hover:text-blue-300 text-2xs flex items-center gap-1.5">
+                  <a href="javascript:void(0);" class="text-blue-400 hover:text-blue-300 text-2xs flex items-center gap-1.5">
                     <PhBook class="w-2.5 h-2.5" />
                     Backup Guide
                   </a>
-                  <a href="#" class="text-blue-400 hover:text-blue-300 text-2xs flex items-center gap-1.5">
+                  <a href="javascript:void(0);" class="text-blue-400 hover:text-blue-300 text-2xs flex items-center gap-1.5">
                     <PhArrowClockwise class="w-2.5 h-2.5" />
                     How to Restore
                   </a>
-                  <a href="#" class="text-blue-400 hover:text-blue-300 text-2xs flex items-center gap-1.5">
+                  <a href="javascript:void(0);" class="text-blue-400 hover:text-blue-300 text-2xs flex items-center gap-1.5">
                     <PhClock class="w-2.5 h-2.5" />
                     Scheduling Backups
                   </a>
-                  <a href="#" class="text-blue-400 hover:text-blue-300 text-2xs flex items-center gap-1.5">
+                  <a href="javascript:void(0);" class="text-blue-400 hover:text-blue-300 text-2xs flex items-center gap-1.5">
                     <PhWrench class="w-2.5 h-2.5" />
                     Troubleshooting
                   </a>
@@ -572,6 +573,8 @@ export default {
       restoreProgress: 0,
       restoreStatus: 'starting',
       restoreMessage: '',
+      isDeletingBackup: false,
+      deletingBackupTimestamp: null,
       siteSize: {
         total: '0 MB',
         database: '0 MB',
@@ -792,11 +795,25 @@ export default {
       this.loadingMessage = 'Deleting backup...';
       this.error = null;
       
+      // Set delete-specific loading state
+      this.isDeletingBackup = true;
+      this.deletingBackupTimestamp = this.confirmingDeleteTimestamp;
+      
+      // Add minimum delay to ensure spinner visibility
+      const startTime = Date.now();
+      const minDelay = 800; // Minimum 800ms to see the spinner
+      
       try {
         const result = await invoke('delete_site_backup', { 
           name: this.siteName,
           backupTimestamp: this.confirmingDeleteTimestamp
         });
+        
+        // Ensure minimum delay has passed
+        const elapsed = Date.now() - startTime;
+        if (elapsed < minDelay) {
+          await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
+        }
         
         this.showSuccessMessage = true;
         this.successMessage = result;
@@ -813,6 +830,8 @@ export default {
       } finally {
         this.isProcessing = false;
         this.loading = false;
+        this.isDeletingBackup = false;
+        this.deletingBackupTimestamp = null;
         this.confirmingDeleteTimestamp = null;
       }
     },
@@ -1132,6 +1151,21 @@ export default {
   0% { opacity: 0.6; }
   50% { opacity: 1; }
   100% { opacity: 0.6; }
+}
+
+/* Custom spinner for delete button */
+.custom-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .bg-blue-600 {
