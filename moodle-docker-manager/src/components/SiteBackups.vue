@@ -137,41 +137,41 @@
           </div>
 
           <!-- Stats Cards Grid - More compact design -->
-          <div class="dashboard-grid grid grid-cols-3 gap-3 p-3">
-            <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-lg p-2 transition-all duration-300 hover:border-blue-500/30 hover:translate-y-[-2px]">
-              <div class="stat-header flex items-center gap-1.5 mb-1">
+          <div class="dashboard-grid grid grid-cols-3 gap-3 px-3 pt-3 pb-2">
+            <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-lg p-2.5 transition-all duration-300 hover:border-blue-500/30 hover:translate-y-[-2px]">
+              <div class="stat-header flex items-center gap-1.5 mb-1.5">
                 <div class="stat-icon bg-gradient-to-br from-blue-500 to-blue-600 rounded p-1 text-white">
-                  <PhDatabase class="w-3 h-3" weight="fill" />
+                  <PhDatabase class="w-3.5 h-3.5" weight="fill" />
                 </div>
-                <div class="stat-title text-gray-400 text-2xs">Site Size</div>
+                <div class="stat-title text-gray-400 text-xs">Site Size</div>
               </div>
               <div class="stat-value text-lg font-bold text-white">847 MB</div>
-              <div class="stat-desc text-2xs text-gray-400">Database: 23MB • Files: 824MB</div>
+              <div class="stat-desc text-xs text-gray-400">Database: 23MB • Files: 824MB</div>
             </div>
             
-            <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-lg p-2 transition-all duration-300 hover:border-red-500/30 hover:translate-y-[-2px]">
-              <div class="stat-header flex items-center gap-1.5 mb-1">
+            <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-lg p-2.5 transition-all duration-300 hover:border-red-500/30 hover:translate-y-[-2px]">
+              <div class="stat-header flex items-center gap-1.5 mb-1.5">
                 <div class="stat-icon bg-gradient-to-br from-red-500 to-red-600 rounded p-1 text-white">
-                  <PhClock class="w-3 h-3" weight="fill" />
+                  <PhClock class="w-3.5 h-3.5" weight="fill" />
                 </div>
-                <div class="stat-title text-gray-400 text-2xs">Last Backup</div>
+                <div class="stat-title text-gray-400 text-xs">Last Backup</div>
               </div>
               <div v-if="backups.length === 0" class="stat-value text-lg font-bold text-white">Never</div>
               <div v-else class="stat-value text-lg font-bold text-white">{{ formatDate(backups[0].timestamp).split(' ')[0] }}</div>
-              <div v-if="backups.length === 0" class="stat-desc text-2xs text-gray-400">No backups created yet</div>
-              <div v-else class="stat-desc text-2xs text-gray-400">{{ backups.length }} backups available</div>
+              <div v-if="backups.length === 0" class="stat-desc text-xs text-gray-400">No backups created yet</div>
+              <div v-else class="stat-desc text-xs text-gray-400">{{ backups.length }} backups available</div>
             </div>
             
-            <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-lg p-2 transition-all duration-300 hover:border-green-500/30 hover:translate-y-[-2px]">
-              <div class="stat-header flex items-center gap-1.5 mb-1">
+            <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-lg p-2.5 transition-all duration-300 hover:border-green-500/30 hover:translate-y-[-2px]">
+              <div class="stat-header flex items-center gap-1.5 mb-1.5">
                 <div class="stat-icon bg-gradient-to-br from-green-500 to-green-600 rounded p-1 text-white">
-                  <PhHardDrive class="w-3 h-3" weight="fill" />
+                  <PhHardDrive class="w-3.5 h-3.5" weight="fill" />
                 </div>
-                <div class="stat-title text-gray-400 text-2xs">Storage Available</div>
+                <div class="stat-title text-gray-400 text-xs">Storage Available</div>
               </div>
               <div class="stat-value text-lg font-bold text-white">15.2 GB</div>
-              <div class="stat-desc text-2xs text-gray-400 mb-1">85% available space</div>
-              <div class="progress-bar h-1 w-full bg-gray-700 rounded-full overflow-hidden">
+              <div class="stat-desc text-xs text-gray-400 mb-2">85% available space</div>
+              <div class="progress-bar h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
                 <div class="progress-fill h-full bg-gradient-to-r from-green-500 to-green-400" style="width: 15%;"></div>
               </div>
             </div>
