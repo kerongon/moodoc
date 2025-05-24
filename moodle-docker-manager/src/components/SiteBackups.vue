@@ -76,7 +76,11 @@
               </div>
               <div class="header-text">
                 <h2 class="text-base font-medium text-white">Site Backups: {{ siteName }}</h2>
-                <p class="text-2xs text-gray-300">Manage backups for this Moodle site • Last activity: {{ formatRelativeTime(lastActivityTimestamp) }}</p>
+                <p class="text-2xs text-gray-300">
+                  <span>Manage backups for this Moodle site</span>
+                  <span> • Last backup: {{ formatRelativeTime(lastActivityTimestamp) }}</span>
+                  <span v-if="lastRestoreTimestamp"> • Last restore: {{ formatRelativeTime(lastRestoreTimestamp) }}</span>
+                </p>
               </div>
             </div>
             
@@ -137,7 +141,7 @@
           </div>
 
           <!-- Stats Cards Grid - More compact design -->
-          <div class="dashboard-grid grid grid-cols-3 gap-3 px-3 pt-3 pb-2">
+          <div class="dashboard-grid grid grid-cols-4 gap-2 px-3 pt-3 pb-2">
             <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-lg p-2.5 transition-all duration-300 hover:border-blue-500/30 hover:translate-y-[-2px]">
               <div class="stat-header flex items-center gap-1.5 mb-1.5">
                 <div class="stat-icon bg-gradient-to-br from-blue-500 to-blue-600 rounded p-1 text-white">
@@ -166,6 +170,23 @@
               <div v-else class="stat-desc text-xs text-gray-400">
                 {{ formatDate(backups[0].timestamp).split(',')[1] || '' }}
                 <br>{{ backups.length }} backups available
+              </div>
+            </div>
+            
+            <!-- New Last Restore Card -->
+            <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-lg p-2.5 transition-all duration-300 hover:border-blue-500/30 hover:translate-y-[-2px]">
+              <div class="stat-header flex items-center gap-1.5 mb-1.5">
+                <div class="stat-icon bg-gradient-to-br from-blue-500 to-blue-600 rounded p-1 text-white">
+                  <PhArrowClockwise class="w-3.5 h-3.5" weight="fill" />
+                </div>
+                <div class="stat-title text-gray-400 text-xs">Last Restore</div>
+              </div>
+              <div v-if="!lastRestoreTimestamp" class="stat-value text-lg font-bold text-white">Never</div>
+              <div v-else class="stat-value text-lg font-bold text-white">{{ formatDate(lastRestoreTimestamp).split(',')[0] }}</div>
+              <div v-if="!lastRestoreTimestamp" class="stat-desc text-xs text-gray-400">No restores performed</div>
+              <div v-else class="stat-desc text-xs text-gray-400">
+                {{ formatDate(lastRestoreTimestamp).split(',')[1] || '' }}
+                <br>From backup: {{ formatDate(lastRestoredBackupTimestamp).split(',')[0] }}
               </div>
             </div>
             
@@ -354,6 +375,20 @@
                     <div class="setting-value text-2xs text-gray-400">
                       {{ backups.length ? formatRelativeTime(lastActivityTimestamp) : 'Never' }}
                     </div>
+                  </div>
+                </div>
+                <div class="setting-item py-1 border-b border-gray-700">
+                  <div class="flex justify-between items-center">
+                    <div class="setting-label text-2xs text-gray-200">Last restore</div>
+                    <div class="setting-value text-2xs text-gray-400">
+                      {{ lastRestoreTimestamp ? formatRelativeTime(lastRestoreTimestamp) : 'Never' }}
+                    </div>
+                  </div>
+                </div>
+                <div class="setting-item py-1 border-b border-gray-700" v-if="lastRestoredBackupTimestamp">
+                  <div class="flex justify-between items-center">
+                    <div class="setting-label text-2xs text-gray-200">Restored backup</div>
+                    <div class="setting-value text-2xs text-blue-400">{{ formatDate(lastRestoredBackupTimestamp).split(',')[0] }}</div>
                   </div>
                 </div>
                 <div class="setting-item py-1 border-b border-gray-700">
@@ -569,6 +604,8 @@ export default {
       successMessage: '',
       lastActivityTimestamp: null,
       lastRefreshTimestamp: null,
+      lastRestoreTimestamp: null,        // New: Track when the last restore happened
+      lastRestoredBackupTimestamp: null, // New: Track which backup was restored
       showRestoreProgress: false,
       restoreProgress: 0,
       restoreStatus: 'starting',
@@ -745,6 +782,8 @@ export default {
               if (data.status === 'completed') {
                 this.showSuccessMessage = true;
                 this.successMessage = `Site '${this.siteName}' restored successfully from backup ${this.selectedBackupTimestamp}`;
+                this.lastRestoreTimestamp = Date.now(); // Update last restore timestamp
+                this.lastRestoredBackupTimestamp = this.selectedBackupTimestamp; // Update last restored backup timestamp
                 // Don't auto-hide for restore operations - let user close it manually
               } else {
                 this.error = `Failed to restore backup: ${data.message}`;
@@ -766,8 +805,9 @@ export default {
           backupTimestamp: this.selectedBackupTimestamp
         });
         
-        // For restore, we can update activity timestamp to current time since it's an action
-        this.lastActivityTimestamp = Date.now();
+        // Update restoration tracking information instead of general activity timestamp
+        this.lastRestoreTimestamp = Date.now();
+        this.lastRestoredBackupTimestamp = this.selectedBackupTimestamp;
       } catch (err) {
         this.error = `Failed to restore backup: ${err}`;
         console.error(err);
