@@ -704,9 +704,9 @@ export default {
     
     async openInFinder(timestamp) {
       try {
-        await invoke('open_backup_in_finder', { 
-          siteName: this.siteName,
-          timestamp: timestamp
+        await invoke('open_backup_location', { 
+          name: this.siteName,
+          backup_timestamp: timestamp
         });
       } catch (err) {
         this.error = `Failed to open backup in Finder: ${err}`;
