@@ -12,17 +12,25 @@
         </div>
       </div>
 
-      <!-- search box -->
-      <div v-if="sites.length > 0" class="relative">
-        <input
-          type="search"
-          v-model="searchQuery"
-          placeholder="Search sites..."
-          aria-label="Search sites"
-          class="p-2 pl-3 pr-10 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 w-64"
-        />
-        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-          <PhMagnifyingGlass class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+      <div class="flex items-center space-x-3">
+        <!-- System Diagnostics Button -->
+        <button @click="showDiagnosticModal" class="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm" title="System Diagnostics">
+          <PhWrench class="w-4 h-4 mr-2" />
+          Diagnostics
+        </button>
+        
+        <!-- search box -->
+        <div v-if="sites.length > 0" class="relative">
+          <input
+            type="search"
+            v-model="searchQuery"
+            placeholder="Search sites..."
+            aria-label="Search sites"
+            class="p-2 pl-3 pr-10 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 w-64"
+          />
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <PhMagnifyingGlass class="w-4 h-4 text-gray-400 dark:text-gray-500" />
+          </div>
         </div>
       </div>
     </div>
@@ -184,10 +192,18 @@
                   </button>
                 </td>
                 <td class="px-4 py-4 whitespace-nowrap">
-                  <span class="compact-status-badge" :class="{'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': site.status === 'running', 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': site.status !== 'running'}">
-                    <span class="inline-block w-1.5 h-1.5 rounded-full mr-1" :class="{'bg-green-500': site.status === 'running', 'bg-gray-400': site.status !== 'running'}"></span>
-                    {{ site.status }}
-                  </span>
+                  <div class="flex items-center space-x-2">
+                    <span class="compact-status-badge" :class="getStatusClasses(site.status)">
+                      <span class="inline-block w-1.5 h-1.5 rounded-full mr-1" :class="getStatusIndicatorClasses(site.status)"></span>
+                      {{ site.status }}
+                    </span>
+                    <!-- Error details button for error status -->
+                    <button v-if="site.status === 'error'" @click="checkDetailedStatus(site.name)" 
+                            class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300" 
+                            title="Check detailed error information">
+                      <PhWarningCircle class="w-4 h-4" />
+                    </button>
+                  </div>
                   <!-- New site indicator -->
                   <span v-if="isRecentlyCreated(site.name)" 
                         class="ml-1 text-xs new-badge  bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200 py-0.5 px-1.5 rounded-full"
@@ -343,6 +359,12 @@
       @updated="handleSiteUpdated" 
     />
     
+    <!-- Diagnostic Modal -->
+    <DiagnosticModal 
+      :show="diagnosticModalVisible"
+      @close="hideDiagnosticModal"
+    />
+    
     <!-- Confirmation Modal for Site Removal -->
     <div v-if="showRemoveModal" class="fixed inset-0 z-50 overflow-y-auto hide-scrollbar">
       <div class="flex items-center justify-center min-h-screen px-4">
@@ -464,8 +486,9 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass, PhFileText, PhCaretUp, PhCaretDown, PhCheckSquare, PhPlus, PhSquare } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass, PhFileText, PhCaretUp, PhCaretDown, PhCheckSquare, PhPlus, PhSquare, PhWrench, PhWarningCircle } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
+import DiagnosticModal from './DiagnosticModal.vue';
 import { Command } from '@tauri-apps/plugin-shell';
 import { cleanupRecentSites } from '../utils/notifications';
 import { useSettingsStore } from '../stores/settings';
@@ -483,13 +506,16 @@ export default {
     PhFolder,
     PhCode,
     UpdateSite,
+    DiagnosticModal,
     PhMagnifyingGlass,
     PhFileText,
     PhCaretUp,
     PhCaretDown,
     PhCheckSquare,
     PhPlus,
-    PhSquare
+    PhSquare,
+    PhWrench,
+    PhWarningCircle
   },
   emits: ['action-start', 'action-end'],
   setup(props, { expose, emit }) {
@@ -506,6 +532,7 @@ export default {
     const showRemoveModal = ref(false);
     const siteToRemove = ref('');
     const removeContainers = ref(true);
+    const diagnosticModalVisible = ref(false);
 
     // Site removal progress tracking
     const isRemovingSite = ref(false);
@@ -738,6 +765,92 @@ export default {
     const handleSiteUpdated = () => {
       loadSites();
       hideUpdateModal();
+    };
+
+    // Diagnostic modal controls
+    const showDiagnosticModal = () => {
+      diagnosticModalVisible.value = true;
+    };
+    
+    const hideDiagnosticModal = () => {
+      diagnosticModalVisible.value = false;
+    };
+    
+    // Check detailed status for a specific site
+    const checkDetailedStatus = async (siteName) => {
+      try {
+        console.log(`Checking detailed status for site: ${siteName}`);
+        const result = await invoke('check_site_status_detailed', { name: siteName });
+        console.log('Detailed status result:', result);
+        
+        // Format the detailed error information
+        let errorDetails = `<h3 class="font-semibold mb-2">Site: ${siteName}</h3>`;
+        
+        if (result.status !== 'running') {
+          errorDetails += `<p class="mb-2"><strong>Status:</strong> ${result.status}</p>`;
+        }
+        
+        if (result.error_details && result.error_details.length > 0) {
+          errorDetails += '<p class="mb-2"><strong>Error Details:</strong></p>';
+          errorDetails += '<ul class="list-disc list-inside space-y-1">';
+          result.error_details.forEach(error => {
+            errorDetails += `<li class="text-sm">${error}</li>`;
+          });
+          errorDetails += '</ul>';
+        }
+        
+        if (result.container_states) {
+          errorDetails += '<p class="mt-3 mb-2"><strong>Container States:</strong></p>';
+          errorDetails += '<div class="space-y-1">';
+          Object.entries(result.container_states).forEach(([container, state]) => {
+            const stateColor = state === 'running' ? 'text-green-600' : 'text-red-600';
+            errorDetails += `<div class="text-sm"><span class="font-medium">${container}:</span> <span class="${stateColor}">${state}</span></div>`;
+          });
+          errorDetails += '</div>';
+        }
+        
+        if (result.directory_checks) {
+          errorDetails += '<p class="mt-3 mb-2"><strong>Directory Checks:</strong></p>';
+          errorDetails += '<div class="space-y-1">';
+          result.directory_checks.forEach(check => {
+            const statusColor = check.exists ? 'text-green-600' : 'text-red-600';
+            errorDetails += `<div class="text-sm"><span class="font-medium">${check.path}:</span> <span class="${statusColor}">${check.exists ? 'exists' : 'missing'}</span></div>`;
+          });
+          errorDetails += '</div>';
+        }
+        
+        showError('Detailed Site Status', errorDetails);
+      } catch (err) {
+        console.error(`Failed to check detailed status for ${siteName}:`, err);
+        showError('Status Check Failed', `Failed to get detailed status for ${siteName}: ${err}`);
+      }
+    };
+
+    // Status styling methods
+    const getStatusClasses = (status) => {
+      switch (status) {
+        case 'running':
+          return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+        case 'error':
+          return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+        case 'stopped':
+          return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        default:
+          return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      }
+    };
+
+    const getStatusIndicatorClasses = (status) => {
+      switch (status) {
+        case 'running':
+          return 'bg-green-500';
+        case 'error':
+          return 'bg-red-500';
+        case 'stopped':
+          return 'bg-gray-400';
+        default:
+          return 'bg-yellow-500';
+      }
     };
 
     // Format long paths for display
@@ -990,6 +1103,13 @@ export default {
       showErrorModal,
       errorContent,
       closeErrorModal,
+      // Diagnostic modal
+      diagnosticModalVisible,
+      showDiagnosticModal,
+      hideDiagnosticModal,
+      checkDetailedStatus,
+      getStatusClasses,
+      getStatusIndicatorClasses,
       // Recently created sites highlight
       isRecentlyCreated,
       getCreationTime,

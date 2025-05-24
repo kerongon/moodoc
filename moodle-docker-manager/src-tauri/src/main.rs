@@ -107,6 +107,8 @@ fn main() {
             docker::remove_site,
             docker::get_docker_logs,
             docker::check_site_status,
+            docker::check_site_status_detailed,
+            docker::run_diagnostics,
             docker::backup_site,
             docker::list_site_backups,
             docker::restore_site_backup,

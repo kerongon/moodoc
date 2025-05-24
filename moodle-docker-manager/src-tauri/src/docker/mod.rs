@@ -31,6 +31,28 @@ pub struct Site {
     pub path: PathBuf,
 }
 
+// Diagnostic information structure
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DiagnosticInfo {
+    pub docker_version: Option<String>,
+    pub docker_running: bool,
+    pub docker_socket_accessible: bool,
+    pub docker_daemon_info: Option<String>,
+    pub environment_variables: HashMap<String, String>,
+    pub current_user: Option<String>,
+    pub current_working_directory: Option<String>,
+    pub home_directory: Option<String>,
+    pub app_data_directory: Option<String>,
+    pub platform_info: String,
+    pub sites_directory_exists: bool,
+    pub sites_directory_writable: bool,
+    pub docker_groups: Vec<String>,
+    pub running_containers: Vec<String>,
+    pub docker_networks: Vec<String>,
+    pub available_ports: Vec<u16>,
+    pub errors: Vec<String>,
+}
+
 // State management for sites
 pub struct SiteState(pub Mutex<HashMap<String, Site>>);
 
@@ -314,4 +336,251 @@ pub fn save_site_config(app_handle: AppHandle, site: Site) -> Result<(), String>
     sites.insert(site.name.clone(), site);
 
     Ok(())
+}
+
+// Comprehensive diagnostic command
+#[command]
+pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, String> {
+    let mut diagnostics = DiagnosticInfo {
+        docker_version: None,
+        docker_running: false,
+        docker_socket_accessible: false,
+        docker_daemon_info: None,
+        environment_variables: HashMap::new(),
+        current_user: None,
+        current_working_directory: None,
+        home_directory: None,
+        app_data_directory: None,
+        platform_info: format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH),
+        sites_directory_exists: false,
+        sites_directory_writable: false,
+        docker_groups: Vec::new(),
+        running_containers: Vec::new(),
+        docker_networks: Vec::new(),
+        available_ports: Vec::new(),
+        errors: Vec::new(),
+    };
+
+    // Check Docker version
+    match Command::new("docker").arg("--version").output() {
+        Ok(output) => {
+            if output.status.success() {
+                diagnostics.docker_version = Some(String::from_utf8_lossy(&output.stdout).trim().to_string());
+            } else {
+                diagnostics.errors.push("Docker version command failed".to_string());
+            }
+        }
+        Err(e) => {
+            diagnostics.errors.push(format!("Failed to run docker --version: {}", e));
+        }
+    }
+
+    // Check if Docker is running
+    diagnostics.docker_running = check_docker_running();
+
+    // Check Docker socket accessibility
+    match Command::new("docker").arg("info").output() {
+        Ok(output) => {
+            diagnostics.docker_socket_accessible = output.status.success();
+            if output.status.success() {
+                diagnostics.docker_daemon_info = Some(String::from_utf8_lossy(&output.stdout).trim().to_string());
+            } else {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                diagnostics.errors.push(format!("Docker info failed: {}", stderr));
+            }
+        }
+        Err(e) => {
+            diagnostics.errors.push(format!("Failed to run docker info: {}", e));
+        }
+    }
+
+    // Collect environment variables
+    for (key, value) in std::env::vars() {
+        if key.contains("DOCKER") || key == "PATH" || key == "HOME" || key == "USER" || key == "PWD" {
+            diagnostics.environment_variables.insert(key, value);
+        }
+    }
+
+    // Get current user
+    diagnostics.current_user = std::env::var("USER").ok();
+
+    // Get current working directory
+    diagnostics.current_working_directory = std::env::current_dir()
+        .ok()
+        .and_then(|p| p.to_str().map(|s| s.to_string()));
+
+    // Get home directory
+    diagnostics.home_directory = app_handle.path().home_dir()
+        .ok()
+        .and_then(|p| p.to_str().map(|s| s.to_string()));
+
+    // Get app data directory
+    match app_handle.path().app_data_dir() {
+        Ok(app_dir) => {
+            diagnostics.app_data_directory = app_dir.to_str().map(|s| s.to_string());
+            
+            // Check if sites directory exists and is writable
+            let sites_dir = app_dir.join("sites");
+            diagnostics.sites_directory_exists = sites_dir.exists();
+            
+            if diagnostics.sites_directory_exists {
+                // Test writability by trying to create a test file
+                let test_file = sites_dir.join(".write_test");
+                match std::fs::write(&test_file, "test") {
+                    Ok(_) => {
+                        diagnostics.sites_directory_writable = true;
+                        let _ = std::fs::remove_file(test_file);
+                    }
+                    Err(e) => {
+                        diagnostics.sites_directory_writable = false;
+                        diagnostics.errors.push(format!("Sites directory not writable: {}", e));
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            diagnostics.errors.push(format!("Failed to get app data directory: {}", e));
+        }
+    }
+
+    // Check Docker groups (Unix-like systems)
+    #[cfg(unix)]
+    {
+        match Command::new("groups").output() {
+            Ok(output) => {
+                if output.status.success() {
+                    let groups_str = String::from_utf8_lossy(&output.stdout);
+                    diagnostics.docker_groups = groups_str
+                        .split_whitespace()
+                        .filter(|g| g.contains("docker"))
+                        .map(|s| s.to_string())
+                        .collect();
+                }
+            }
+            Err(e) => {
+                diagnostics.errors.push(format!("Failed to get user groups: {}", e));
+            }
+        }
+    }
+
+    // List running containers
+    if diagnostics.docker_socket_accessible {
+        match Command::new("docker").args(&["ps", "--format", "{{.Names}}"]).output() {
+            Ok(output) => {
+                if output.status.success() {
+                    diagnostics.running_containers = String::from_utf8_lossy(&output.stdout)
+                        .lines()
+                        .filter(|line| !line.trim().is_empty())
+                        .map(|s| s.to_string())
+                        .collect();
+                }
+            }
+            Err(e) => {
+                diagnostics.errors.push(format!("Failed to list containers: {}", e));
+            }
+        }
+
+        // List Docker networks
+        match Command::new("docker").args(&["network", "ls", "--format", "{{.Name}}"]).output() {
+            Ok(output) => {
+                if output.status.success() {
+                    diagnostics.docker_networks = String::from_utf8_lossy(&output.stdout)
+                        .lines()
+                        .filter(|line| !line.trim().is_empty())
+                        .map(|s| s.to_string())
+                        .collect();
+                }
+            }
+            Err(e) => {
+                diagnostics.errors.push(format!("Failed to list networks: {}", e));
+            }
+        }
+    }
+
+    // Check common port availability
+    let test_ports = vec![8000, 8001, 8002, 3306, 3307, 3308, 5432, 5433];
+    for port in test_ports {
+        if check_port_available(port) {
+            diagnostics.available_ports.push(port);
+        }
+    }
+
+    Ok(diagnostics)
+}
+
+// Enhanced site status checking with detailed error reporting
+#[command]
+pub async fn check_site_status_detailed(
+    app_handle: AppHandle,
+    site_name: String,
+) -> Result<(String, Vec<String>), String> {
+    let mut errors = Vec::new();
+    let mut status = "unknown".to_string();
+
+    // Get site configuration
+    let state = app_handle.state::<SiteState>();
+    let sites = state.0.lock().map_err(|_| "Failed to lock sites state")?;
+    
+    let site = sites.get(&site_name)
+        .ok_or_else(|| format!("Site '{}' not found", site_name))?;
+
+    // Check if site directory exists
+    if !site.path.exists() {
+        errors.push(format!("Site directory does not exist: {}", site.path.display()));
+        return Ok(("error".to_string(), errors));
+    }
+
+    // Check for docker-compose file
+    let compose_file = site.path.join("docker-compose.yml");
+    if !compose_file.exists() {
+        errors.push("docker-compose.yml file not found".to_string());
+        status = "error".to_string();
+    }
+
+    // Check for moodle-docker directory
+    let moodle_docker_dir = site.path.join("moodle-docker");
+    if !moodle_docker_dir.exists() {
+        errors.push("moodle-docker directory not found".to_string());
+        status = "error".to_string();
+    }
+
+    // If basic files exist, check Docker containers
+    if errors.is_empty() {
+        // Set environment and check containers
+        let output = Command::new("docker")
+            .args(&["ps", "-a", "--filter", &format!("name={}", site_name), "--format", "{{.State}}"])
+            .current_dir(&site.path)
+            .output();
+
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    let container_states = String::from_utf8_lossy(&output.stdout);
+                    let states: Vec<&str> = container_states.lines().collect();
+                    
+                    if states.is_empty() {
+                        status = "stopped".to_string();
+                        errors.push("No Docker containers found for this site".to_string());
+                    } else if states.iter().all(|&s| s == "running") {
+                        status = "running".to_string();
+                    } else if states.iter().any(|&s| s == "running") {
+                        status = "partial".to_string();
+                        errors.push("Some containers are not running".to_string());
+                    } else {
+                        status = "stopped".to_string();
+                    }
+                } else {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    errors.push(format!("Failed to check container status: {}", stderr));
+                    status = "error".to_string();
+                }
+            }
+            Err(e) => {
+                errors.push(format!("Failed to execute docker command: {}", e));
+                status = "error".to_string();
+            }
+        }
+    }
+
+    Ok((status, errors))
 }
