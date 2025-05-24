@@ -8,13 +8,31 @@
             <!-- Window Controls -->
             <div class="window-controls">
               <button @click="closeWindow" class="window-control-button close-button" title="Close">
-                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FF5F57" stroke="#E0443E" stroke-width="1"></circle></svg>
+                <!-- default red circle -->
+                <svg class="icon-default" width="12" height="12" viewBox="0 0 12 12">
+                  <circle cx="6" cy="6" r="5.5" fill="#FF5F57" stroke="#E0443E" stroke-width="1" />
+                </svg>
+                <!-- hover X icon -->
+                <svg class="icon-hover" width="8" height="8" viewBox="0 0 24 24">
+                  <path stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
               <button @click="minimizeWindow" class="window-control-button minimize-button" title="Minimize">
-                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FFBD2E" stroke="#DEA123" stroke-width="1"></circle></svg>
+                <!-- default yellow circle -->
+                <svg class="icon-default" width="12" height="12" viewBox="0 0 12 12">
+                  <circle cx="6" cy="6" r="5.5" fill="#FFBD2E" stroke="#DEA123" stroke-width="1" />
+                </svg>
+                <!-- hover minus icon -->
+                <svg class="icon-hover" width="8" height="2" viewBox="0 0 12 12">
+                  <rect x="2" y="5" width="8" height="2" fill="white" />
+                </svg>
               </button>
               <button @click="toggleMaximizeWindow" class="window-control-button maximize-button" title="Maximize">
-                <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#27C93F" stroke="#1AAB29" stroke-width="1"></circle></svg>
+                <!-- default green circle -->
+                <svg class="icon-default" width="12" height="12" viewBox="0 0 12 12">
+                  <circle cx="6" cy="6" r="5.5" fill="#27C93F" stroke="#1AAB29" stroke-width="1" />
+                </svg>
+                <PhArrowsOut class="icon-hover w-2 h-2 text-white" weight="fill" />
               </button>
             </div>
             <!-- Navigation Controls -->
@@ -555,7 +573,8 @@ import {
   PhBook, 
   PhWrench, 
   PhArrowLeft,
-  PhWarningCircle 
+  PhWarningCircle,
+  PhArrowsOut
 } from '@phosphor-icons/vue';
 
 export default {
@@ -581,7 +600,8 @@ export default {
     PhBook,
     PhWrench,
     PhArrowLeft,
-    PhWarningCircle
+    PhWarningCircle,
+    PhArrowsOut
   },
   props: {
     siteName: {
@@ -1236,5 +1256,24 @@ export default {
 .success-close-button:hover {
   color: #14532d !important;
   background-color: rgba(22, 101, 52, 0.2) !important;
+}
+
+/* Window control hover icons */
+.window-control-button {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+}
+.window-control-button svg.icon-hover {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.window-control-button:hover svg.icon-hover {
+  display: block;
 }
 </style>
