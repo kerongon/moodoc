@@ -671,9 +671,9 @@ export default {
       this.error = null;
       
       try {
-        const result = await invoke('delete_backup', { 
-          siteName: this.siteName,
-          timestamp: this.confirmingDeleteTimestamp
+        const result = await invoke('delete_site_backup', { 
+          name: this.siteName,
+          backupTimestamp: this.confirmingDeleteTimestamp
         });
         
         console.log(result);
