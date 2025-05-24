@@ -138,6 +138,7 @@ fn main() {
             docker::backup_site,
             docker::list_site_backups,
             docker::restore_site_backup,
+            docker::restore_site_backup_async,
             docker::delete_site_backup,
             docker::open_backup_location,
             docker::update_moodle_version,

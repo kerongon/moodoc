@@ -410,6 +410,28 @@
       </div> <!-- end of .main-content -->
     </div> <!-- end of dashboard-full -->
     
+    <!-- Restore Progress Overlay -->
+    <div v-if="showRestoreProgress" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70">
+      <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-96 mx-4">
+        <div class="mb-4">
+          <h3 class="text-lg font-medium text-white">Restoring Backup</h3>
+          <p class="text-sm text-gray-300 mt-2">
+            {{ restoreMessage }}
+          </p>
+        </div>
+        
+        <div class="mt-4">
+          <div class="w-full bg-gray-700 rounded-full h-2.5">
+            <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: restoreProgress + '%' }"></div>
+          </div>
+          <div class="flex justify-between mt-1">
+            <span class="text-2xs text-gray-400">{{ Math.round(restoreProgress) }}%</span>
+            <span class="text-2xs text-gray-400">{{ restoreStatus }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- Restore Confirmation Modal -->
     <div v-if="showRestoreModal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70">
       <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-96 mx-4">
@@ -476,6 +498,7 @@
 import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
 import { invoke } from '@tauri-apps/api/tauri';
+import { listen } from '@tauri-apps/api/event';
 import { appWindow } from '@tauri-apps/api/window';
 import { 
   PhArchiveBox, 
@@ -545,6 +568,10 @@ export default {
       successMessage: '',
       lastActivityTimestamp: null,
       lastRefreshTimestamp: null,
+      showRestoreProgress: false,
+      restoreProgress: 0,
+      restoreStatus: 'starting',
+      restoreMessage: '',
       siteSize: {
         total: '0 MB',
         database: '0 MB',
@@ -694,30 +721,62 @@ export default {
       this.loading = true;
       this.loadingMessage = 'Restoring backup... This might take a few minutes';
       this.error = null;
+      this.restoreProgress = 0;
+      this.restoreStatus = 'starting';
+      this.restoreMessage = 'Preparing to restore backup...';
+      this.showRestoreProgress = true;
       
       try {
-        const result = await invoke('restore_site_backup', { 
+        // Set up a listener for restore progress events
+        const unlisten = await listen('restore_progress', (event) => {
+          const data = event.payload;
+          if (data.siteName === this.siteName) {
+            this.restoreStatus = data.status;
+            this.restoreMessage = data.message;
+            this.restoreProgress = data.progress * 100; // Convert to percentage
+            
+            if (data.status === 'completed' || data.status === 'error') {
+              // When complete/error, we can clean up the listener
+              unlisten();
+              
+              if (data.status === 'completed') {
+                this.showSuccessMessage = true;
+                this.successMessage = `Site '${this.siteName}' restored successfully from backup ${this.selectedBackupTimestamp}`;
+                setTimeout(() => {
+                  this.showSuccessMessage = false;
+                }, 5000);
+              } else {
+                this.error = `Failed to restore backup: ${data.message}`;
+              }
+
+              // Hide progress display after a short delay
+              setTimeout(() => {
+                this.showRestoreProgress = false;
+                this.isProcessing = false;
+                this.loading = false;
+              }, 2000);
+            }
+          }
+        });
+        
+        // Start the async restore process
+        await invoke('restore_site_backup_async', { 
           name: this.siteName,
           backupTimestamp: this.selectedBackupTimestamp
         });
-        
-        this.showSuccessMessage = true;
-        this.successMessage = result;
-        setTimeout(() => {
-          this.showSuccessMessage = false;
-        }, 5000);
         
         // For restore, we can update activity timestamp to current time since it's an action
         this.lastActivityTimestamp = Date.now();
       } catch (err) {
         this.error = `Failed to restore backup: ${err}`;
         console.error(err);
-      } finally {
+        this.showRestoreProgress = false;
         this.isProcessing = false;
         this.loading = false;
-        this.selectedBackupTimestamp = null;
       }
-    },
+        this.loading = false;
+        this.selectedBackupTimestamp = null;
+      },
     
     confirmDelete(timestamp) {
       this.confirmingDeleteTimestamp = timestamp;
@@ -736,7 +795,7 @@ export default {
       try {
         const result = await invoke('delete_site_backup', { 
           name: this.siteName,
-          backup_timestamp: this.confirmingDeleteTimestamp
+          backupTimestamp: this.confirmingDeleteTimestamp
         });
         
         this.showSuccessMessage = true;
@@ -1066,6 +1125,18 @@ export default {
 .stat-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Progress bar animation */
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.bg-blue-600 {
+  transition: width 0.5s ease-in-out;
+  animation: pulse 2s infinite;
 }
 
 .btn-icon {
