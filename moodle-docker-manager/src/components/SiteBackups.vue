@@ -265,7 +265,9 @@
                       <tr v-for="backup in backups" :key="backup.timestamp" class="hover:bg-gray-700/40 transition-colors duration-150">
                         <td class="px-2 py-1 text-2xs text-gray-200">
                           {{ formatDate(backup.timestamp) }}
-                          <span v-if="backup.timestamp && isNaN(new Date(backup.timestamp).getTime())" class="text-red-300 text-opacity-70 ml-1">(Raw: {{ backup.timestamp }})</span>
+                          <span v-if="backup.timestamp && isNaN(new Date(backup.timestamp).getTime())" class="text-red-300 text-opacity-70 ml-1">
+                            <!-- (Raw: {{ backup.timestamp }}) -->
+                          </span>
                         </td>
                         <td class="px-2 py-1 text-2xs text-gray-200">{{ backup.moodle_branch }}</td>
                         <td class="px-2 py-1 text-2xs text-gray-200">{{ backup.php_version }}</td>
@@ -275,23 +277,23 @@
                             <button 
                               @click="restoreBackup(backup.timestamp)" 
                               :disabled="isProcessing" 
-                              class="btn-icon bg-blue-600 hover:bg-blue-700 text-white p-0.5 rounded transition-colors duration-150"
+                              class="btn-icon bg-blue-600 hover:bg-blue-700 text-white p-1 rounded transition-colors duration-150 w-7 h-6 flex items-center justify-center"
                               title="Restore this backup">
-                              <PhArrowClockwise class="w-2.5 h-2.5" />
+                              <PhArrowClockwise class="w-3 h-3" />
                             </button>
                             <button 
                               @click="openInFinder(backup.timestamp)" 
                               :disabled="isProcessing" 
-                              class="btn-icon bg-green-600 hover:bg-green-700 text-white p-0.5 rounded transition-colors duration-150"
+                              class="btn-icon bg-green-600 hover:bg-green-700 text-white p-1 rounded transition-colors duration-150 w-7 h-6 flex items-center justify-center"
                               title="Show in Finder">
-                              <PhFolderOpen class="w-2.5 h-2.5" />
+                              <PhFolderOpen class="w-3 h-3" />
                             </button>
                             <button 
                               @click="confirmDelete(backup.timestamp)" 
                               :disabled="isProcessing" 
-                              class="btn-icon bg-red-600 hover:bg-red-700 text-white p-0.5 rounded transition-colors duration-150"
+                              class="btn-icon bg-red-600 hover:bg-red-700 text-white p-1 rounded transition-colors duration-150 w-7 h-6 flex items-center justify-center"
                               title="Delete this backup">
-                              <PhTrash class="w-2.5 h-2.5" />
+                              <PhTrash class="w-3 h-3" />
                             </button>
                           </div>
                         </td>
