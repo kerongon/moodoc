@@ -695,7 +695,7 @@ export default {
     
     async openBackupsFolder() {
       try {
-        await invoke('open_site_backups_folder', { name: this.siteName });
+        await invoke('open_backup_location', { name: this.siteName });
       } catch (err) {
         this.error = `Failed to open backups folder: ${err}`;
         console.error(err);
