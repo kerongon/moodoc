@@ -347,20 +347,22 @@
                 </h3>
                 <div class="setting-item py-1 border-b border-gray-700">
                   <div class="flex justify-between items-center">
-                    <div class="setting-label text-2xs text-gray-200">Active users</div>
-                    <div class="setting-value text-2xs text-gray-400">247 users</div>
+                    <div class="setting-label text-2xs text-gray-200">Last backup</div>
+                    <div class="setting-value text-2xs text-gray-400">
+                      {{ backups.length ? formatRelativeTime(lastActivityTimestamp) : 'Never' }}
+                    </div>
                   </div>
                 </div>
                 <div class="setting-item py-1 border-b border-gray-700">
                   <div class="flex justify-between items-center">
-                    <div class="setting-label text-2xs text-gray-200">Total courses</div>
-                    <div class="setting-value text-2xs text-gray-400">18 courses</div>
+                    <div class="setting-label text-2xs text-gray-200">Backup count</div>
+                    <div class="setting-value text-2xs text-gray-400">{{ backups.length }} backups</div>
                   </div>
                 </div>
                 <div class="setting-item py-1">
                   <div class="flex justify-between items-center">
-                    <div class="setting-label text-2xs text-gray-200">Last modified</div>
-                    <div class="setting-value text-2xs text-gray-400">2 hours ago</div>
+                    <div class="setting-label text-2xs text-gray-200">Last refresh</div>
+                    <div class="setting-value text-2xs text-gray-400">{{ formatRelativeTime(lastRefreshTimestamp) }}</div>
                   </div>
                 </div>
               </div>
@@ -539,6 +541,8 @@ export default {
       loadingMessage: 'Loading backups...',
       showSuccessMessage: false,
       successMessage: '',
+      lastActivityTimestamp: null,
+      lastRefreshTimestamp: null,
       siteSize: {
         total: '0 MB',
         database: '0 MB',
@@ -558,10 +562,20 @@ export default {
     };
   },
   mounted() {
-    this.refreshBackups();
-    this.fetchSiteSize();
-    this.fetchStorageInfo();
-    this.lastRefreshTimestamp = Date.now();
+    // this.fetchSiteSize();
+    // this.fetchStorageInfo();
+    this.refreshBackups().then(() => {
+      // Initialize lastActivityTimestamp with most recent backup time if available
+      this.updateActivityTimestamp();
+
+      // If no backups exist, set to current time
+      if (!this.lastActivityTimestamp) {
+        this.lastActivityTimestamp = Date.now();
+      }
+
+      // Initialize refresh timestamp
+      this.lastRefreshTimestamp = Date.now();
+    });
   },
   methods: {
     // Window control methods
@@ -619,6 +633,9 @@ export default {
           this.fetchStorageInfo()
         ]);
         
+        // Update last refresh timestamp (but not activity timestamp)
+        this.lastRefreshTimestamp = Date.now();
+        
       } catch (err) {
         this.error = `Failed to fetch data: ${err}`;
         console.error(err);
@@ -644,6 +661,8 @@ export default {
           this.showSuccessMessage = false;
         }, 5000);
         await this.refreshBackups();
+        // Update activity timestamp based on the new backup's actual timestamp
+        this.updateActivityTimestamp();
       } catch (err) {
         const errorMsg = String(err);
         console.error(`Backup error:`, errorMsg);
@@ -675,9 +694,9 @@ export default {
       this.error = null;
       
       try {
-        const result = await invoke('restore_backup', { 
-          siteName: this.siteName,
-          timestamp: this.selectedBackupTimestamp
+        const result = await invoke('restore_site_backup', { 
+          name: this.siteName,
+          backup_timestamp: this.selectedBackupTimestamp
         });
         
         this.showSuccessMessage = true;
@@ -685,6 +704,9 @@ export default {
         setTimeout(() => {
           this.showSuccessMessage = false;
         }, 5000);
+        
+        // For restore, we can update activity timestamp to current time since it's an action
+        this.lastActivityTimestamp = Date.now();
       } catch (err) {
         this.error = `Failed to restore backup: ${err}`;
         console.error(err);
@@ -712,7 +734,7 @@ export default {
       try {
         const result = await invoke('delete_site_backup', { 
           name: this.siteName,
-          backupTimestamp: this.confirmingDeleteTimestamp
+          backup_timestamp: this.confirmingDeleteTimestamp
         });
         
         this.showSuccessMessage = true;
@@ -721,6 +743,9 @@ export default {
           this.showSuccessMessage = false;
         }, 5000);
         await this.refreshBackups();
+        
+        // Update activity timestamp based on the remaining backups
+        this.updateActivityTimestamp();
       } catch (err) {
         this.error = `Failed to delete backup: ${err}`;
         console.error(err);
@@ -749,6 +774,39 @@ export default {
       } catch (err) {
         this.error = `Failed to open backup in Finder: ${err}`;
         console.error(err);
+      }
+    },
+    
+    // Helper method to update activity timestamp based on most recent backup
+    updateActivityTimestamp() {
+      if (this.backups.length > 0 && this.backups[0].timestamp) {
+        try {
+          if (typeof this.backups[0].timestamp === 'string' && 
+              this.backups[0].timestamp.match(/^\d{8}_\d{6}$/)) {
+            // Parse YYYYMMDD_HHMMSS format
+            const timestamp = this.backups[0].timestamp;
+            const year = parseInt(timestamp.substring(0, 4));
+            const month = parseInt(timestamp.substring(4, 6)) - 1; // Month is 0-indexed in JS
+            const day = parseInt(timestamp.substring(6, 8));
+            const hour = parseInt(timestamp.substring(9, 11));
+            const minute = parseInt(timestamp.substring(11, 13));
+            const second = parseInt(timestamp.substring(13, 15));
+            
+            const date = new Date(year, month, day, hour, minute, second);
+            
+            if (!isNaN(date.getTime())) {
+              this.lastActivityTimestamp = date.getTime();
+            }
+          } else {
+            // For standard timestamp format
+            const ts = parseInt(this.backups[0].timestamp);
+            if (!isNaN(ts)) {
+              this.lastActivityTimestamp = ts < 10000000000 ? ts * 1000 : ts;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to parse backup timestamp:", e);
+        }
       }
     },
     
@@ -811,6 +869,50 @@ export default {
         console.error("Date formatting error:", e, timestamp);
         return "Date error";
       }
+    },
+    
+    formatRelativeTime(timestamp) {
+      if (!timestamp) return 'Never';
+      
+      const now = new Date();
+      const date = new Date(timestamp);
+      const diffMs = now - date;
+      
+      // Convert to seconds
+      const diffSec = Math.floor(diffMs / 1000);
+      
+      // Less than a minute
+      if (diffSec < 60) {
+        return 'Just now';
+      }
+      
+      // Minutes
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) {
+        return diffMin === 1 ? '1 minute ago' : `${diffMin} minutes ago`;
+      }
+      
+      // Hours
+      const diffHour = Math.floor(diffMin / 60);
+      if (diffHour < 24) {
+        return diffHour === 1 ? '1 hour ago' : `${diffHour} hours ago`;
+      }
+      
+      // Days
+      const diffDay = Math.floor(diffHour / 24);
+      if (diffDay < 30) {
+        return diffDay === 1 ? 'Yesterday' : `${diffDay} days ago`;
+      }
+      
+      // Months
+      const diffMonth = Math.floor(diffDay / 30);
+      if (diffMonth < 12) {
+        return diffMonth === 1 ? '1 month ago' : `${diffMonth} months ago`;
+      }
+      
+      // Years
+      const diffYear = Math.floor(diffMonth / 12);
+      return diffYear === 1 ? '1 year ago' : `${diffYear} years ago`;
     },
     
     formatErrorMessage(errorMsg) {
