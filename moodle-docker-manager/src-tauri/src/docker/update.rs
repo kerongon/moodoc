@@ -249,10 +249,3 @@ pub fn cancel_update(app_handle: AppHandle, name: String) -> Result<String, Stri
     safe_emit(&app_handle, "update_cancelled", format!("Update cancelled for site '{}'", name));
     Ok(format!("Update cancelled for site '{}'", name))
 }
-
-// Helper function to check if an update is running for a site
-pub fn is_update_running(app_handle: &AppHandle, name: &str) -> Result<bool, String> {
-    let running_updates = app_handle.state::<RunningUpdates>();
-    let updates = running_updates.0.lock().map_err(|_| "Failed to lock running updates state".to_string())?;
-    Ok(updates.get(name) == Some(&true))
-}

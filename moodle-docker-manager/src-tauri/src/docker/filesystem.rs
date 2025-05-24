@@ -130,16 +130,3 @@ pub fn open_in_editor(editor_name: String, path: String) -> Result<String, Strin
         Err(format!("Failed to open {} in {}: {}", path, editor_name, error))
     }
 }
-
-// Helper function to check if a file or directory exists
-pub fn path_exists(path: &str) -> bool {
-    std::path::Path::new(path).exists()
-}
-
-// Helper function to get the parent directory of a path
-pub fn get_parent_dir(path: &str) -> Option<String> {
-    std::path::Path::new(path)
-        .parent()
-        .and_then(|p| p.to_str())
-        .map(|s| s.to_string())
-}
