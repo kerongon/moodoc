@@ -803,8 +803,11 @@ export default {
                 this.showSuccessMessage = true;
                 this.successMessage = `Site '${this.siteName}' restored successfully from backup ${this.selectedBackupTimestamp}`;
                 this.lastRestoreTimestamp = Date.now(); // Update last restore timestamp
-                this.lastRestoredBackupTimestamp = this.selectedBackupTimestamp; // Update last restored backup timestamp
-                // Don't auto-hide for restore operations - let user close it manually
+                this.lastRestoredBackupTimestamp = this.selectedBackupTimestamp;
+                // Auto-hide the success message after 5 seconds
+                setTimeout(() => {
+                  this.showSuccessMessage = false;
+                }, 5000);
               } else {
                 this.error = `Failed to restore backup: ${data.message}`;
               }
