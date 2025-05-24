@@ -27,3 +27,5 @@
 
 
 cd /Users/kerongonzales/code/moodoc/moodle-docker-manager && npm run
+
+cd /Users/kerongonzales/code/moodoc/moodle-docker-manager/src-tauri && cargo check
