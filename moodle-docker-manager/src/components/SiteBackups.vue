@@ -127,7 +127,7 @@
                 <p class="text-sm text-green-800">{{ successMessage }}</p>
               </div>
               <div class="ml-auto pl-3">
-                <button @click="showSuccessMessage = false" class="inline-flex text-green-500 hover:text-green-700">
+                <button @click="showSuccessMessage = false" class="inline-flex text-green-700 hover:text-green-800">
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -745,9 +745,7 @@ export default {
               if (data.status === 'completed') {
                 this.showSuccessMessage = true;
                 this.successMessage = `Site '${this.siteName}' restored successfully from backup ${this.selectedBackupTimestamp}`;
-                setTimeout(() => {
-                  this.showSuccessMessage = false;
-                }, 5000);
+                // Don't auto-hide for restore operations - let user close it manually
               } else {
                 this.error = `Failed to restore backup: ${data.message}`;
               }
