@@ -157,9 +157,12 @@
                 <div class="stat-title text-gray-400 text-xs">Last Backup</div>
               </div>
               <div v-if="backups.length === 0" class="stat-value text-lg font-bold text-white">Never</div>
-              <div v-else class="stat-value text-lg font-bold text-white">{{ formatDate(backups[0].timestamp).split(' ')[0] }}</div>
+              <div v-else class="stat-value text-lg font-bold text-white">{{ formatDate(backups[0].timestamp).split(',')[0] }}</div>
               <div v-if="backups.length === 0" class="stat-desc text-xs text-gray-400">No backups created yet</div>
-              <div v-else class="stat-desc text-xs text-gray-400">{{ backups.length }} backups available</div>
+              <div v-else class="stat-desc text-xs text-gray-400">
+                {{ formatDate(backups[0].timestamp).split(',')[1] || '' }}
+                <br>{{ backups.length }} backups available
+              </div>
             </div>
             
             <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-lg p-2.5 transition-all duration-300 hover:border-green-500/30 hover:translate-y-[-2px]">
