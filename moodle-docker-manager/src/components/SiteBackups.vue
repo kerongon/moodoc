@@ -107,10 +107,10 @@
               
               <button 
                 @click="refreshBackups" 
-                :disabled="isProcessing" 
+                :disabled="isProcessing || loading" 
                 class="ultra-compact-button flex items-center gap-1 bg-gray-700 text-gray-200 px-2 py-1 rounded text-2xs font-medium hover:bg-gray-600 transition-all duration-200 border border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                <PhArrowClockwise class="w-3 h-3" />
-                Refresh
+                <PhArrowClockwise class="w-3 h-3" :class="{ 'animate-spin': loading }" />
+                {{ loading ? 'Refreshing...' : 'Refresh' }}
               </button>
             </div>
           </div>
@@ -592,18 +592,26 @@ export default {
       appWindow.close();
     },
     
-    // Existing backup methods
+    // Enhanced refresh method to reload all data
     async refreshBackups() {
       this.loading = true;
       this.error = null;
-      this.loadingMessage = 'Loading backups...';
+      this.loadingMessage = 'Refreshing data...';
       
       try {
+        // Refresh backups list
         this.backups = await invoke('list_site_backups', { 
           name: this.siteName 
         });
+        
+        // Also refresh site size and storage info
+        await Promise.all([
+          this.fetchSiteSize(),
+          this.fetchStorageInfo()
+        ]);
+        
       } catch (err) {
-        this.error = `Failed to fetch backups: ${err}`;
+        this.error = `Failed to fetch data: ${err}`;
         console.error(err);
       } finally {
         this.loading = false;
