@@ -6,6 +6,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
 use std::time::Duration;
+use tokio::task;
 use tauri::{command, AppHandle, Manager};
 
 use super::{Site, SiteState, safe_emit};
@@ -678,7 +679,28 @@ pub fn check_site_status(app_handle: AppHandle, name: String) -> Result<Site, St
 }
 
 #[command]
-pub fn remove_site(app_handle: AppHandle, name: String, remove_containers: Option<bool>) -> Result<String, String> {
+pub async fn remove_site(
+    app_handle: AppHandle,
+    name: String,
+    remove_containers: Option<bool>,
+) -> Result<String, String> {
+    let app = app_handle.clone();
+    let nm = name.clone();
+    let flag = remove_containers.unwrap_or(true);
+    let result = task::spawn_blocking(move || {
+        remove_site_blocking(app, nm, Some(flag))
+    })
+    .await
+    .map_err(|e| format!("Task error: {}", e))??;
+    Ok(result)
+}
+
+// synchronous removal logic matching docker_original.rs implementation
+fn remove_site_blocking(
+    app_handle: AppHandle,
+    name: String,
+    remove_containers: Option<bool>,
+) -> Result<String, String> {
     let state = app_handle.state::<SiteState>();
     let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
     
@@ -688,98 +710,90 @@ pub fn remove_site(app_handle: AppHandle, name: String, remove_containers: Optio
         None => return Err(format!("Site '{}' not found", name)),
     };
     
+    // Default to true if not specified
     let should_remove_containers = remove_containers.unwrap_or(true);
     
-    // Stop the site first if it's running
-    if site.status == "running" {
-        if let Err(e) = stop_site(app_handle.clone(), name.clone()) {
-            return Err(format!("Failed to stop site before removal: {}", e));
-        }
-    }
-    
-    // Remove Docker containers and volumes if requested
-    if should_remove_containers {
-        let moodle_www_root = site.path.join("moodle");
-        let abs_moodle_path = moodle_www_root.canonicalize()
-            .unwrap_or_else(|_| moodle_www_root.clone());
-        
-        // Create removal script
-        let removal_script = format!(r#"#!/bin/bash
+    // Create a cleanup script to ensure proper environment variables are set
+    let cleanup_script = format!(r#"#!/bin/bash
 cd {}
 export COMPOSE_PROJECT_NAME={}
-export MOODLE_DOCKER_WWWROOT={}
-export MOODLE_DOCKER_DB={}
-export MOODLE_DOCKER_WEB_PORT={}
-export MOODLE_DOCKER_PHP_VERSION={}
-export MOODLE_DOCKER_DB_PORT={}
+export MOODLE_DOCKER_WWWROOT=$PWD/moodle
 
-# Stop and remove containers
-./bin/moodle-docker-compose down
+# Stop and remove containers with volumes
+./bin/moodle-docker-compose down -v
 
-# Remove volumes (this will delete the database)
-docker volume rm ${{COMPOSE_PROJECT_NAME}}_mariadb_data 2>/dev/null || true
-docker volume rm ${{COMPOSE_PROJECT_NAME}}_mysql_data 2>/dev/null || true
-docker volume rm ${{COMPOSE_PROJECT_NAME}}_postgres_data 2>/dev/null || true
-
-# Remove any orphaned containers
-docker container prune -f --filter label=com.docker.compose.project=${{COMPOSE_PROJECT_NAME}}
-
-echo "Docker containers and volumes removed"
+echo "Removed all containers and volumes for {}"
 "#, 
         site.path.to_str().unwrap_or(""),
         name,
-        abs_moodle_path.to_str().unwrap_or(""),
-        site.db_type.to_lowercase(),
-        site.web_port.unwrap_or(8000),
-        site.php_version,
-        site.db_port.unwrap_or(3306)
-        );
+        name
+    );
+    
+    // Only remove containers if explicitly requested
+    if should_remove_containers {
+        // Use a cleanup script with guaranteed cleanup
+        let script_path = site.path.join("cleanup.sh");
         
-        let script_path = site.path.join("remove_temp.sh");
-        fs::write(&script_path, removal_script)
-            .map_err(|e| format!("Failed to create removal script: {}", e))?;
+        let cleanup_result = (|| -> Result<(), String> {
+            let mut file = File::create(&script_path)
+                .map_err(|e| format!("Failed to create cleanup script: {}", e))?;
+            
+            file.write_all(cleanup_script.as_bytes())
+                .map_err(|e| format!("Failed to write cleanup script: {}", e))?;
+            
+            // Make the script executable
+            let chmod_output = Command::new("chmod")
+                .args(["+x", script_path.to_str().unwrap_or("cleanup.sh")])
+                .output()
+                .map_err(|e| format!("Failed to make cleanup script executable: {}", e))?;
+            
+            if !chmod_output.status.success() {
+                return Err("Failed to make cleanup script executable".to_string());
+            }
+            
+            // Execute the cleanup script
+            let _output = Command::new(script_path.to_str().unwrap_or("./cleanup.sh"))
+                .output()
+                .map_err(|e| format!("Failed to execute cleanup script: {}", e))?;
+                
+            Ok(())
+        })();
         
-        // Make script executable
-        Command::new("chmod")
-            .args(["+x", script_path.to_str().unwrap_or("remove_temp.sh")])
-            .output()
-            .map_err(|e| format!("Failed to make removal script executable: {}", e))?;
+        // Always clean up the script
+        if let Err(e) = fs::remove_file(&script_path) {
+            println!("Warning: Failed to remove cleanup script {}: {}", script_path.display(), e);
+        }
         
-        // Execute removal script
-        let output = Command::new(script_path.to_str().unwrap_or("./remove_temp.sh"))
-            .output()
-            .map_err(|e| {
-                let _ = fs::remove_file(&script_path);
-                format!("Failed to execute removal script: {}", e)
-            })?;
-        
-        // Clean up script
-        let _ = fs::remove_file(script_path);
-        
-        if !output.status.success() {
-            let error = String::from_utf8_lossy(&output.stderr);
-            return Err(format!("Failed to remove Docker containers: {}", error));
+        // Only return error if we couldn't execute the cleanup and the error is worth reporting
+        if let Err(e) = cleanup_result {
+            println!("Warning during container cleanup: {}", e);
+            // We don't return the error since we still want to remove the site from state
         }
     }
     
-    // Remove site directory if it exists
-    if site.path.exists() {
-        fs::remove_dir_all(&site.path)
-            .map_err(|e| format!("Failed to remove site directory: {}", e))?;
-    }
+    // Even if the script fails, we'll try to remove the directory and site from state
     
-    // Remove site configuration file
-    let app_dir = app_handle.path_resolver().app_data_dir()
-        .ok_or_else(|| "Failed to get app data directory".to_string())?;
-    
-    let config_file = app_dir.join("sites").join(format!("{}.json", name));
-    if config_file.exists() {
-        fs::remove_file(&config_file)
-            .map_err(|e| format!("Failed to remove site configuration: {}", e))?;
-    }
+    // Try to remove the site directory
+    let _remove_result = fs::remove_dir_all(&site.path);
     
     // Remove from in-memory state
     sites.remove(&name);
+    
+    // Save the updated configuration
+    let app_dir = app_handle.path_resolver().app_data_dir()
+        .ok_or_else(|| "Failed to get app data directory".to_string())?;
+    
+    let config_path = app_dir.join("sites_config.json");
+    
+    // Convert HashMap to Vec for serialization
+    let sites_vec: Vec<Site> = sites.values().cloned().collect();
+    
+    // Serialize and save to file
+    let json = serde_json::to_string_pretty(&sites_vec)
+        .map_err(|e| format!("Failed to serialize sites config: {}", e))?;
+    
+    fs::write(&config_path, json)
+        .map_err(|e| format!("Failed to write sites config: {}", e))?;
     
     super::safe_emit(&app_handle, "site_removed", format!("Site '{}' removed successfully", name));
     Ok(format!("Site '{}' removed successfully", name))
