@@ -161,6 +161,32 @@ export default {
           container.scrollTop = container.scrollHeight;
         }
       });
+
+      // Listen for site creation cancelled events
+      const cancelListener = await eventBus.listenForSiteCreationCancelled((msg) => {
+        logs.value.push({ time: new Date().toLocaleTimeString(), message: msg });
+        status.value = 'Creation cancelled';
+        isCreating.value = false;
+        progress.value = 0;
+        
+        // Clean up the time interval
+        if (timeInterval.value) {
+          clearInterval(timeInterval.value);
+          timeInterval.value = null;
+        }
+        
+        // Close the dialog after a brief delay
+        setTimeout(() => {
+          emit('close');
+        }, 2000);
+      });
+
+      // Store the cancel listener for cleanup
+      const originalUnlisten = unlisten;
+      unlisten = () => {
+        if (originalUnlisten) originalUnlisten();
+        if (cancelListener) cancelListener();
+      };
       
       // Update time every second
       timeInterval.value = setInterval(() => {
@@ -261,10 +287,23 @@ export default {
         });
         
         if (confirmed) {
-          // Here you would ideally implement cleanup logic
-          logs.value.push({ time: new Date().toLocaleTimeString(), message: 'Site creation cancelled by user.' });
-          emit('close');
-          router.push('/');
+          try {
+            logs.value.push({ time: new Date().toLocaleTimeString(), message: 'Cancelling site creation...' });
+            status.value = 'Cancelling...';
+            
+            // Call the backend to cancel site creation
+            await eventBus.cancelSiteCreation(props.siteName);
+            
+            // Note: The actual cleanup and UI updates will be handled by the 
+            // site_creation_cancelled event listener we set up above
+          } catch (error) {
+            console.error('Failed to cancel site creation:', error);
+            logs.value.push({ time: new Date().toLocaleTimeString(), message: `Error cancelling site creation: ${error}` });
+            
+            // Fallback: just close the dialog
+            emit('close');
+            router.push('/');
+          }
         }
       } else {
         emit('close');

@@ -43,6 +43,15 @@ impl Default for RunningUpdates {
     }
 }
 
+// Struct to track site creation operations in progress
+pub struct RunningCreations(pub Mutex<HashMap<String, bool>>);
+
+impl Default for RunningCreations {
+    fn default() -> Self {
+        RunningCreations(Mutex::new(HashMap::new()))
+    }
+}
+
 // Helper function for safe event emission
 fn safe_emit<T: serde::Serialize + Clone>(app_handle: &AppHandle, event: &str, payload: T) {
     if let Err(e) = app_handle.emit(event, payload.clone()) {
@@ -52,8 +61,8 @@ fn safe_emit<T: serde::Serialize + Clone>(app_handle: &AppHandle, event: &str, p
 
 // Re-export functions from submodules
 pub use site_management::{
-    __cmd__check_site_status, __cmd__create_site, __cmd__list_sites, __cmd__remove_site,
-    __cmd__start_site, __cmd__stop_site, check_site_status, create_site, list_sites, remove_site,
+    __cmd__cancel_site_creation, __cmd__check_site_status, __cmd__create_site, __cmd__list_sites, __cmd__remove_site,
+    __cmd__start_site, __cmd__stop_site, cancel_site_creation, check_site_status, create_site, list_sites, remove_site,
     start_site, stop_site,
 };
 

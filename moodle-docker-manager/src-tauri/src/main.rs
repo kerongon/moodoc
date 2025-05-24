@@ -93,12 +93,14 @@ fn main() {
         })
         .manage(docker::SiteState(Mutex::new(HashMap::new())))
         .manage(docker::RunningUpdates::default())
+        .manage(docker::RunningCreations::default())
         .invoke_handler(generate_handler![
             docker::check_docker_installed,
             docker::check_docker_running,
             docker::check_platform_compatibility,
             docker::validate_environment,
             docker::create_site,
+            docker::cancel_site_creation,
             docker::list_sites,
             docker::start_site,
             docker::stop_site,

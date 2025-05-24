@@ -52,13 +52,24 @@ class EventBus {
   }
 
   /**
+   * Listen for site creation cancelled events
+   * @param callback Function to call when event is received
+   * @returns Unlisten function
+   */
+  async listenForSiteCreationCancelled(callback: (message: string) => void): Promise<() => void> {
+    return await listen('site_creation_cancelled', (event) => {
+      callback(event.payload as string);
+    });
+  }
+
+  /**
    * Cancel site creation
    * @param siteName Site name to cancel
    */
   async cancelSiteCreation(siteName: string): Promise<void> {
     try {
       await invoke('cancel_site_creation', { name: siteName });
-      await emit('site_creation_canceled', { siteName });
+      await emit('site_creation_cancelled', { siteName });
     } catch (error) {
       console.error('Failed to cancel site creation:', error);
     }

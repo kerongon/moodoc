@@ -7,8 +7,26 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::time::Duration;
 use tauri::{command, AppHandle, Manager};
+use tauri_plugin_store::StoreExt;
 
 use super::{safe_emit, Site, SiteState};
+
+// Helper function to check if site creation has been cancelled
+fn is_creation_cancelled(app_handle: &AppHandle, name: &str) -> bool {
+    if let Some(running_creations) = app_handle.try_state::<super::RunningCreations>() {
+        if let Ok(creations) = running_creations.0.lock() {
+            return creations.get(name) != Some(&true);
+        }
+    }
+    false
+}
+
+// Helper function to clean up running creation state
+fn cleanup_running_creation(running_creations: &super::RunningCreations, name: &str) {
+    if let Ok(mut creations) = running_creations.0.lock() {
+        creations.remove(name);
+    }
+}
 
 #[command]
 pub async fn create_site(
@@ -79,21 +97,83 @@ fn create_site_blocking(
 
     // Check if the site already exists
     let state = app_handle.state::<SiteState>();
+    let running_creations = app_handle.state::<super::RunningCreations>();
+    
+    // Check if a creation is already running for this site
+    {
+        let creations = running_creations
+            .0
+            .lock()
+            .map_err(|_| "Failed to lock running creations state".to_string())?;
+        if creations.get(&name) == Some(&true) {
+            return Err(format!("Site creation is already running for site '{}'", name));
+        }
+    }
+    
+    // Mark this site creation as running
+    {
+        let mut creations = running_creations
+            .0
+            .lock()
+            .map_err(|_| "Failed to lock running creations state".to_string())?;
+        creations.insert(name.clone(), true);
+    }
+    
+    // Check if site already exists
     {
         let sites = state
             .0
             .lock()
             .map_err(|_| "Failed to lock sites state".to_string())?;
         if sites.contains_key(&name) {
+            cleanup_running_creation(&running_creations, &name);
             return Err(format!("Site '{}' already exists", name));
         }
     }
-
+    
     // Parse directory path
     let site_dir = PathBuf::from(&directory).join(&name);
 
+    // Execute the main creation logic with proper cleanup on error
+    let result = create_site_internal(
+        &app_handle, 
+        &name, 
+        &php_version, 
+        &db_type, 
+        &db_env, 
+        &moodle_branch, 
+        db_port, 
+        web_port, 
+        &directory, 
+        site_dir.clone()
+    );
+    
+    // Always cleanup running creation state
+    cleanup_running_creation(&running_creations, &name);
+    
+    result
+}
+
+// Internal function that performs the actual site creation
+fn create_site_internal(
+    app_handle: &AppHandle,
+    name: &str,
+    php_version: &str,
+    db_type: &str,
+    db_env: &str,
+    moodle_branch: &str,
+    db_port: Option<u16>,
+    web_port: Option<u16>,
+    _directory: &str,
+    site_dir: PathBuf,
+) -> Result<String, String> {
+    // Check for cancellation at the start
+    if is_creation_cancelled(app_handle, name) {
+        return Err("Site creation was cancelled".to_string());
+    }
+
     safe_emit(
-        &app_handle,
+        app_handle,
         "site_creation_progress",
         format!("Creating site directory for {}", name),
     );
@@ -103,9 +183,20 @@ fn create_site_blocking(
         create_dir_all(&site_dir).map_err(|e| format!("Failed to create site directory: {}", e))?;
     }
 
+    // Check for cancellation before cloning
+    if is_creation_cancelled(app_handle, name) {
+        return Err("Site creation was cancelled".to_string());
+    }
+
     // Clone the moodle-docker repository if it doesn't exist
     let moodle_docker_dir = site_dir.join("moodle-docker");
     if !moodle_docker_dir.exists() {
+        safe_emit(
+            app_handle,
+            "site_creation_progress",
+            format!("Cloning moodle-docker repository for {}", name),
+        );
+        
         // Clone the moodle-docker repository
         let output = Command::new("git")
             .current_dir(&site_dir)
@@ -136,8 +227,13 @@ fn create_site_blocking(
             .map_err(|e| format!("Failed to create moodle-docker directory: {}", e))?;
     }
 
+    // Check for cancellation before cloning Moodle
+    if is_creation_cancelled(app_handle, name) {
+        return Err("Site creation was cancelled".to_string());
+    }
+
     safe_emit(
-        &app_handle,
+        app_handle,
         "site_creation_progress",
         format!("Cloning Moodle {} for {}", moodle_branch, name),
     );
@@ -329,9 +425,14 @@ echo ""
         ));
     }
 
+    // Check for cancellation before starting Docker containers
+    if is_creation_cancelled(app_handle, name) {
+        return Err("Site creation was cancelled".to_string());
+    }
+
     // Start Docker containers
     safe_emit(
-        &app_handle,
+        app_handle,
         "site_creation_progress",
         format!("Starting Docker containers for {}", name),
     );
@@ -472,10 +573,15 @@ echo ""
         std::thread::sleep(Duration::from_secs(5));
     }
 
+    // Check for cancellation before installing Moodle
+    if is_creation_cancelled(app_handle, name) {
+        return Err("Site creation was cancelled".to_string());
+    }
+
     // Install Moodle
     println!("Attempting to install Moodle for site: {}", name);
     safe_emit(
-        &app_handle,
+        app_handle,
         "site_creation_progress",
         format!(
             "Installing Moodle for {}. This may take several minutes...",
@@ -540,17 +646,17 @@ echo ""
         format!("Finalizing setup for {}", name),
     );
     let site = Site {
-        name: name.clone(),
-        php_version,
-        db_type,
-        moodle_branch,
+        name: name.to_string(),
+        php_version: php_version.to_string(),
+        db_type: db_type.to_string(),
+        moodle_branch: moodle_branch.to_string(),
         db_port,
         web_port: Some(web_port_str.parse().unwrap_or(8000)),
         status: "running".to_string(),
         path: moodle_docker_dir,
     };
 
-    super::save_site_config_to_store(app_handle, site)?;
+    super::save_site_config_to_store(app_handle.clone(), site)?;
 
     Ok(format!("Site '{}' created successfully", name))
 }
@@ -1036,4 +1142,180 @@ echo "Cleanup completed for {}"
         format!("Site '{}' removed successfully", name),
     );
     Ok(format!("Site '{}' removed successfully", name))
+}
+
+#[command]
+pub fn cancel_site_creation(app_handle: AppHandle, name: String) -> Result<String, String> {
+    let running_creations = app_handle.state::<super::RunningCreations>();
+
+    // Check if a site creation is running for this site
+    {
+        let creations = running_creations
+            .0
+            .lock()
+            .map_err(|_| "Failed to lock running creations state".to_string())?;
+        if creations.get(&name) != Some(&true) {
+            return Err(format!(
+                "No site creation is currently running for site '{}'",
+                name
+            ));
+        }
+    }
+
+    // Cancel the site creation and perform cleanup
+    {
+        let mut creations = running_creations
+            .0
+            .lock()
+            .map_err(|_| "Failed to lock running creations state".to_string())?;
+        creations.remove(&name);
+    }
+
+    // Emit cancellation progress update
+    super::safe_emit(
+        &app_handle,
+        "site_creation_progress",
+        serde_json::json!({
+            "site": name,
+            "percent": 0,
+            "step": "cancelling"
+        }),
+    );
+
+    // Perform cleanup operations
+    cleanup_cancelled_site_creation(&app_handle, &name)?;
+
+    super::safe_emit(
+        &app_handle,
+        "site_creation_cancelled",
+        format!("Site creation cancelled for '{}'", name),
+    );
+
+    Ok(format!("Site creation cancelled for '{}'", name))
+}
+
+// Helper function to clean up after cancelled site creation
+fn cleanup_cancelled_site_creation(app_handle: &AppHandle, name: &str) -> Result<(), String> {
+    super::safe_emit(
+        app_handle,
+        "site_creation_progress",
+        serde_json::json!({
+            "site": name,
+            "percent": 10,
+            "step": "stopping_containers"
+        }),
+    );
+
+    // Try to stop and remove any containers that might have been created
+    let cleanup_commands = vec![
+        format!("docker stop {}_db", name),
+        format!("docker stop {}_web", name), 
+        format!("docker rm {}_db", name),
+        format!("docker rm {}_web", name),
+    ];
+
+    for cmd_str in cleanup_commands {
+        let parts: Vec<&str> = cmd_str.split_whitespace().collect();
+        if parts.len() >= 2 {
+            let output = Command::new(parts[0])
+                .args(&parts[1..])
+                .output();
+            // Ignore errors as containers might not exist
+            if let Ok(output) = output {
+                if !output.status.success() {
+                    println!("Cleanup command failed (expected): {}", cmd_str);
+                }
+            }
+        }
+    }
+
+    super::safe_emit(
+        app_handle,
+        "site_creation_progress",
+        serde_json::json!({
+            "site": name,
+            "percent": 50,
+            "step": "removing_networks"
+        }),
+    );
+
+    // Try to remove the Docker network
+    let network_cleanup = Command::new("docker")
+        .args(&["network", "rm", &format!("{}_network", name)])
+        .output();
+    // Ignore errors as network might not exist
+    if let Ok(output) = network_cleanup {
+        if !output.status.success() {
+            println!("Network cleanup failed (expected): docker network rm {}_network", name);
+        }
+    }
+
+    super::safe_emit(
+        app_handle,
+        "site_creation_progress", 
+        serde_json::json!({
+            "site": name,
+            "percent": 75,
+            "step": "removing_volumes"
+        }),
+    );
+
+    // Try to remove Docker volumes
+    let volume_cleanup_commands = vec![
+        format!("docker volume rm {}_db_data", name),
+        format!("docker volume rm {}_moodle_data", name),
+    ];
+
+    for cmd_str in volume_cleanup_commands {
+        let parts: Vec<&str> = cmd_str.split_whitespace().collect();
+        if parts.len() >= 3 {
+            let output = Command::new(parts[0])
+                .args(&parts[1..])
+                .output();
+            // Ignore errors as volumes might not exist
+            if let Ok(output) = output {
+                if !output.status.success() {
+                    println!("Volume cleanup command failed (expected): {}", cmd_str);
+                }
+            }
+        }
+    }
+
+    super::safe_emit(
+        app_handle,
+        "site_creation_progress",
+        serde_json::json!({
+            "site": name,
+            "percent": 90,
+            "step": "cleaning_filesystem"
+        }),
+    );
+
+    // Remove the site from in-memory state if it exists
+    let state = app_handle.state::<super::SiteState>();
+    {
+        let mut sites = state
+            .0
+            .lock()
+            .map_err(|_| "Failed to lock sites state".to_string())?;
+        sites.remove(name);
+    }
+
+    // Try to remove the site configuration from store if it exists
+    if let Ok(store) = app_handle.store("sites.json") {
+        let _ = store.delete(name);
+        let _ = store.save();
+    }
+
+    super::safe_emit(
+        app_handle,
+        "site_creation_progress",
+        serde_json::json!({
+            "site": name,
+            "percent": 100,
+            "step": "cleanup_completed"
+        }),
+    );
+
+    Ok(())
 }
