@@ -1,0 +1,140 @@
+/* Ultra-compact styles for SiteBackups.vue to fit within 845px viewport */
+
+/* Compact button styles */
+.compact-button {
+  font-size: 11px !important;
+  padding: 4px 8px !important;
+  height: auto !important;
+  min-height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Adjust stat cards for compact display */
+.stat-card {
+  padding: 10px !important;
+}
+
+.stat-value {
+  font-size: 18px !important;
+  line-height: 1.2 !important;
+  margin-bottom: 2px !important;
+}
+
+.stat-desc {
+  font-size: 10px !important;
+  line-height: 1.2 !important;
+}
+
+.stat-header {
+  margin-bottom: 6px !important;
+}
+
+/* Adjust step cards for compact display */
+.step-card {
+  padding: 8px !important;
+}
+
+.step-number {
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 10px !important;
+  margin-bottom: 6px !important;
+}
+
+.step-title {
+  font-size: 11px !important;
+  margin-bottom: 2px !important;
+}
+
+.step-desc {
+  font-size: 9px !important;
+  line-height: 1.2 !important;
+}
+
+/* Adjust settings card for compact display */
+.settings-card {
+  padding: 12px !important;
+}
+
+.setting-item {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+.card-title {
+  margin-bottom: 8px !important;
+  font-size: 13px !important;
+}
+
+.setting-label {
+  font-size: 11px !important;
+}
+
+.setting-value {
+  font-size: 10px !important;
+}
+
+/* Adjust help card for compact display */
+.help-card {
+  padding: 12px !important;
+}
+
+.help-links a {
+  font-size: 11px !important;
+}
+
+/* Make sure the overall content fits in 845px height */
+.dashboard-full {
+  max-height: 845px !important;
+  overflow: hidden !important;
+}
+
+.main-content {
+  max-height: calc(845px - 40px) !important; /* Account for header height */
+  overflow-y: auto !important;
+}
+
+/* Adjust table for compact display */
+.overflow-x-auto table th,
+.overflow-x-auto table td {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  font-size: 10px !important;
+}
+
+/* Button icon size adjustments */
+.btn-icon {
+  padding: 4px !important;
+}
+
+/* Reduce empty state icon size */
+.empty-icon {
+  width: 60px !important;
+  height: 60px !important;
+  margin-bottom: 12px !important;
+}
+
+.empty-icon svg {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.empty-title {
+  font-size: 16px !important;
+  margin-bottom: 8px !important;
+}
+
+.empty-desc {
+  font-size: 11px !important;
+  line-height: 1.3 !important;
+  margin-bottom: 12px !important;
+}
+
+/* Footer adjustments */
+.actions {
+  padding: 8px !important;
+}

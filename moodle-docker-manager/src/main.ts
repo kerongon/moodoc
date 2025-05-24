@@ -16,6 +16,8 @@ import './assets/compact-ui-fix.css';
 import './assets/modern-buttons.css';
 // Import create site compact styles
 import './assets/create-site-compact.css';
+// Import site backups compact styles
+import './assets/compact-site-backups.css';
 // Import window drag region styles
 import './assets/drag-region.css';
 
