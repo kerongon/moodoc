@@ -2,11 +2,10 @@
 // This module contains functions for creating, starting, stopping, and managing Moodle sites
 
 use std::fs::{self, File, create_dir_all};
-use std::io::Write;
+use std::io::{Write, BufRead, BufReader};
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::time::Duration;
-use tokio::task;
 use tauri::{command, AppHandle, Manager};
 
 use super::{Site, SiteState, safe_emit};
@@ -684,18 +683,10 @@ pub async fn remove_site(
     name: String,
     remove_containers: Option<bool>,
 ) -> Result<String, String> {
-    let app = app_handle.clone();
-    let nm = name.clone();
-    let flag = remove_containers.unwrap_or(true);
-    let result = task::spawn_blocking(move || {
-        remove_site_blocking(app, nm, Some(flag))
-    })
-    .await
-    .map_err(|e| format!("Task error: {}", e))??;
-    Ok(result)
+    remove_site_blocking(app_handle, name, remove_containers)
 }
 
-// synchronous removal logic matching docker_original.rs implementation
+// synchronous removal logic matching docker_original.rs implementation with progress reporting
 fn remove_site_blocking(
     app_handle: AppHandle,
     name: String,
@@ -713,25 +704,44 @@ fn remove_site_blocking(
     // Default to true if not specified
     let should_remove_containers = remove_containers.unwrap_or(true);
     
+    // Emit initial progress
+    super::safe_emit(&app_handle, "site_removal_progress", serde_json::json!({
+        "site": name,
+        "percent": 0,
+        "step": "validating"
+    }));
+    
     // Create a cleanup script to ensure proper environment variables are set
     let cleanup_script = format!(r#"#!/bin/bash
 cd {}
 export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT=$PWD/moodle
 
+echo "Stopping containers..."
 # Stop and remove containers with volumes
 ./bin/moodle-docker-compose down -v
 
-echo "Removed all containers and volumes for {}"
+echo "Removing Docker networks..."
+# Clean up any remaining networks
+docker network ls --filter name={} --format "{{{{.ID}}}}" | xargs -r docker network rm || true
+
+echo "Cleanup completed for {}"
 "#, 
         site.path.to_str().unwrap_or(""),
+        name,
         name,
         name
     );
     
     // Only remove containers if explicitly requested
     if should_remove_containers {
-        // Use a cleanup script with guaranteed cleanup
+        super::safe_emit(&app_handle, "site_removal_progress", serde_json::json!({
+            "site": name,
+            "percent": 25,
+            "step": "stopping_containers"
+        }));
+        
+        // Use a cleanup script with guaranteed cleanup and progress reporting
         let script_path = site.path.join("cleanup.sh");
         
         let cleanup_result = (|| -> Result<(), String> {
@@ -751,10 +761,41 @@ echo "Removed all containers and volumes for {}"
                 return Err("Failed to make cleanup script executable".to_string());
             }
             
-            // Execute the cleanup script
-            let _output = Command::new(script_path.to_str().unwrap_or("./cleanup.sh"))
-                .output()
+            // Execute the cleanup script with progress tracking
+            let mut child = Command::new("bash")
+                .arg(script_path.to_str().unwrap_or("./cleanup.sh"))
+                .stdout(Stdio::piped())
+                .spawn()
                 .map_err(|e| format!("Failed to execute cleanup script: {}", e))?;
+            
+            // Read output lines for progress tracking
+            if let Some(stdout) = child.stdout.take() {
+                let reader = BufReader::new(stdout);
+                for line in reader.lines() {
+                    if let Ok(text) = line {
+                        let (pct, step) = if text.contains("Stopping containers") {
+                            (40, "stopping_containers")
+                        } else if text.contains("Removing Docker networks") {
+                            (60, "cleaning_networks")
+                        } else if text.contains("Cleanup completed") {
+                            (75, "containers_removed")
+                        } else {
+                            continue;
+                        };
+                        // Emit progress event
+                        super::safe_emit(&app_handle, "site_removal_progress", serde_json::json!({
+                            "site": name,
+                            "percent": pct,
+                            "step": step
+                        }));
+                    }
+                }
+            }
+            
+            let status = child.wait().map_err(|e| format!("Error waiting for cleanup script: {}", e))?;
+            if !status.success() {
+                return Err(format!("Cleanup script exited with status {:?}", status.code()));
+            }
                 
             Ok(())
         })();
@@ -772,12 +813,23 @@ echo "Removed all containers and volumes for {}"
     }
     
     // Even if the script fails, we'll try to remove the directory and site from state
+    super::safe_emit(&app_handle, "site_removal_progress", serde_json::json!({
+        "site": name,
+        "percent": 85,
+        "step": "removing_files"
+    }));
     
     // Try to remove the site directory
     let _remove_result = fs::remove_dir_all(&site.path);
     
     // Remove from in-memory state
     sites.remove(&name);
+    
+    super::safe_emit(&app_handle, "site_removal_progress", serde_json::json!({
+        "site": name,
+        "percent": 95,
+        "step": "updating_config"
+    }));
     
     // Save the updated configuration
     let app_dir = app_handle.path_resolver().app_data_dir()
@@ -794,6 +846,12 @@ echo "Removed all containers and volumes for {}"
     
     fs::write(&config_path, json)
         .map_err(|e| format!("Failed to write sites config: {}", e))?;
+    
+    super::safe_emit(&app_handle, "site_removal_progress", serde_json::json!({
+        "site": name,
+        "percent": 100,
+        "step": "completed"
+    }));
     
     super::safe_emit(&app_handle, "site_removed", format!("Site '{}' removed successfully", name));
     Ok(format!("Site '{}' removed successfully", name))

@@ -241,8 +241,20 @@
                     <!-- <button @click="showUpdateModal(site.name)" class="icon-action-btn bg-orange-600 text-white p-1.5 rounded-lg hover:bg-orange-700 transition-colors shadow-sm" title="Update">
                       <PhRecycle class="w-5 h-5" weight="fill" />
                     </button> -->
-                    <button @click="removeSite(site.name)" class="icon-action-btn bg-gray-800 hover:bg-red-700" title="Remove">
-                      <PhTrash class="w-5 h-5 text-red-400" />
+                    <button @click="removeSite(site.name)" 
+                        class="icon-action-btn" 
+                        :class="{
+                            'bg-gray-800 hover:bg-red-700': !isRemovingSite || removingSiteName !== site.name, 
+                            'bg-red-600 spinner-container': isRemovingSite && removingSiteName === site.name
+                        }"
+                        :disabled="isRemovingSite && removingSiteName === site.name"
+                        title="Remove">
+                      <template v-if="isRemovingSite && removingSiteName === site.name">
+                        <div class="custom-spinner"></div>
+                      </template>
+                      <template v-else>
+                        <PhTrash class="w-5 h-5 text-red-400" />
+                      </template>
                     </button>
                   </div>
                 </td>
@@ -391,11 +403,65 @@
         </div>
       </div>
     </div>
+    
+    <!-- Site Removal Progress Modal -->
+    <div v-if="isRemovingSite" class="fixed inset-0 z-50 overflow-y-auto hide-scrollbar">
+      <div class="flex items-center justify-center min-h-screen px-4">
+        <!-- Modal backdrop -->
+        <div class="fixed inset-0 bg-black/50 transition-opacity"></div>
+        
+        <!-- Modal panel -->
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+          <!-- Modal content -->
+          <div class="p-6">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center">
+                <div class="bg-red-600 rounded-lg p-1.5 mr-3 shadow-sm">
+                  <PhTrash class="text-white w-6 h-6" weight="fill" />
+                </div>
+                <div>
+                  <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Removing Site</h2>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ removingSiteName }}</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Progress bar -->
+            <div class="mb-4">
+              <div class="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full">
+                <div 
+                  class="h-2 bg-red-500 dark:bg-red-600 rounded-full transition-all duration-300"
+                  :style="{ width: `${removalProgress}%` }">
+                </div>
+              </div>
+              <p class="text-xs text-center mt-2 text-gray-600 dark:text-gray-400">{{ removalStatus }}</p>
+              <p class="text-xs text-center mt-1 text-gray-500 dark:text-gray-500">{{ removalProgress }}% complete</p>
+            </div>
+            
+            <!-- Loading animation -->
+            <div class="flex items-center justify-center space-x-2 mb-4">
+              <div class="h-3 w-3 bg-red-500 rounded-full animate-bounce" style="animation-delay: 0.0s"></div>
+              <div class="h-3 w-3 bg-red-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+              <div class="h-3 w-3 bg-red-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+            </div>
+            
+            <!-- Note -->
+            <div class="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-md">
+              <p class="text-xs text-amber-600 dark:text-amber-400">
+                <span class="font-medium">Please wait:</span> Site removal is in progress. This may take a few minutes.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div> 
 </template>
 
 <script>
 import { invoke } from '@tauri-apps/api/tauri';
+import { listen } from '@tauri-apps/api/event';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass, PhFileText, PhCaretUp, PhCaretDown, PhCheckSquare, PhPlus, PhSquare } from '@phosphor-icons/vue';
@@ -438,6 +504,12 @@ export default {
     const showRemoveModal = ref(false);
     const siteToRemove = ref('');
     const removeContainers = ref(true);
+
+    // Site removal progress tracking
+    const isRemovingSite = ref(false);
+    const removalProgress = ref(0);
+    const removalStatus = ref('');
+    const removingSiteName = ref('');
 
     // new for search/sort/pagination
     const searchQuery = ref('');
@@ -605,39 +677,33 @@ export default {
     // Confirm and execute site removal
     const confirmRemove = async () => {
       try {
-        loading.value = true;
+        // Setup removal progress tracking
+        isRemovingSite.value = true;
+        removalProgress.value = 0;
+        removalStatus.value = 'Preparing to remove site...';
+        removingSiteName.value = siteToRemove.value;
         showRemoveModal.value = false;
         activeActionSite.value = siteToRemove.value;
 
-        // Use docker-compose down for full Docker cleanup if requested
-        if (removeContainers.value) {
-          console.log(`Cleaning up Docker resources for ${siteToRemove.value}...`);
-          try {
-            await invoke('docker_compose_down', {
-              name: siteToRemove.value,
-              removeVolumes: true,
-              removeOrphans: true
-            });
-            // Wait a bit for Docker operations to complete
-            await new Promise(res => setTimeout(res, 2000));
-          } catch (err) {
-            console.warn(`docker-compose down failed: ${err}`);
-          }
-        }
-
-        // Now remove the site from the system
+        // Call the backend remove_site function with progress tracking
         await invoke('remove_site', {
           name: siteToRemove.value,
-          removeContainers: false
+          removeContainers: removeContainers.value
         });
-        console.log(`Site ${siteToRemove.value} removed successfully`);
 
+        // Reload sites after successful removal
         await loadSites();
+        
+        console.log(`Site ${siteToRemove.value} removed successfully`);
       } catch (err) {
         console.error(`Failed to remove site ${siteToRemove.value}:`, err);
         showError(`Failed to remove site: ${siteToRemove.value}`, String(err));
       } finally {
-        loading.value = false;
+        // Reset removal progress state
+        isRemovingSite.value = false;
+        removalProgress.value = 0;
+        removalStatus.value = '';
+        removingSiteName.value = '';
         activeActionSite.value = null;
         siteToRemove.value = '';
       }
@@ -823,14 +889,75 @@ export default {
     }
 
     let refreshTimer;
-    onMounted(() => {
+    let progressUnlistener;
+    let completeUnlistener;
+    
+    onMounted(async () => {
       loadSites();
       // Poll for status changes every 5 seconds without full re-render
       refreshTimer = setInterval(refreshStatuses, 5000);
       // Load recently created sites from local storage
       loadRecentlyCreatedSites();
+      
+      // Listen for site removal progress events
+      progressUnlistener = await listen('site_removal_progress', (event) => {
+        console.log('Site removal progress:', event.payload);
+        if (isRemovingSite.value) {
+          const { site, percent, step } = event.payload;
+          // Ensure this event is for the site we're removing
+          if (site === removingSiteName.value) {
+            removalProgress.value = percent;
+            
+            // Update status message based on step
+            switch (step) {
+              case 'validating':
+                removalStatus.value = 'Validating site...';
+                break;
+              case 'stopping_containers':
+                removalStatus.value = 'Stopping containers...';
+                break;
+              case 'cleaning_networks':
+                removalStatus.value = 'Cleaning up networks...';
+                break;
+              case 'containers_removed':
+                removalStatus.value = 'Containers removed successfully';
+                break;
+              case 'removing_files':
+                removalStatus.value = 'Removing site files...';
+                break;
+              case 'updating_config':
+                removalStatus.value = 'Updating configuration...';
+                break;
+              case 'completed':
+                removalStatus.value = 'Site removal completed';
+                break;
+              default:
+                removalStatus.value = `Processing: ${step}`;
+            }
+          }
+        }
+      });
+      
+      // Listen for site removal completion events
+      completeUnlistener = await listen('site_removed', (event) => {
+        console.log('Site removal complete:', event.payload);
+        if (isRemovingSite.value) {
+          // Reset removal state
+          isRemovingSite.value = false;
+          removalProgress.value = 0;
+          removalStatus.value = '';
+          removingSiteName.value = '';
+          activeActionSite.value = null;
+          siteToRemove.value = '';
+        }
+      });
     });
-    onBeforeUnmount(() => clearInterval(refreshTimer));
+    
+    onBeforeUnmount(() => {
+      clearInterval(refreshTimer);
+      if (progressUnlistener) progressUnlistener();
+      if (completeUnlistener) completeUnlistener();
+    });
     
     // Expose the loadSites method to parent components
     expose({ loadSites });
@@ -867,6 +994,11 @@ export default {
       removeContainers,
       cancelRemove,
       confirmRemove,
+      // Site removal progress tracking
+      isRemovingSite,
+      removalProgress,
+      removalStatus,
+      removingSiteName,
       // Search, sort, and pagination properties
       searchQuery,
       sortKey, sortOrder, sort,
