@@ -6,6 +6,13 @@ use tauri::{command, AppHandle, Manager};
 
 use super::{SiteState, RunningUpdates, safe_emit};
 
+// Helper function to clean up running update state
+fn cleanup_running_update(running_updates: &RunningUpdates, name: &str) {
+    if let Ok(mut updates) = running_updates.0.lock() {
+        updates.remove(name);
+    }
+}
+
 #[command]
 pub async fn update_moodle_version(
     app_handle: AppHandle, 
@@ -52,9 +59,7 @@ fn update_moodle_version_blocking(
     let mut site = match sites.get(&name) {
         Some(site) => site.clone(),
         None => {
-            // Remove from running updates
-            let mut updates = running_updates.0.lock().map_err(|_| "Failed to lock running updates state".to_string())?;
-            updates.remove(&name);
+            cleanup_running_update(&running_updates, &name);
             return Err(format!("Site '{}' not found", name));
         }
     };
@@ -67,9 +72,7 @@ fn update_moodle_version_blocking(
     // Stop the site before updating
     safe_emit(&app_handle, "update_progress", format!("Stopping site '{}'", name));
     if let Err(e) = super::site_management::stop_site(app_handle.clone(), name.clone()) {
-        // Remove from running updates
-        let mut updates = running_updates.0.lock().map_err(|_| "Failed to lock running updates state".to_string())?;
-        updates.remove(&name);
+        cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to stop site before update: {}", e));
     }
     
@@ -83,10 +86,7 @@ fn update_moodle_version_blocking(
         .args(["branch", "--show-current"])
         .output()
         .map_err(|e| {
-            // Remove from running updates
-            if let Ok(mut updates) = running_updates.0.lock() {
-                updates.remove(&name);
-            }
+            cleanup_running_update(&running_updates, &name);
             format!("Failed to get current branch: {}", e)
         })?;
     
@@ -99,19 +99,13 @@ fn update_moodle_version_blocking(
         .args(["fetch", "origin"])
         .output()
         .map_err(|e| {
-            // Remove from running updates
-            if let Ok(mut updates) = running_updates.0.lock() {
-                updates.remove(&name);
-            }
+            cleanup_running_update(&running_updates, &name);
             format!("Failed to fetch repository: {}", e)
         })?;
     
     if !fetch_output.status.success() {
         let error = String::from_utf8_lossy(&fetch_output.stderr);
-        // Remove from running updates
-        if let Ok(mut updates) = running_updates.0.lock() {
-            updates.remove(&name);
-        }
+        cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to fetch repository: {}", error));
     }
     
@@ -122,19 +116,13 @@ fn update_moodle_version_blocking(
         .args(["checkout", &new_branch])
         .output()
         .map_err(|e| {
-            // Remove from running updates
-            if let Ok(mut updates) = running_updates.0.lock() {
-                updates.remove(&name);
-            }
+            cleanup_running_update(&running_updates, &name);
             format!("Failed to checkout branch: {}", e)
         })?;
     
     if !checkout_output.status.success() {
         let error = String::from_utf8_lossy(&checkout_output.stderr);
-        // Remove from running updates
-        if let Ok(mut updates) = running_updates.0.lock() {
-            updates.remove(&name);
-        }
+        cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to checkout branch '{}': {}", new_branch, error));
     }
     
@@ -145,19 +133,13 @@ fn update_moodle_version_blocking(
         .args(["pull", "origin", &new_branch])
         .output()
         .map_err(|e| {
-            // Remove from running updates
-            if let Ok(mut updates) = running_updates.0.lock() {
-                updates.remove(&name);
-            }
+            cleanup_running_update(&running_updates, &name);
             format!("Failed to pull latest changes: {}", e)
         })?;
     
     if !pull_output.status.success() {
         let error = String::from_utf8_lossy(&pull_output.stderr);
-        // Remove from running updates
-        if let Ok(mut updates) = running_updates.0.lock() {
-            updates.remove(&name);
-        }
+        cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to pull latest changes: {}", error));
     }
     
@@ -169,12 +151,12 @@ fn update_moodle_version_blocking(
     
     // Save updated site configuration
     if let Err(e) = super::save_site_config(app_handle.clone(), site.clone()) {
-        // Remove from running updates
-        if let Ok(mut updates) = running_updates.0.lock() {
-            updates.remove(&name);
-        }
+        cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to save updated site configuration: {}", e));
     }
+    
+    // Store the site path before moving site into state
+    let site_path = site.path.clone();
     
     // Update the in-memory state
     {
@@ -186,29 +168,21 @@ fn update_moodle_version_blocking(
     // Restart the site with updated configuration
     safe_emit(&app_handle, "update_progress", format!("Restarting site '{}' with updated configuration", name));
     if let Err(e) = super::site_management::start_site(app_handle.clone(), name.clone()) {
-        // Remove from running updates
-        if let Ok(mut updates) = running_updates.0.lock() {
-            updates.remove(&name);
-        }
+        cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to restart site after update: {}", e));
     }
     
     // Run database upgrade if needed
     safe_emit(&app_handle, "update_progress", format!("Running database upgrade for site '{}'", name));
-    let upgrade_output = Command::new("docker")
+    let upgrade_output = Command::new("sh")
+        .current_dir(&site_path)
         .args([
-            "exec", 
-            &format!("{}_webserver_1", name),
-            "php", 
-            "/var/www/html/admin/cli/upgrade.php",
-            "--non-interactive"
+            "-c", 
+            &format!("source ./docker-env.sh && ./bin/moodle-docker-compose exec -T webserver php /var/www/html/admin/cli/upgrade.php --non-interactive")
         ])
         .output()
         .map_err(|e| {
-            // Remove from running updates
-            if let Ok(mut updates) = running_updates.0.lock() {
-                updates.remove(&name);
-            }
+            cleanup_running_update(&running_updates, &name);
             format!("Failed to run database upgrade: {}", e)
         })?;
     
