@@ -9,6 +9,7 @@ use std::process::Command;
 use std::sync::Mutex;
 use serde::{Serialize, Deserialize};
 use tauri::{command, AppHandle, Manager};
+use tauri_plugin_store::StoreBuilder;
 
 // Re-export submodules
 pub mod site_management;
@@ -166,7 +167,73 @@ pub fn validate_environment(app_handle: AppHandle) -> Result<String, String> {
     Ok("Environment validation successful".to_string())
 }
 
-// Load site configurations at application startup
+// New store-based site configuration functions
+pub fn load_site_configs_from_store(app: &tauri::App) -> Result<(), String> {
+    let app_handle = app.handle();
+    let state = app_handle.state::<SiteState>();
+    let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    // Create or open the store
+    let store = StoreBuilder::new(app_handle.clone(), "sites.json".parse().unwrap())
+        .build()
+        .map_err(|e| format!("Failed to create store: {}", e))?;
+    
+    // Load all sites from store
+    for (key, value) in store.entries().map_err(|e| format!("Failed to read store entries: {}", e))? {
+        if key.starts_with("site_") {
+            if let Ok(site) = serde_json::from_value::<Site>(value.clone()) {
+                sites.insert(site.name.clone(), site);
+            }
+        }
+    }
+    
+    Ok(())
+}
+
+pub fn save_site_config_to_store(app_handle: AppHandle, site: Site) -> Result<(), String> {
+    // Create or open the store
+    let store = StoreBuilder::new(app_handle.clone(), "sites.json".parse().unwrap())
+        .build()
+        .map_err(|e| format!("Failed to create store: {}", e))?;
+    
+    // Save site to store with site_ prefix
+    let site_key = format!("site_{}", site.name);
+    store.set(site_key, serde_json::to_value(&site).map_err(|e| format!("Failed to serialize site: {}", e))?)
+        .map_err(|e| format!("Failed to save site to store: {}", e))?;
+    
+    // Persist to disk
+    store.save().map_err(|e| format!("Failed to persist store: {}", e))?;
+    
+    // Also update the in-memory state
+    let state = app_handle.state::<SiteState>();
+    let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    sites.insert(site.name.clone(), site);
+    
+    Ok(())
+}
+
+pub fn remove_site_from_store(app_handle: AppHandle, site_name: String) -> Result<(), String> {
+    // Create or open the store
+    let store = StoreBuilder::new(app_handle.clone(), "sites.json".parse().unwrap())
+        .build()
+        .map_err(|e| format!("Failed to create store: {}", e))?;
+    
+    // Remove site from store
+    let site_key = format!("site_{}", site_name);
+    store.delete(&site_key).map_err(|e| format!("Failed to delete site from store: {}", e))?;
+    
+    // Persist to disk
+    store.save().map_err(|e| format!("Failed to persist store: {}", e))?;
+    
+    // Also remove from in-memory state
+    let state = app_handle.state::<SiteState>();
+    let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    sites.remove(&site_name);
+    
+    Ok(())
+}
+
+// Legacy file-based loading for migration
 pub fn load_site_configs(app: &tauri::App) -> Result<(), String> {
     let app_handle = app.handle();
     let state = app_handle.state::<SiteState>();

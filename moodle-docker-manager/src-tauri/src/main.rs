@@ -117,8 +117,8 @@ fn main() {
                     let _ = splash_window.close();
                 }
             });
-            // Load any existing site configurations
-            if let Err(err) = docker::load_site_configs(app) {
+            // Load any existing site configurations using the store
+            if let Err(err) = docker::load_site_configs_from_store(app) {
                 eprintln!("Failed to load site configurations: {}", err);
             }
             Ok(())

@@ -461,7 +461,7 @@ echo ""
         path: moodle_docker_dir,
     };
     
-    super::save_site_config(app_handle, site)?;
+    super::save_site_config_to_store(app_handle, site)?;
     
     Ok(format!("Site '{}' created successfully", name))
 }
@@ -860,7 +860,7 @@ echo "Cleanup completed for {}"
         }
     }
     
-    // Remove from in-memory state
+    // Remove from in-memory state and store
     sites.remove(&name);
     drop(sites); // Release the lock early
     
@@ -870,17 +870,9 @@ echo "Cleanup completed for {}"
         "step": "updating_config"
     }));
     
-    // Remove the individual site configuration file
-    let app_dir = app_handle.path_resolver().app_data_dir()
-        .ok_or_else(|| "Failed to get app data directory".to_string())?;
-    let sites_dir = app_dir.join("sites");
-    let site_config_file = sites_dir.join(format!("{}.json", name));
-    
-    // Remove the individual site configuration file if it exists
-    if site_config_file.exists() {
-        fs::remove_file(&site_config_file)
-            .map_err(|e| format!("Failed to remove site config file: {}", e))?;
-    }
+    // Remove from the store
+    super::remove_site_from_store(app_handle.clone(), name.clone())
+        .map_err(|e| format!("Failed to remove site from store: {}", e))?;
     
     super::safe_emit(&app_handle, "site_removal_progress", serde_json::json!({
         "site": name,
