@@ -411,17 +411,17 @@
           <PhWarningCircle class="w-5 h-5" />
           <p>This action cannot be undone.</p>
         </div>
-        <div class="flex justify-end space-x-3">
+        <div class="flex justify-end space-x-3 mt-6">
           <button 
             @click="showRestoreModal = false" 
-            class="btn-secondary bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-600 transition-colors duration-150 border border-gray-600">
-            Cancel
+            class="btn-secondary bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors duration-150 border border-gray-600 shadow-sm flex items-center justify-center">
+            <span>Cancel</span>
           </button>
           <button 
             @click="confirmRestore" 
             :disabled="isProcessing" 
-            class="btn-danger bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-lg text-sm hover:from-red-700 hover:to-red-800 transition-colors duration-150 disabled:opacity-50">
-            {{ isProcessing ? 'Restoring...' : 'Restore Backup' }}
+            class="btn-primary bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-green-600 hover:to-green-700 transition-colors duration-150 shadow-sm disabled:opacity-50 flex items-center justify-center">
+            <span>{{ isProcessing ? 'Restoring...' : 'Restore Backup' }}</span>
           </button>
         </div>
       </div>
@@ -440,17 +440,17 @@
           <PhWarningCircle class="w-5 h-5" />
           <p>This action cannot be undone.</p>
         </div>
-        <div class="flex justify-end space-x-3">
+        <div class="flex justify-end space-x-3 mt-6">
           <button 
             @click="showDeleteConfirm = false" 
-            class="btn-secondary bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-600 transition-colors duration-150 border border-gray-600">
-            Cancel
+            class="btn-secondary bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors duration-150 border border-gray-600 shadow-sm flex items-center justify-center">
+            <span>Cancel</span>
           </button>
           <button 
             @click="deleteBackup" 
             :disabled="isProcessing" 
-            class="btn-danger bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-lg text-sm hover:from-red-700 hover:to-red-800 transition-colors duration-150 disabled:opacity-50">
-            {{ isProcessing ? 'Deleting...' : 'Delete Backup' }}
+            class="btn-danger bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-red-700 hover:to-red-800 transition-colors duration-150 shadow-sm disabled:opacity-50 flex items-center justify-center">
+            <span>{{ isProcessing ? 'Deleting...' : 'Delete Backup' }}</span>
           </button>
         </div>
       </div>
@@ -761,5 +761,19 @@ export default {
 
 .progress-fill {
   transition: width 1s ease;
+}
+
+/* Modal button styles */
+.btn-primary, .btn-danger, .btn-secondary {
+  min-width: 120px;
+  transition: all 0.2s ease;
+  height: 36px;
+  line-height: 1;
+}
+.btn-primary:hover, .btn-danger:hover, .btn-secondary:hover {
+  transform: translateY(-1px);
+}
+.btn-primary span, .btn-danger span, .btn-secondary span {
+  display: inline-block;
 }
 </style>
