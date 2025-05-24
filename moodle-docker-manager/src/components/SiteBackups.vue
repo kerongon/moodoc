@@ -131,7 +131,7 @@
                 <p class="text-sm text-green-800">{{ successMessage }}</p>
               </div>
               <div class="ml-auto pl-3">
-                <button @click="showSuccessMessage = false" class="close-button inline-flex text-green-800 hover:text-green-900 p-1 transition-colors duration-200">
+                <button @click="showSuccessMessage = false" class="success-close-button inline-flex text-green-800 hover:text-green-900 p-1 transition-colors duration-200">
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -1049,7 +1049,6 @@ export default {
             total: this.formatSize(sizeData.total_size || 0),
             database: this.formatSize(sizeData.db_size || 0),
             files: this.formatSize(sizeData.files_size || 0),
-            // Store additional details for potential future use
             moodle: this.formatSize(sizeData.moodle_size || 0),
             moodledata: this.formatSize(sizeData.moodledata_size || 0),
             other: this.formatSize(sizeData.other_files_size || 0)
@@ -1057,12 +1056,10 @@ export default {
         }
       } catch (err) {
         console.error('Failed to fetch site size:', err);
-        // Don't show error to user, just use default values
       }
     },
     
     formatSize(size) {
-      // Convert bytes to human readable format
       if (size === 0) return '0 B';
       
       const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -1085,38 +1082,30 @@ export default {
         }
       } catch (err) {
         console.error('Failed to fetch storage information:', err);
-        // Don't show error to user, just use default values
       }
     },
     
-    // New methods for this UI
     scheduleBackups() {
-      // To be implemented
       alert('Schedule backups functionality coming soon');
     },
     
     configSettings() {
-      // To be implemented
       alert('Configure backup settings functionality coming soon');
     },
     
-    // Helper method to update activity timestamp based on most recent backup
     updateActivityTimestamp() {
-      // Update activity timestamp based on the most recent backup
       if (this.backups.length > 0 && this.backups[0].timestamp) {
         try {
           if (typeof this.backups[0].timestamp === 'string' && 
               this.backups[0].timestamp.match(/^\d{8}_\d{6}$/)) {
-            // Parse YYYYMMDD_HHMMSS format
             const timestamp = this.backups[0].timestamp;
             const year = parseInt(timestamp.substring(0, 4));
-            const month = parseInt(timestamp.substring(4, 6)) - 1; // Month is 0-indexed in JS
+            const month = parseInt(timestamp.substring(4, 6)) - 1;
             const day = parseInt(timestamp.substring(6, 8));
             const hour = parseInt(timestamp.substring(9, 11));
             const minute = parseInt(timestamp.substring(11, 13));
             const second = parseInt(timestamp.substring(13, 15));
             
-            // Create a UTC date object since backup timestamps are likely in UTC
             const date = new Date(Date.UTC(year, month, day, hour, minute, second));
             
             if (!isNaN(date.getTime())) {
@@ -1125,7 +1114,6 @@ export default {
               this.lastActivityTimestamp = Date.now();
             }
           } else {
-            // For standard timestamp format
             const ts = parseInt(this.backups[0].timestamp);
             if (!isNaN(ts)) {
               this.lastActivityTimestamp = ts < 10000000000 ? ts * 1000 : ts;
@@ -1138,30 +1126,28 @@ export default {
           this.lastActivityTimestamp = Date.now();
         }
       } else {
-        // No backups, use current time
         this.lastActivityTimestamp = Date.now();
       }
     },
     
-    // Format relative time for display
     formatRelativeTime(timestamp) {
       if (!timestamp) return 'Never';
       
       const now = Date.now();
       const diff = now - timestamp;
       
-      if (diff < 60000) { // Less than 1 minute
+      if (diff < 60000) {
         return 'Just now';
-      } else if (diff < 3600000) { // Less than 1 hour
+      } else if (diff < 3600000) {
         const minutes = Math.floor(diff / 60000);
         return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-      } else if (diff < 86400000) { // Less than 24 hours
+      } else if (diff < 86400000) {
         const hours = Math.floor(diff / 3600000);
         return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-      } else if (diff < 2592000000) { // Less than 30 days
+      } else if (diff < 2592000000) {
         const days = Math.floor(diff / 86400000);
         return `${days} day${days === 1 ? '' : 's'} ago`;
-      } else if (diff < 31536000000) { // Less than 1 year
+      } else if (diff < 31536000000) {
         const months = Math.floor(diff / 2592000000);
         return `${months} month${months === 1 ? '' : 's'} ago`;
       } else {
@@ -1174,7 +1160,6 @@ export default {
 </script>
 
 <style scoped>
-/* Add any additional styles needed for the component */
 .stat-card {
   transform: translateY(0);
   transition: all 0.3s ease;
@@ -1184,14 +1169,12 @@ export default {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Progress bar animation */
 @keyframes pulse {
   0% { opacity: 0.6; }
   50% { opacity: 1; }
   100% { opacity: 0.6; }
 }
 
-/* Custom spinner for delete button */
 .custom-spinner {
   width: 12px;
   height: 12px;
@@ -1213,11 +1196,11 @@ export default {
 
 .btn-icon {
   transition: all 0.2s ease;
-  margin: 0 1px; /* Add some horizontal spacing between buttons */
+  margin: 0 1px;
 }
 .btn-icon:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add a subtle shadow on hover */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .backdrop-blur-sm {
@@ -1228,7 +1211,6 @@ export default {
   transition: width 1s ease;
 }
 
-/* Modal button styles */
 .btn-primary, .btn-danger, .btn-secondary {
   min-width: 120px;
   transition: all 0.2s ease;
@@ -1243,16 +1225,16 @@ export default {
 }
 
 /* Success notification close button */
-.close-button {
-  color: #166534 !important; /* dark green */
-  background-color: rgba(22, 101, 52, 0.1) !important; /* light square background */
-  border-radius: 4px !important; /* square with slightly rounded corners */
+.success-close-button {
+  color: #166534 !important;
+  background-color: rgba(22, 101, 52, 0.1) !important;
+  border-radius: 4px !important;
   padding: 4px !important;
   transition: all 0.2s ease !important;
 }
 
-.close-button:hover {
-  color: #14532d !important; /* darker green on hover */
-  background-color: rgba(22, 101, 52, 0.2) !important; /* darker square background on hover */
+.success-close-button:hover {
+  color: #14532d !important;
+  background-color: rgba(22, 101, 52, 0.2) !important;
 }
 </style>
