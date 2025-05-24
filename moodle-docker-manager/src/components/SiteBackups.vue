@@ -1070,9 +1070,11 @@ export default {
 
 .btn-icon {
   transition: all 0.2s ease;
+  margin: 0 1px; /* Add some horizontal spacing between buttons */
 }
 .btn-icon:hover {
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add a subtle shadow on hover */
 }
 
 .backdrop-blur-sm {
