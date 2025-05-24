@@ -127,7 +127,7 @@
                 <p class="text-sm text-green-800">{{ successMessage }}</p>
               </div>
               <div class="ml-auto pl-3">
-                <button @click="showSuccessMessage = false" class="inline-flex text-green-700 hover:text-green-800">
+                <button @click="showSuccessMessage = false" class="close-button inline-flex text-green-800 hover:text-green-900 p-1 transition-colors duration-200">
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -1200,5 +1200,19 @@ export default {
 }
 .btn-primary span, .btn-danger span, .btn-secondary span {
   display: inline-block;
+}
+
+/* Success notification close button */
+.close-button {
+  color: #166534 !important; /* dark green */
+  background-color: rgba(22, 101, 52, 0.1) !important; /* light square background */
+  border-radius: 4px !important; /* square with slightly rounded corners */
+  padding: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+.close-button:hover {
+  color: #14532d !important; /* darker green on hover */
+  background-color: rgba(22, 101, 52, 0.2) !important; /* darker square background on hover */
 }
 </style>
