@@ -819,11 +819,50 @@ echo "Cleanup completed for {}"
         "step": "removing_files"
     }));
     
-    // Try to remove the site directory
-    let _remove_result = fs::remove_dir_all(&site.path);
+    // Try to remove the site directory with robust error handling
+    println!("Attempting to remove site directory: {}", site.path.display());
+    
+    // First attempt: standard fs::remove_dir_all
+    match fs::remove_dir_all(&site.path) {
+        Ok(_) => {
+            println!("Successfully removed site directory: {}", site.path.display());
+        }
+        Err(e) => {
+            println!("Failed to remove directory with fs::remove_dir_all: {}. Trying system command...", e);
+            
+            // Fallback: use system command for forced removal
+            let remove_cmd = if cfg!(target_os = "windows") {
+                format!("rmdir /s /q \"{}\"", site.path.display())
+            } else {
+                format!("rm -rf \"{}\"", site.path.display())
+            };
+            
+            match Command::new("sh")
+                .arg("-c")
+                .arg(&remove_cmd)
+                .output()
+            {
+                Ok(output) => {
+                    if output.status.success() {
+                        println!("Successfully removed site directory using system command");
+                    } else {
+                        let error = String::from_utf8(output.stderr)
+                            .unwrap_or_else(|_| "Unknown error".to_string());
+                        println!("Warning: Failed to remove site directory even with system command: {}", error);
+                        // We continue anyway to remove from state - partial cleanup is better than none
+                    }
+                }
+                Err(e) => {
+                    println!("Warning: Failed to execute system remove command: {}", e);
+                    // We continue anyway to remove from state
+                }
+            }
+        }
+    }
     
     // Remove from in-memory state
     sites.remove(&name);
+    drop(sites); // Release the lock early
     
     super::safe_emit(&app_handle, "site_removal_progress", serde_json::json!({
         "site": name,
@@ -831,21 +870,17 @@ echo "Cleanup completed for {}"
         "step": "updating_config"
     }));
     
-    // Save the updated configuration
+    // Remove the individual site configuration file
     let app_dir = app_handle.path_resolver().app_data_dir()
         .ok_or_else(|| "Failed to get app data directory".to_string())?;
+    let sites_dir = app_dir.join("sites");
+    let site_config_file = sites_dir.join(format!("{}.json", name));
     
-    let config_path = app_dir.join("sites_config.json");
-    
-    // Convert HashMap to Vec for serialization
-    let sites_vec: Vec<Site> = sites.values().cloned().collect();
-    
-    // Serialize and save to file
-    let json = serde_json::to_string_pretty(&sites_vec)
-        .map_err(|e| format!("Failed to serialize sites config: {}", e))?;
-    
-    fs::write(&config_path, json)
-        .map_err(|e| format!("Failed to write sites config: {}", e))?;
+    // Remove the individual site configuration file if it exists
+    if site_config_file.exists() {
+        fs::remove_file(&site_config_file)
+            .map_err(|e| format!("Failed to remove site config file: {}", e))?;
+    }
     
     super::safe_emit(&app_handle, "site_removal_progress", serde_json::json!({
         "site": name,
