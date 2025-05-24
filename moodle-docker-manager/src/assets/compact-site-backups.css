@@ -1,34 +1,65 @@
 /* Ultra-compact styles for SiteBackups.vue to fit within 845px viewport */
 
+/* Extra small text that's smaller than tailwind's xs */
+.text-2xs {
+  font-size: 0.65rem !important;
+  line-height: 1rem !important;
+}
+
 /* Compact button styles */
 .compact-button {
-  font-size: 11px !important;
-  padding: 4px 8px !important;
+  font-size: 10px !important;
+  padding: 3px 6px !important;
   height: auto !important;
-  min-height: 24px !important;
+  min-height: 22px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
 }
 
+/* Ultra-compact button styles for header actions */
+.ultra-compact-button {
+  font-size: 9px !important;
+  padding: 2px 5px !important;
+  height: auto !important;
+  min-height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-width: 0.5px !important;
+}
+
 /* Adjust stat cards for compact display */
 .stat-card {
-  padding: 10px !important;
+  padding: 8px !important;
+  margin-bottom: 0 !important;
+  border-radius: 6px !important;
 }
 
 .stat-value {
-  font-size: 18px !important;
-  line-height: 1.2 !important;
+  font-size: 16px !important;
+  line-height: 1.1 !important;
   margin-bottom: 2px !important;
+  margin-top: 0 !important;
 }
 
 .stat-desc {
-  font-size: 10px !important;
-  line-height: 1.2 !important;
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+  margin-bottom: 0 !important;
 }
 
 .stat-header {
-  margin-bottom: 6px !important;
+  margin-bottom: 2px !important;
+}
+
+.stat-icon {
+  padding: 3px !important;
+  border-radius: 4px !important;
+}
+
+.stat-title {
+  font-size: 9px !important;
 }
 
 /* Adjust step cards for compact display */
@@ -55,34 +86,37 @@
 
 /* Adjust settings card for compact display */
 .settings-card {
-  padding: 12px !important;
+  padding: 8px !important;
+  border-radius: 6px !important;
 }
 
 .setting-item {
-  padding-top: 6px !important;
-  padding-bottom: 6px !important;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+  border-bottom-width: 1px !important;
 }
 
 .card-title {
-  margin-bottom: 8px !important;
-  font-size: 13px !important;
-}
-
-.setting-label {
+  margin-bottom: 6px !important;
   font-size: 11px !important;
 }
 
+.setting-label {
+  font-size: 9px !important;
+}
+
 .setting-value {
-  font-size: 10px !important;
+  font-size: 9px !important;
 }
 
 /* Adjust help card for compact display */
 .help-card {
-  padding: 12px !important;
+  padding: 8px !important;
+  border-radius: 6px !important;
 }
 
 .help-links a {
-  font-size: 11px !important;
+  font-size: 9px !important;
 }
 
 /* Make sure the overall content fits in 845px height */
@@ -93,6 +127,12 @@
 
 .main-content {
   max-height: calc(845px - 40px) !important; /* Account for header height */
+  overflow-y: auto !important;
+}
+
+/* Limit site-backups height */
+.site-backups {
+  max-height: calc(845px - 80px) !important; 
   overflow-y: auto !important;
 }
 
