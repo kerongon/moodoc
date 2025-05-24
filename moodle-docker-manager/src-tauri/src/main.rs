@@ -4,6 +4,7 @@
 )]
 
 mod docker;
+mod site_metrics;
 
 use tauri::{generate_handler, CustomMenuItem, Menu, MenuItem, Submenu, WindowUrl, WindowBuilder};
 use tauri::Manager;
@@ -144,6 +145,8 @@ fn main() {
             docker::open_in_editor,
             docker::cancel_update,
             docker::check_port_available,
+            site_metrics::get_site_size,
+            site_metrics::get_storage_info,
             open_logs_window,
         ])
         .run(tauri::generate_context!())

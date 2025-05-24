@@ -145,8 +145,8 @@
                 </div>
                 <div class="stat-title text-gray-400 text-xs">Site Size</div>
               </div>
-              <div class="stat-value text-lg font-bold text-white">847 MB</div>
-              <div class="stat-desc text-xs text-gray-400">Database: 23MB • Files: 824MB</div>
+              <div class="stat-value text-lg font-bold text-white">{{ siteSize.total }}</div>
+              <div class="stat-desc text-xs text-gray-400">Database: {{ siteSize.database }} • Files: {{ siteSize.files }}</div>
             </div>
             
             <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-lg p-2.5 transition-all duration-300 hover:border-red-500/30 hover:translate-y-[-2px]">
@@ -172,10 +172,10 @@
                 </div>
                 <div class="stat-title text-gray-400 text-xs">Storage Available</div>
               </div>
-              <div class="stat-value text-lg font-bold text-white">15.2 GB</div>
-              <div class="stat-desc text-xs text-gray-400 mb-2">85% available space</div>
+              <div class="stat-value text-lg font-bold text-white">{{ storageInfo.available }}</div>
+              <div class="stat-desc text-xs text-gray-400 mb-2">{{ storageInfo.percentAvailable }}% available space</div>
               <div class="progress-bar h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
-                <div class="progress-fill h-full bg-gradient-to-r from-green-500 to-green-400" style="width: 15%;"></div>
+                <div class="progress-fill h-full bg-gradient-to-r from-green-500 to-green-400" :style="{ width: `${100 - storageInfo.percentUsed}%` }"></div>
               </div>
             </div>
           </div>
@@ -535,10 +535,23 @@ export default {
       loadingMessage: 'Loading backups...',
       showSuccessMessage: false,
       successMessage: '',
+      siteSize: {
+        total: '0 MB',
+        database: '0 MB',
+        files: '0 MB'
+      },
+      storageInfo: {
+        available: '0 GB',
+        total: '0 GB',
+        percentAvailable: 0,
+        percentUsed: 0
+      },
     };
   },
   mounted() {
     this.refreshBackups();
+    this.fetchSiteSize();
+    this.fetchStorageInfo();
   },
   methods: {
     // Window control methods
@@ -601,7 +614,6 @@ export default {
           name: this.siteName 
         });
         
-        console.log(result);
         this.showSuccessMessage = true;
         this.successMessage = result;
         setTimeout(() => {
@@ -644,7 +656,6 @@ export default {
           timestamp: this.selectedBackupTimestamp
         });
         
-        console.log(result);
         this.showSuccessMessage = true;
         this.successMessage = result;
         setTimeout(() => {
@@ -680,7 +691,6 @@ export default {
           backupTimestamp: this.confirmingDeleteTimestamp
         });
         
-        console.log(result);
         this.showSuccessMessage = true;
         this.successMessage = result;
         setTimeout(() => {
@@ -768,6 +778,53 @@ export default {
     formatErrorMessage(errorMsg) {
       // Format the error message with HTML line breaks
       return errorMsg.replace(/\n/g, '<br>');
+    },
+    
+    async fetchSiteSize() {
+      try {
+        const sizeData = await invoke('get_site_size', { 
+          name: this.siteName 
+        });
+        
+        if (sizeData) {
+          this.siteSize = {
+            total: this.formatSize(sizeData.total_size || 0),
+            database: this.formatSize(sizeData.db_size || 0),
+            files: this.formatSize(sizeData.files_size || 0)
+          };
+        }
+      } catch (err) {
+        console.error('Failed to fetch site size:', err);
+        // Don't show error to user, just use default values
+      }
+    },
+    
+    formatSize(size) {
+      // Convert bytes to human readable format
+      if (size === 0) return '0 B';
+      
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(size) / Math.log(1024));
+      
+      return (size / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+    },
+    
+    async fetchStorageInfo() {
+      try {
+        const storageData = await invoke('get_storage_info');
+        
+        if (storageData) {
+          this.storageInfo = {
+            available: this.formatSize(storageData.available || 0),
+            total: this.formatSize(storageData.total || 0),
+            percentAvailable: Math.round((storageData.available / storageData.total) * 100) || 0,
+            percentUsed: Math.round(((storageData.total - storageData.available) / storageData.total) * 100) || 0
+          };
+        }
+      } catch (err) {
+        console.error('Failed to fetch storage information:', err);
+        // Don't show error to user, just use default values
+      }
     },
     
     // New methods for this UI
