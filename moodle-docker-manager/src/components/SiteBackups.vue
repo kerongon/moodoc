@@ -10,9 +10,9 @@
               <button @click="closeWindow" class="window-control-button close-button" title="Close">
                 <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FF5F57" stroke="#E0443E" stroke-width="1"></circle></svg>
               </button>
-              <!-- <button @click="minimizeWindow" class="window-control-button minimize-button" title="Minimize">
+              <button @click="minimizeWindow" class="window-control-button minimize-button" title="Minimize">
                 <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#FFBD2E" stroke="#DEA123" stroke-width="1"></circle></svg>
-              </button> -->
+              </button>
               <button @click="toggleMaximizeWindow" class="window-control-button maximize-button" title="Maximize">
                 <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5.5" fill="#27C93F" stroke="#1AAB29" stroke-width="1"></circle></svg>
               </button>
@@ -66,157 +66,369 @@
           </nav>
         </div>
         
-        <div class="site-backups bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 w-full p-4">
-
-    <!-- Header - macOS style (more compact) -->
-    <div class="flex items-center mb-5">
-      <div class="bg-green-600 rounded-lg p-1.5 mr-3 shadow-sm">
-        <PhArchiveBox class="text-white w-6 h-6" weight="fill" />
-      </div>
-      <div>
-        <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Site Backups: {{ siteName }}</h2>
-        <p class="text-xs text-gray-500 dark:text-gray-400">Manage backups for this Moodle site</p>
-      </div>
-    </div>
-
-    <!-- Success message notification -->
-    <div v-if="showSuccessMessage" class="mb-4 p-3 bg-green-100 border border-green-200 rounded-md">
-      <div class="flex items-start">
-        <div class="flex-shrink-0">
-          <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <p class="text-sm text-green-800">{{ successMessage }}</p>
-        </div>
-        <div class="ml-auto pl-3">
-          <button @click="showSuccessMessage = false" class="inline-flex text-green-500 hover:text-green-700">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="loading" class="loading text-xs">
-      <div class="flex items-center justify-center space-x-2">
-        <div class="h-4 w-4 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.0s"></div>
-        <div class="h-4 w-4 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-        <div class="h-4 w-4 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
-      </div>
-      <p class="text-center mt-2">{{ loadingMessage }}</p>
-    </div>
-    <div v-else-if="error">
-      <div class="error text-xs text-red-500 p-3 bg-red-50 border border-red-100 rounded-md overflow-auto max-h-60" v-html="error"></div>
-    </div>
-    <div v-else>
-      <!-- Actions -->
-      <div class="mb-4 flex justify-between items-center">
-        <div class="flex space-x-2">
-          <button @click="createBackup" 
-                  :disabled="isProcessing" 
-                  class="compact-action-button bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed">
-            <PhPlus class="w-4 h-4 mr-1" />
-            Create Backup
-          </button>
+        <div class="site-backups bg-gradient-to-br from-gray-800 to-gray-900 dark:from-gray-900 dark:to-black rounded-lg shadow-lg border border-gray-700 dark:border-gray-800 w-full overflow-hidden">
           
-          <button @click="openBackupsFolder" 
-                  :disabled="isProcessing" 
-                  class="compact-action-button bg-gray-500 text-white hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed">
-            <PhFolderOpen class="w-4 h-4 mr-1" />
-            Open Folder
-          </button>
-        </div>
-        
-        <button @click="refreshBackups" 
+          <!-- Header - Modern style with actions -->
+          <div class="page-header flex items-center justify-between p-6 border-b border-gray-700 dark:border-gray-800">
+            <div class="header-info flex items-center gap-4">
+              <div class="site-icon bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-2.5 shadow-lg">
+                <PhArchiveBox class="text-white w-7 h-7" weight="fill" />
+              </div>
+              <div class="header-text">
+                <h2 class="text-xl font-medium text-white">Site Backups: {{ siteName }}</h2>
+                <p class="text-sm text-gray-300">Manage backups for this Moodle site • Last activity: 2 hours ago</p>
+              </div>
+            </div>
+            
+            <div class="header-actions flex gap-2">
+              <button 
+                @click="createBackup" 
                 :disabled="isProcessing" 
-                class="compact-action-button bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed">
-          <PhArrowClockwise class="w-4 h-4 mr-1" />
-          Refresh
-        </button>
-      </div>
-      
-      <!-- Backups List -->
-      <div v-if="backups.length === 0" class="text-center text-gray-500 dark:text-gray-400 my-8">
-        <PhFolderNotch class="w-10 h-10 mx-auto mb-2" />
-        <p>No backups available</p>
-        <p class="text-xs mt-1">Create your first backup using the button above</p>
-      </div>
-      
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead class="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              <th scope="col" class="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-300 text-left">Date</th>
-              <th scope="col" class="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-300 text-left">Moodle Version</th>
-              <th scope="col" class="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-300 text-left">PHP Version</th>
-              <th scope="col" class="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-300 text-left">Database</th>
-              <th scope="col" class="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-300 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="backup in backups" :key="backup.timestamp" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-              <td class="px-4 py-2 text-xs text-gray-900 dark:text-gray-100">
-                {{ formatDate(backup.timestamp) }}
-              </td>
-              <td class="px-4 py-2 text-xs text-gray-900 dark:text-gray-100">{{ backup.moodle_branch }}</td>
-              <td class="px-4 py-2 text-xs text-gray-900 dark:text-gray-100">{{ backup.php_version }}</td>
-              <td class="px-4 py-2 text-xs text-gray-900 dark:text-gray-100">{{ backup.db_type }}</td>
-              <td class="px-4 py-2 text-xs">
-                <div class="flex space-x-1">
-                  <button 
-                    @click="restoreBackup(backup.timestamp)" 
-                    :disabled="isProcessing" 
-                    class="compact-mini-button bg-blue-500 hover:bg-blue-600 text-white"
-                    title="Restore this backup">
-                    <PhArrowClockwise class="w-3 h-3" />
-                  </button>
-                  <button 
-                    @click="openInFinder(backup.timestamp)" 
-                    :disabled="isProcessing" 
-                    class="compact-mini-button bg-green-500 hover:bg-green-600 text-white"
-                    title="Show in Finder">
-                    <PhFolderOpen class="w-3 h-3" />
-                  </button>
-                  <button 
-                    @click="confirmDelete(backup.timestamp)" 
-                    :disabled="isProcessing" 
-                    class="compact-mini-button bg-red-500 hover:bg-red-600 text-white"
-                    title="Delete this backup">
-                    <PhTrash class="w-3 h-3" />
-                  </button>
+                class="btn-primary flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
+                <PhPlus class="w-4 h-4" />
+                Create Backup
+              </button>
+              
+              <button 
+                @click="scheduleBackups" 
+                :disabled="isProcessing" 
+                class="btn-secondary flex items-center gap-2 bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-all duration-200 border border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                <PhClock class="w-4 h-4" />
+                Schedule
+              </button>
+              
+              <button 
+                @click="openBackupsFolder" 
+                :disabled="isProcessing" 
+                class="btn-secondary flex items-center gap-2 bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-all duration-200 border border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                <PhFolderOpen class="w-4 h-4" />
+                Open Folder
+              </button>
+              
+              <button 
+                @click="refreshBackups" 
+                :disabled="isProcessing" 
+                class="btn-secondary flex items-center gap-2 bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-all duration-200 border border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                <PhArrowClockwise class="w-4 h-4" />
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          <!-- Success message notification -->
+          <div v-if="showSuccessMessage" class="mx-6 mt-4 p-3 bg-green-100 border border-green-200 rounded-md">
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-green-800">{{ successMessage }}</p>
+              </div>
+              <div class="ml-auto pl-3">
+                <button @click="showSuccessMessage = false" class="inline-flex text-green-500 hover:text-green-700">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Cards Grid -->
+          <div class="dashboard-grid grid grid-cols-3 gap-4 p-6">
+            <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-xl p-5 transition-all duration-300 hover:border-blue-500/30 hover:translate-y-[-2px]">
+              <div class="stat-header flex items-center gap-3 mb-3">
+                <div class="stat-icon bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-2 text-white">
+                  <PhDatabase class="w-4 h-4" weight="fill" />
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+                <div class="stat-title text-gray-400 text-sm">Site Size</div>
+              </div>
+              <div class="stat-value text-2xl font-bold text-white">847 MB</div>
+              <div class="stat-desc text-xs text-gray-400">Database: 23MB • Files: 824MB</div>
+            </div>
+            
+            <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-xl p-5 transition-all duration-300 hover:border-red-500/30 hover:translate-y-[-2px]">
+              <div class="stat-header flex items-center gap-3 mb-3">
+                <div class="stat-icon bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-2 text-white">
+                  <PhClock class="w-4 h-4" weight="fill" />
+                </div>
+                <div class="stat-title text-gray-400 text-sm">Last Backup</div>
+              </div>
+              <div v-if="backups.length === 0" class="stat-value text-2xl font-bold text-white">Never</div>
+              <div v-else class="stat-value text-2xl font-bold text-white">{{ formatDate(backups[0].timestamp).split(' ')[0] }}</div>
+              <div v-if="backups.length === 0" class="stat-desc text-xs text-gray-400">No backups created yet</div>
+              <div v-else class="stat-desc text-xs text-gray-400">{{ backups.length }} backups available</div>
+            </div>
+            
+            <div class="stat-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-xl p-5 transition-all duration-300 hover:border-green-500/30 hover:translate-y-[-2px]">
+              <div class="stat-header flex items-center gap-3 mb-3">
+                <div class="stat-icon bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-2 text-white">
+                  <PhHardDrive class="w-4 h-4" weight="fill" />
+                </div>
+                <div class="stat-title text-gray-400 text-sm">Storage Available</div>
+              </div>
+              <div class="stat-value text-2xl font-bold text-white">15.2 GB</div>
+              <div class="stat-desc text-xs text-gray-400 mb-2">85% available space</div>
+              <div class="progress-bar h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
+                <div class="progress-fill h-full bg-gradient-to-r from-green-500 to-green-400" style="width: 15%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="loading" class="loading text-sm text-center py-10">
+            <div class="flex items-center justify-center space-x-2">
+              <div class="h-3 w-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.0s"></div>
+              <div class="h-3 w-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+              <div class="h-3 w-3 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+            </div>
+            <p class="text-gray-400 mt-3">{{ loadingMessage }}</p>
+          </div>
+          
+          <div v-else-if="error" class="mx-6 my-4">
+            <div class="error text-xs text-red-400 p-4 bg-red-900/20 border border-red-700/30 rounded-md overflow-auto max-h-60" v-html="error"></div>
+          </div>
+          
+          <div v-else class="main-content grid grid-cols-3 gap-6 p-6">
+            <!-- Main Content Section (2/3 width) -->
+            <div class="backup-section col-span-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
+              <!-- Empty state when no backups -->
+              <div v-if="backups.length === 0" class="empty-state text-center">
+                <div class="empty-icon mx-auto mb-6 bg-gray-700/50 rounded-xl flex items-center justify-center w-24 h-24">
+                  <PhPackage class="w-12 h-12 text-gray-500" weight="fill" />
+                </div>
+                <h2 class="empty-title text-xl font-semibold text-white mb-2">Ready to Create Your First Backup?</h2>
+                <p class="empty-desc text-sm text-gray-400 mx-auto max-w-md mb-6">
+                  Protect your Moodle site with regular backups. A backup includes your courses, user data, 
+                  settings, and uploaded files. Estimated backup time: ~3 minutes.
+                </p>
+                
+                <div class="onboarding-steps grid grid-cols-2 gap-4 mb-8">
+                  <div class="step-card bg-gray-700/30 border border-gray-600/30 rounded-lg p-4">
+                    <div class="step-number bg-gradient-to-r from-blue-500 to-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mb-3">1</div>
+                    <div class="step-title text-white text-sm font-medium mb-1">Quick Backup</div>
+                    <div class="step-desc text-gray-400 text-xs">Create an immediate backup with default settings</div>
+                  </div>
+                  
+                  <div class="step-card bg-gray-700/30 border border-gray-600/30 rounded-lg p-4">
+                    <div class="step-number bg-gradient-to-r from-blue-500 to-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mb-3">2</div>
+                    <div class="step-title text-white text-sm font-medium mb-1">Custom Backup</div>
+                    <div class="step-desc text-gray-400 text-xs">Choose what to include and backup location</div>
+                  </div>
+                  
+                  <div class="step-card bg-gray-700/30 border border-gray-600/30 rounded-lg p-4">
+                    <div class="step-number bg-gradient-to-r from-blue-500 to-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mb-3">3</div>
+                    <div class="step-title text-white text-sm font-medium mb-1">Schedule Backups</div>
+                    <div class="step-desc text-gray-400 text-xs">Set up automatic daily or weekly backups</div>
+                  </div>
+                  
+                  <div class="step-card bg-gray-700/30 border border-gray-600/30 rounded-lg p-4">
+                    <div class="step-number bg-gradient-to-r from-blue-500 to-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium mb-3">4</div>
+                    <div class="step-title text-white text-sm font-medium mb-1">Test Restore</div>
+                    <div class="step-desc text-gray-400 text-xs">Verify your backup works by testing restore</div>
+                  </div>
+                </div>
+                
+                <button 
+                  @click="createBackup" 
+                  :disabled="isProcessing" 
+                  class="btn-primary bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg text-base font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-md flex items-center gap-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed">
+                  <PhRocketLaunch class="w-5 h-5" />
+                  Create Your First Backup
+                </button>
+              </div>
+              
+              <!-- Backups list when backups exist -->
+              <div v-else>
+                <h3 class="text-lg font-medium text-white mb-4">Backup History</h3>
+                
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-gray-700">
+                    <thead class="bg-gray-800">
+                      <tr>
+                        <th scope="col" class="px-4 py-2 text-xs font-medium text-gray-400 text-left">Date</th>
+                        <th scope="col" class="px-4 py-2 text-xs font-medium text-gray-400 text-left">Moodle Version</th>
+                        <th scope="col" class="px-4 py-2 text-xs font-medium text-gray-400 text-left">PHP Version</th>
+                        <th scope="col" class="px-4 py-2 text-xs font-medium text-gray-400 text-left">Database</th>
+                        <th scope="col" class="px-4 py-2 text-xs font-medium text-gray-400 text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-gray-800/30 divide-y divide-gray-700">
+                      <tr v-for="backup in backups" :key="backup.timestamp" class="hover:bg-gray-700/40 transition-colors duration-150">
+                        <td class="px-4 py-2 text-xs text-gray-200">
+                          {{ formatDate(backup.timestamp) }}
+                        </td>
+                        <td class="px-4 py-2 text-xs text-gray-200">{{ backup.moodle_branch }}</td>
+                        <td class="px-4 py-2 text-xs text-gray-200">{{ backup.php_version }}</td>
+                        <td class="px-4 py-2 text-xs text-gray-200">{{ backup.db_type }}</td>
+                        <td class="px-4 py-2 text-xs">
+                          <div class="flex space-x-2">
+                            <button 
+                              @click="restoreBackup(backup.timestamp)" 
+                              :disabled="isProcessing" 
+                              class="btn-icon bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded transition-colors duration-150"
+                              title="Restore this backup">
+                              <PhArrowClockwise class="w-3 h-3" />
+                            </button>
+                            <button 
+                              @click="openInFinder(backup.timestamp)" 
+                              :disabled="isProcessing" 
+                              class="btn-icon bg-green-600 hover:bg-green-700 text-white p-1.5 rounded transition-colors duration-150"
+                              title="Show in Finder">
+                              <PhFolderOpen class="w-3 h-3" />
+                            </button>
+                            <button 
+                              @click="confirmDelete(backup.timestamp)" 
+                              :disabled="isProcessing" 
+                              class="btn-icon bg-red-600 hover:bg-red-700 text-white p-1.5 rounded transition-colors duration-150"
+                              title="Delete this backup">
+                              <PhTrash class="w-3 h-3" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Sidebar Section (1/3 width) -->
+            <div class="sidebar flex flex-col gap-4">
+              <!-- Settings Card -->
+              <div class="settings-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-xl p-5">
+                <h3 class="card-title text-base font-medium text-white mb-4 flex items-center gap-2">
+                  <PhGear class="w-4 h-4 text-gray-400" />
+                  Backup Settings
+                </h3>
+                <div class="setting-item py-2 border-b border-gray-700">
+                  <div class="flex justify-between items-center">
+                    <div class="setting-label text-sm text-gray-200">Auto-backup</div>
+                    <div class="setting-value text-xs text-gray-400">Disabled</div>
+                  </div>
+                </div>
+                <div class="setting-item py-2 border-b border-gray-700">
+                  <div class="flex justify-between items-center">
+                    <div class="setting-label text-sm text-gray-200">Retention</div>
+                    <div class="setting-value text-xs text-gray-400">Keep 7 backups</div>
+                  </div>
+                </div>
+                <div class="setting-item py-2 border-b border-gray-700">
+                  <div class="flex justify-between items-center">
+                    <div class="setting-label text-sm text-gray-200">Include user files</div>
+                    <div class="setting-value text-xs text-gray-400">Yes</div>
+                  </div>
+                </div>
+                <div class="setting-item py-2">
+                  <div class="flex justify-between items-center">
+                    <div class="setting-label text-sm text-gray-200">Compress backups</div>
+                    <div class="setting-value text-xs text-gray-400">Yes</div>
+                  </div>
+                </div>
+                <button @click="configSettings" class="w-full mt-4 btn-secondary bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-600 transition-all duration-200 border border-gray-600">
+                  Configure Settings
+                </button>
+              </div>
+              
+              <!-- Site Activity Card -->
+              <div class="settings-card bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-xl p-5">
+                <h3 class="card-title text-base font-medium text-white mb-4 flex items-center gap-2">
+                  <PhChartLine class="w-4 h-4 text-gray-400" />
+                  Site Activity
+                </h3>
+                <div class="setting-item py-2 border-b border-gray-700">
+                  <div class="flex justify-between items-center">
+                    <div class="setting-label text-sm text-gray-200">Active users</div>
+                    <div class="setting-value text-xs text-gray-400">247 users</div>
+                  </div>
+                </div>
+                <div class="setting-item py-2 border-b border-gray-700">
+                  <div class="flex justify-between items-center">
+                    <div class="setting-label text-sm text-gray-200">Total courses</div>
+                    <div class="setting-value text-xs text-gray-400">18 courses</div>
+                  </div>
+                </div>
+                <div class="setting-item py-2">
+                  <div class="flex justify-between items-center">
+                    <div class="setting-label text-sm text-gray-200">Last modified</div>
+                    <div class="setting-value text-xs text-gray-400">2 hours ago</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Help Card -->
+              <div class="help-card bg-gradient-to-br from-blue-900/20 to-indigo-900/20 backdrop-blur-sm border border-blue-700/30 rounded-xl p-5">
+                <h3 class="card-title text-base font-medium text-white mb-2 flex items-center gap-2">
+                  <PhQuestion class="w-4 h-4 text-blue-400" />
+                  Need Help?
+                </h3>
+                <p class="text-sm text-gray-300 mb-4">Learn more about backing up your Moodle site</p>
+                
+                <ul class="help-links space-y-2">
+                  <li>
+                    <a href="#" class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-2">
+                      <PhBook class="w-4 h-4" />
+                      Backup Guide
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-2">
+                      <PhArrowClockwise class="w-4 h-4" />
+                      How to Restore
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-2">
+                      <PhClock class="w-4 h-4" />
+                      Scheduling Backups
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" class="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-2">
+                      <PhWrench class="w-4 h-4" />
+                      Troubleshooting
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Footer Actions -->
+          <div class="actions p-6 border-t border-gray-700">
+            <button @click="$router.push('/')" class="btn-secondary bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-all duration-200 border border-gray-600 flex items-center gap-2">
+              <PhArrowLeft class="w-4 h-4" />
+              Back to Dashboard
+            </button>
+          </div>
+        </div> <!-- end of .site-backups -->
+      </div> <!-- end of .main-content -->
+    </div> <!-- end of dashboard-full -->
     
     <!-- Restore Confirmation Modal -->
-    <div v-if="showRestoreModal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-5 w-96 mx-3">
+    <div v-if="showRestoreModal" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70">
+      <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-96 mx-4">
         <div class="mb-4">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Confirm Restore</h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <h3 class="text-lg font-medium text-white">Confirm Restore</h3>
+          <p class="text-sm text-gray-300 mt-2">
             Are you sure you want to restore this backup? This will overwrite the current site content and database.
           </p>
         </div>
-        <div class="text-xs text-red-500 font-medium mb-3">
-          <p>⚠️ This action cannot be undone.</p>
+        <div class="text-sm text-red-400 font-medium mb-4 flex items-center gap-2">
+          <PhWarningCircle class="w-5 h-5" />
+          <p>This action cannot be undone.</p>
         </div>
         <div class="flex justify-end space-x-3">
           <button 
             @click="showRestoreModal = false" 
-            class="compact-action-button bg-gray-300 text-gray-700 hover:bg-gray-400">
+            class="btn-secondary bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-600 transition-colors duration-150 border border-gray-600">
             Cancel
           </button>
           <button 
             @click="confirmRestore" 
             :disabled="isProcessing" 
-            class="compact-action-button bg-red-500 text-white hover:bg-red-600 disabled:bg-gray-300">
+            class="btn-danger bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-lg text-sm hover:from-red-700 hover:to-red-800 transition-colors duration-150 disabled:opacity-50">
             {{ isProcessing ? 'Restoring...' : 'Restore Backup' }}
           </button>
         </div>
@@ -224,43 +436,36 @@
     </div>
     
     <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteConfirm" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-5 w-96 mx-3">
+    <div v-if="showDeleteConfirm" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70">
+      <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-96 mx-4">
         <div class="mb-4">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Confirm Delete</h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <h3 class="text-lg font-medium text-white">Confirm Delete</h3>
+          <p class="text-sm text-gray-300 mt-2">
             Are you sure you want to delete this backup from {{ formatDate(confirmingDeleteTimestamp) }}?
           </p>
         </div>
-        <div class="text-xs text-red-500 font-medium mb-3">
-          <p>⚠️ This action cannot be undone.</p>
+        <div class="text-sm text-red-400 font-medium mb-4 flex items-center gap-2">
+          <PhWarningCircle class="w-5 h-5" />
+          <p>This action cannot be undone.</p>
         </div>
         <div class="flex justify-end space-x-3">
           <button 
             @click="showDeleteConfirm = false" 
-            class="compact-action-button bg-gray-300 text-gray-700 hover:bg-gray-400">
+            class="btn-secondary bg-gray-700 text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-600 transition-colors duration-150 border border-gray-600">
             Cancel
           </button>
           <button 
             @click="deleteBackup" 
             :disabled="isProcessing" 
-            class="compact-action-button bg-red-500 text-white hover:bg-red-600 disabled:bg-gray-300">
+            class="btn-danger bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-lg text-sm hover:from-red-700 hover:to-red-800 transition-colors duration-150 disabled:opacity-50">
             {{ isProcessing ? 'Deleting...' : 'Delete Backup' }}
           </button>
         </div>
       </div>
     </div>
     
-    <div class="actions mt-3 flex gap-2">
-      <button @click="$router.push('/')" class="compact-action-button bg-gray-500 text-white hover:bg-gray-600">
-        Back to Dashboard
-      </button>
-    </div>
-  </div> <!-- end of .site-backups -->
-  </div> <!-- end of .main-content -->
-</div> <!-- end of dashboard-full -->
-</div> <!-- end of root div -->
-  <SettingsModal ref="settingsModal" />
+    <SettingsModal ref="settingsModal" />
+  </div>
 </template>
 
 <script>
@@ -268,7 +473,27 @@ import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
 import { invoke } from '@tauri-apps/api/tauri';
 import { appWindow } from '@tauri-apps/api/window';
-import { PhArchiveBox, PhPlus, PhArrowClockwise, PhFolderNotch, PhFolderOpen, PhTrash, PhGear, PhList, PhSquare } from '@phosphor-icons/vue';
+import { 
+  PhArchiveBox, 
+  PhPlus, 
+  PhArrowClockwise, 
+  PhFolderNotch, 
+  PhFolderOpen, 
+  PhTrash, 
+  PhGear, 
+  PhList,
+  PhDatabase, 
+  PhClock, 
+  PhHardDrive, 
+  PhPackage, 
+  PhRocketLaunch,
+  PhChartLine, 
+  PhQuestion, 
+  PhBook, 
+  PhWrench, 
+  PhArrowLeft,
+  PhWarningCircle 
+} from '@phosphor-icons/vue';
 
 export default {
   name: 'SiteBackups',
@@ -283,7 +508,17 @@ export default {
     PhTrash,
     PhGear,
     PhList,
-    PhSquare
+    PhDatabase,
+    PhClock,
+    PhHardDrive,
+    PhPackage,
+    PhRocketLaunch,
+    PhChartLine,
+    PhQuestion,
+    PhBook,
+    PhWrench,
+    PhArrowLeft,
+    PhWarningCircle
   },
   props: {
     siteName: {
@@ -305,6 +540,9 @@ export default {
       showSuccessMessage: false,
       successMessage: '',
     };
+  },
+  mounted() {
+    this.refreshBackups();
   },
   methods: {
     // Window control methods
@@ -398,16 +636,16 @@ export default {
     async confirmRestore() {
       if (!this.selectedBackupTimestamp) return;
       
-      this.isProcessing = true;
       this.showRestoreModal = false;
+      this.isProcessing = true;
       this.loading = true;
       this.loadingMessage = 'Restoring backup... This might take a few minutes';
       this.error = null;
       
       try {
-        const result = await invoke('restore_site_backup', { 
-          name: this.siteName,
-          backupTimestamp: this.selectedBackupTimestamp
+        const result = await invoke('restore_backup', { 
+          siteName: this.siteName,
+          timestamp: this.selectedBackupTimestamp
         });
         
         console.log(result);
@@ -417,16 +655,12 @@ export default {
           this.showSuccessMessage = false;
         }, 5000);
       } catch (err) {
-        const errorMsg = String(err);
-        if (errorMsg.includes("Error output:") || errorMsg.includes("Standard output:")) {
-          this.error = this.formatErrorMessage(errorMsg);
-        } else {
-          this.error = `Failed to restore backup: ${errorMsg}`;
-        }
+        this.error = `Failed to restore backup: ${err}`;
         console.error(err);
       } finally {
-        this.loading = false;
         this.isProcessing = false;
+        this.loading = false;
+        this.selectedBackupTimestamp = null;
       }
     },
     
@@ -438,16 +672,16 @@ export default {
     async deleteBackup() {
       if (!this.confirmingDeleteTimestamp) return;
       
-      this.isProcessing = true;
       this.showDeleteConfirm = false;
+      this.isProcessing = true;
       this.loading = true;
       this.loadingMessage = 'Deleting backup...';
       this.error = null;
       
       try {
-        const result = await invoke('delete_site_backup', { 
-          name: this.siteName,
-          backupTimestamp: this.confirmingDeleteTimestamp
+        const result = await invoke('delete_backup', { 
+          siteName: this.siteName,
+          timestamp: this.confirmingDeleteTimestamp
         });
         
         console.log(result);
@@ -461,542 +695,79 @@ export default {
         this.error = `Failed to delete backup: ${err}`;
         console.error(err);
       } finally {
-        this.loading = false;
         this.isProcessing = false;
+        this.loading = false;
         this.confirmingDeleteTimestamp = null;
-      }
-    },
-    
-    async openInFinder(timestamp) {
-      try {
-        const result = await invoke('open_backup_location', { 
-          name: this.siteName,
-          backupTimestamp: timestamp
-        });
-        console.log(result);
-      } catch (err) {
-        this.error = `Failed to open in Finder: ${err}`;
-        console.error(err);
       }
     },
     
     async openBackupsFolder() {
       try {
-        const result = await invoke('open_backup_location', { 
-          name: this.siteName
-        });
-        console.log(result);
+        await invoke('open_site_backups_folder', { name: this.siteName });
       } catch (err) {
         this.error = `Failed to open backups folder: ${err}`;
         console.error(err);
       }
     },
     
-    // Enhanced error message formatter with better detail extraction
-    formatErrorMessage(errorMsg) {
-      let formattedMsg = 'Operation failed:';
-      
-      // Extract error details
-      const errorOutputMatch = errorMsg.match(/Error output:([\s\S]*?)(?=\n\nStandard output:|$)/);
-      const stdOutputMatch = errorMsg.match(/Standard output:([\s\S]*?)$/);
-      
-      // Extract common database errors
-      const dbErrorMatch = errorMsg.match(/mysqldump: (.*?)$/m) || errorMsg.match(/pg_dumpall: (.*?)$/m);
-      
-      if (dbErrorMatch && dbErrorMatch[1]) {
-        formattedMsg += `\n\n<div class="error-box">
-          <div class="error-title">Database Error Detected:</div>
-          <div class="error-message">${dbErrorMatch[1]}</div>
-          <div class="error-hint">This appears to be a database connection issue. The backup might be missing the database dump.</div>
-        </div>`;
+    async openInFinder(timestamp) {
+      try {
+        await invoke('open_backup_in_finder', { 
+          siteName: this.siteName,
+          timestamp: timestamp
+        });
+      } catch (err) {
+        this.error = `Failed to open backup in Finder: ${err}`;
+        console.error(err);
       }
-      
-      if (errorOutputMatch && errorOutputMatch[1]) {
-        const errorDetails = errorOutputMatch[1].trim();
-        formattedMsg += `\n\n<div class="error-details">
-          <div class="error-title">Error Details:</div>
-          <pre class="error-content">${errorDetails}</pre>
-        </div>`;
-      }
-      
-      if (stdOutputMatch && stdOutputMatch[1]) {
-        const stdOutput = stdOutputMatch[1].trim();
-        if (stdOutput) {
-          formattedMsg += `\n\n<div class="output-details">
-            <div class="output-title">Command Output:</div>
-            <pre class="output-content">${stdOutput}</pre>
-          </div>`;
-        }
-      }
-      
-      return formattedMsg;
     },
     
     formatDate(timestamp) {
-      if (!timestamp) return '';
-      
-      // Format like: "May 20, 2025 at 14:30"
-      try {
-        // Parse YYYYMMDD_HHMMSS format
-        const year = timestamp.substring(0, 4);
-        const month = timestamp.substring(4, 6);
-        const day = timestamp.substring(6, 8);
-        const hour = timestamp.substring(9, 11);
-        const minute = timestamp.substring(11, 13);
-        
-        const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`);
-        
-        return new Intl.DateTimeFormat('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }).format(date);
-      } catch (e) {
-        return timestamp;
-      }
+      return new Date(timestamp * 1000).toLocaleString();
+    },
+    
+    formatErrorMessage(errorMsg) {
+      // Format the error message with HTML line breaks
+      return errorMsg.replace(/\n/g, '<br>');
+    },
+    
+    // New methods for this UI
+    scheduleBackups() {
+      // To be implemented
+      alert('Schedule backups functionality coming soon');
+    },
+    
+    configSettings() {
+      // To be implemented
+      alert('Configure backup settings functionality coming soon');
     }
-  },
-  mounted() {
-    this.refreshBackups();
   }
 };
 </script>
 
-<style>
-.site-backups {
-  max-width: none;
-  margin: 0;
-}
-
-.compact-action-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
-  transition: color 0.15s ease, background-color 0.15s ease;
-}
-
-.table-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  border-radius: 0.25rem;
-  transition: color 0.15s ease, background-color 0.15s ease;
-}
-
-/* Error and output message styling */
-.error-details,
-.output-details {
-  margin-top: 10px;
-  border: 1px solid #fee2e2;
-  border-radius: 6px;
-  padding: 8px;
-  background-color: #fef2f2;
-}
-
-.error-box {
-  margin-top: 10px;
-  border: 1px solid #f87171;
-  border-radius: 6px;
-  padding: 12px;
-  background-color: #fee2e2;
-}
-
-.error-title,
-.output-title {
-  font-weight: 500;
-  color: #dc2626;
-  margin-bottom: 4px;
-}
-
-.error-message {
-  font-weight: 500;
-  color: #b91c1c;
-  padding: 6px;
-  background-color: #fecaca;
-  border-radius: 4px;
-  margin: 6px 0;
-}
-
-.error-hint {
-  font-size: 0.7rem;
-  color: #7f1d1d;
-  font-style: italic;
-  margin-top: 4px;
-}
-
-.output-title {
-  color: #2563eb;
-}
-
-.error-content,
-.output-content {
-  font-family: monospace;
-  font-size: 0.75rem;
-  white-space: pre-wrap;
-  overflow-x: auto;
-  padding: 6px;
-  background-color: #fff;
-  border-radius: 4px;
-  border: 1px solid #f3f4f6;
-}
-
-.compact-mini-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.15rem 0.3rem;
-  border-radius: 0.25rem;
-  transition: all 0.15s ease;
-}
-
-/* Modern macOS-style header CSS */
-.dashboard-full {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  width: 100vw;
-  background: inherit;
-  padding: 0;
-}
-
-.app-header {
-  background: rgba(17, 24, 39, 0.9);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 0.75rem 1rem;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
+<style scoped>
+/* Add any additional styles needed for the component */
+.stat-card {
+  transform: translateY(0);
   transition: all 0.3s ease;
-  height: 56px;
-  display: flex;
-  align-items: center;
+}
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-.main-content {
-  padding-top: 72px;
-  flex-grow: 1;
-  overflow-y: auto;
-}
-
-.dark .app-header {
-  background: rgba(17, 24, 39, 0.8);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 0.5rem;
-}
-
-.titlebar-left-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.window-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-right: 12px;
-}
-
-.window-control-button {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: none;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: default;
-}
-
-/* Specific styles for each button to mimic macOS traffic lights */
-.close-button svg circle { fill: #FF5F57; stroke: #E0443E; }
-.minimize-button svg circle { fill: #FFBD2E; stroke: #DEA123; }
-.maximize-button svg circle { fill: #27C93F; stroke: #1AAB29; }
-
-/* Always display the macOS traffic-light icons */
-.window-control-button svg {
-  opacity: 1 !important;
-  transition: opacity 0.1s ease-in-out;
-}
-
-.navigation-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.app-branding {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  /* Positioned to the right of navigation controls */
-  margin-left: 12px;
-  pointer-events: auto;
-}
-
-.logo-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  pointer-events: auto;
-  background-color: #6366F1;
-  border-radius: 6px;
-}
-
-.logo-icon {
-  width: 18px;
-  height: 18px;
-}
-
-.title-container {
-  display: flex;
-  flex-direction: column;
-  pointer-events: auto;
-}
-
-.app-title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0;
-  letter-spacing: -0.025em;
-  color: #FFFFFF;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.header-nav-button {
-  background: rgba(33, 37, 50, 0.95);
-  border: none;
-  padding: 6px;
-  margin: 0 2px;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  color: #FFFFFF;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease;
-}
-.header-nav-button .button-icon {
-  width: 16px;
-  height: 16px;
-}
-.header-nav-button:hover {
-  background: rgba(50, 56, 74, 0.95);
-}
-
-.chevron {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.modern-settings-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background-color: transparent;
+.btn-icon {
   transition: all 0.2s ease;
-  color: #9ca3af;
-  border: none;
 }
-
-.dark .modern-settings-button {
-  color: #d1d5db;
-}
-
-.modern-settings-button:hover {
-  color: #6366F1;
-  transform: rotate(15deg); /* Added back rotation */
-}
-
-.dark .modern-settings-button:hover {
-  color: #d1d5db; /* This is light gray, not purple, and matches default dark mode color */
-}
-
-.modern-new-site-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #6366F1;
-  color: white;
-  padding: 0.5rem 1.25rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
-  text-decoration: none;
-}
-
-.modern-new-site-button:hover {
-  background-color: #4F46E5;
+.btn-icon:hover {
   transform: translateY(-1px);
 }
 
-.docker-status-button {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  gap: 0.3rem;
-  padding: 0;
-  border-radius: 0;
-  font-weight: 500; 
-  font-size: 0.875rem;
-  background-color: transparent;
-  color: #22c55e;
-  min-height: 24px;
-  margin-right: 8px;
-  box-shadow: none;
+.backdrop-blur-sm {
+  backdrop-filter: blur(8px);
 }
 
-.dark .docker-status-button {
-  color: #4ade80;
-}
-
-.button-icon {
-  width: 20px;
-  height: 20px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .app-branding {
-    position: static;
-    transform: none;
-    margin-left: 10px;
-  }
-  .app-title {
-    font-size: 1rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .app-header {
-    padding: 0.5rem 0.75rem;
-    height: 52px;
-  }
-  .main-content {
-    padding-top: 60px;
-  }
-  .app-title {
-    font-size: 0.9rem;
-  }
-  
-  .modern-new-site-button span {
-    display: none;
-  }
-  
-  .modern-new-site-button {
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-  }
-  
-  .header-nav-button {
-    width: 28px;
-    height: 28px;
-  }
-  .header-nav-button .button-icon {
-    width: 16px;
-    height: 16px;
-  }
-  .window-controls {
-    gap: 6px;
-    margin-right: 8px;
-  }
-  .titlebar-left-controls {
-    gap: 8px;
-  }
-}
-
-/* Dark mode styles */
-@media (prefers-color-scheme: dark) {
-  .macos-input,
-  .macos-select {
-    background-color: #374151 !important;
-    border-color: #4b5563 !important;
-    color: white !important;
-  }
-  
-  .macos-button-secondary {
-    background-color: #374151 !important;
-    border-color: #4b5563 !important;
-    color: #e5e7eb !important;
-  }
-  
-  .macos-button-primary {
-    background-color: #2563eb !important;
-  }
-  
-  .bg-gray-50 {
-    background-color: #1f2937 !important;
-  }
-  
-  .bg-gray-100 {
-    background-color: #1f2937 !important;
-  }
-  
-  .border-gray-200 {
-    border-color: #374151 !important;
-  }
-  
-  .text-gray-700 {
-    color: #e5e7eb !important;
-  }
-  
-  .text-gray-600 {
-    color: #d1d5db !important;
-  }
-  
-  .text-gray-500 {
-    color: #9ca3af !important;
-  }
-}
-
-/* Hide scrollbar styles */
-.hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
+.progress-fill {
+  transition: width 1s ease;
 }
 </style>
