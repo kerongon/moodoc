@@ -468,6 +468,7 @@ import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle,
 import UpdateSite from './UpdateSite.vue';
 import { Command } from '@tauri-apps/plugin-shell';
 import { cleanupRecentSites } from '../utils/notifications';
+import { useSettingsStore } from '../stores/settings';
 
 export default {
   name: 'SiteList',
@@ -497,6 +498,7 @@ export default {
     const activeActionSite = ref(null);
     const error = ref(null);
     const router = useRouter();
+    const settingsStore = useSettingsStore();
     const updateModalVisible = ref(false);
     const selectedSiteName = ref(null);
     const showErrorModal = ref(false);
@@ -790,8 +792,8 @@ export default {
     // Open in selected code editor
     const openInEditor = async (path) => {
       try {
-        // retrieve editor executable from localStorage
-        const editorPath = localStorage.getItem('editorPath');
+        // retrieve editor executable from settings store
+        const editorPath = settingsStore.editorPath;
         if (!editorPath) {
           return showError(
             'No editor configured',
@@ -893,6 +895,9 @@ export default {
     let completeUnlistener;
     
     onMounted(async () => {
+      // Load settings first to ensure editor path is available
+      await settingsStore.loadSettings();
+      
       loadSites();
       // Poll for status changes every 5 seconds without full re-render
       refreshTimer = setInterval(refreshStatuses, 5000);
