@@ -180,14 +180,14 @@
                 <div class="stat-icon bg-gradient-to-br from-red-500 to-red-600 rounded p-1 text-white">
                   <PhClock class="w-3.5 h-3.5" weight="fill" />
                 </div>
-                <div class="stat-title text-gray-400 text-xs">Last Backup</div>
+                <div class="stat-title text-gray-400 text-xs">Last Activity</div>
               </div>
-              <div v-if="backups.length === 0" class="stat-value text-lg font-bold text-white">Never</div>
-              <div v-else class="stat-value text-lg font-bold text-white">{{ formatDate(backups[0].timestamp).split(',')[0] }}</div>
-              <div v-if="backups.length === 0" class="stat-desc text-xs text-gray-400">No backups created yet</div>
+              <div v-if="backups.length === 0 && !lastRestoreTimestamp" class="stat-value text-lg font-bold text-white">Never</div>
+              <div v-else class="stat-value text-lg font-bold text-white">{{ formatDate(getLastActivityTimestamp()).split(',')[0] }}</div>
+              <div v-if="backups.length === 0 && !lastRestoreTimestamp" class="stat-desc text-xs text-gray-400">No activity yet</div>
               <div v-else class="stat-desc text-xs text-gray-400">
-                {{ formatDate(backups[0].timestamp).split(',')[1] || '' }}
-                <br>{{ backups.length }} backups available
+                {{ formatDate(getLastActivityTimestamp()).split(',')[1] || '' }}
+                <br>{{ getActivityType() }}
               </div>
             </div>
             
@@ -652,8 +652,7 @@ export default {
     };
   },
   mounted() {
-    // this.fetchSiteSize();
-    // this.fetchStorageInfo();
+    this.loadRestoreData();
     this.refreshBackups().then(() => {
       // Initialize lastActivityTimestamp with most recent backup time if available
       this.updateActivityTimestamp();
@@ -668,6 +667,33 @@ export default {
     });
   },
   methods: {
+    // Load restore data from localStorage
+    loadRestoreData() {
+      try {
+        const storedRestoreData = localStorage.getItem(`restoreData_${this.siteName}`);
+        if (storedRestoreData) {
+          const restoreData = JSON.parse(storedRestoreData);
+          this.lastRestoreTimestamp = restoreData.lastRestoreTimestamp;
+          this.lastRestoredBackupTimestamp = restoreData.lastRestoredBackupTimestamp;
+        }
+      } catch (err) {
+        console.error("Failed to load restore data:", err);
+      }
+    },
+
+    // Save restore data to localStorage
+    saveRestoreData() {
+      try {
+        const restoreData = {
+          lastRestoreTimestamp: this.lastRestoreTimestamp,
+          lastRestoredBackupTimestamp: this.lastRestoredBackupTimestamp
+        };
+        localStorage.setItem(`restoreData_${this.siteName}`, JSON.stringify(restoreData));
+      } catch (err) {
+        console.error("Failed to save restore data:", err);
+      }
+    },
+
     // Window control methods
     openSettings() {
       const modal = this.$refs.settingsModal;
@@ -799,17 +825,22 @@ export default {
             if (data.status === 'completed' || data.status === 'error') {
               // When complete/error, we can clean up the listener
               unlisten();
+                 if (data.status === 'completed') {
+              this.showSuccessMessage = true;
+              this.successMessage = `Site '${this.siteName}' restored successfully from backup ${this.selectedBackupTimestamp}`;
+              this.lastRestoreTimestamp = Date.now();
+              this.lastRestoredBackupTimestamp = this.selectedBackupTimestamp;
               
-              if (data.status === 'completed') {
-                this.showSuccessMessage = true;
-                this.successMessage = `Site '${this.siteName}' restored successfully from backup ${this.selectedBackupTimestamp}`;
-                this.lastRestoreTimestamp = Date.now(); // Update last restore timestamp
-                this.lastRestoredBackupTimestamp = this.selectedBackupTimestamp;
-                // Auto-hide the success message after 5 seconds
-                setTimeout(() => {
-                  this.showSuccessMessage = false;
-                }, 5000);
-              } else {
+              // Save to localStorage for persistence
+              this.saveRestoreData();
+              
+              // Update activity timestamp to reflect this restore as latest activity
+              this.updateActivityTimestamp();
+              
+              setTimeout(() => {
+                this.showSuccessMessage = false;
+              }, 5000);
+            } else {
                 this.error = `Failed to restore backup: ${data.message}`;
               }
 
@@ -829,9 +860,6 @@ export default {
           backupTimestamp: this.selectedBackupTimestamp
         });
         
-        // Update restoration tracking information instead of general activity timestamp
-        this.lastRestoreTimestamp = Date.now();
-        this.lastRestoredBackupTimestamp = this.selectedBackupTimestamp;
       } catch (err) {
         this.error = `Failed to restore backup: ${err}`;
         console.error(err);
@@ -919,13 +947,15 @@ export default {
       }
     },
     
-    // Helper method to update activity timestamp based on most recent backup
+    // Helper method to update activity timestamp to include both backup and restore activity
     updateActivityTimestamp() {
+      let latestActivity = null;
+
+      // Check latest backup activity
       if (this.backups.length > 0 && this.backups[0].timestamp) {
         try {
           if (typeof this.backups[0].timestamp === 'string' && 
               this.backups[0].timestamp.match(/^\d{8}_\d{6}$/)) {
-            // Parse YYYYMMDD_HHMMSS format
             const timestamp = this.backups[0].timestamp;
             const year = parseInt(timestamp.substring(0, 4));
             const month = parseInt(timestamp.substring(4, 6)) - 1; // Month is 0-indexed in JS
@@ -934,22 +964,31 @@ export default {
             const minute = parseInt(timestamp.substring(11, 13));
             const second = parseInt(timestamp.substring(13, 15));
             
-            const date = new Date(year, month, day, hour, minute, second);
+            const date = new Date(Date.UTC(year, month, day, hour, minute, second));
             
             if (!isNaN(date.getTime())) {
-              this.lastActivityTimestamp = date.getTime();
+              latestActivity = date.getTime();
             }
           } else {
-            // For standard timestamp format
             const ts = parseInt(this.backups[0].timestamp);
             if (!isNaN(ts)) {
-              this.lastActivityTimestamp = ts < 10000000000 ? ts * 1000 : ts;
+              latestActivity = ts < 10000000000 ? ts * 1000 : ts;
             }
           }
         } catch (e) {
           console.error("Failed to parse backup timestamp:", e);
         }
       }
+
+      // Check if restore activity is more recent than backup activity
+      if (this.lastRestoreTimestamp) {
+        if (!latestActivity || this.lastRestoreTimestamp > latestActivity) {
+          latestActivity = this.lastRestoreTimestamp;
+        }
+      }
+
+      // Set the most recent activity or current time if none found
+      this.lastActivityTimestamp = latestActivity || Date.now();
     },
     
     formatDate(timestamp) {
@@ -1177,6 +1216,93 @@ export default {
       } else {
         const years = Math.floor(diff / 31536000000);
         return `${years} year${years === 1 ? '' : 's'} ago`;
+      }
+    },
+
+    // Get the timestamp of the last activity (backup or restore)
+    getLastActivityTimestamp() {
+      let latestActivity = null;
+
+      // Check latest backup activity
+      if (this.backups.length > 0 && this.backups[0].timestamp) {
+        try {
+          if (typeof this.backups[0].timestamp === 'string' && 
+              this.backups[0].timestamp.match(/^\d{8}_\d{6}$/)) {
+            const timestamp = this.backups[0].timestamp;
+            const year = parseInt(timestamp.substring(0, 4));
+            const month = parseInt(timestamp.substring(4, 6)) - 1;
+            const day = parseInt(timestamp.substring(6, 8));
+            const hour = parseInt(timestamp.substring(9, 11));
+            const minute = parseInt(timestamp.substring(11, 13));
+            const second = parseInt(timestamp.substring(13, 15));
+            
+            const date = new Date(Date.UTC(year, month, day, hour, minute, second));
+            
+            if (!isNaN(date.getTime())) {
+              latestActivity = date.getTime();
+            }
+          } else {
+            const ts = parseInt(this.backups[0].timestamp);
+            if (!isNaN(ts)) {
+              latestActivity = ts < 10000000000 ? ts * 1000 : ts;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to parse backup timestamp:", e);
+        }
+      }
+
+      // Check if restore activity is more recent
+      if (this.lastRestoreTimestamp) {
+        if (!latestActivity || this.lastRestoreTimestamp > latestActivity) {
+          latestActivity = this.lastRestoreTimestamp;
+        }
+      }
+
+      return latestActivity || Date.now();
+    },
+
+    // Get the type of the last activity
+    getActivityType() {
+      const lastBackupTime = this.backups.length > 0 ? this.parseBackupTimestamp(this.backups[0].timestamp) : null;
+      
+      if (!lastBackupTime && !this.lastRestoreTimestamp) {
+        return 'No activity';
+      }
+      
+      if (!this.lastRestoreTimestamp) {
+        return 'Backup created';
+      }
+      
+      if (!lastBackupTime) {
+        return 'Site restored';
+      }
+      
+      return this.lastRestoreTimestamp > lastBackupTime ? 'Site restored' : 'Backup created';
+    },
+
+    // Helper to parse backup timestamp
+    parseBackupTimestamp(timestamp) {
+      if (!timestamp) return null;
+      
+      try {
+        if (typeof timestamp === 'string' && timestamp.match(/^\d{8}_\d{6}$/)) {
+          const year = parseInt(timestamp.substring(0, 4));
+          const month = parseInt(timestamp.substring(4, 6)) - 1;
+          const day = parseInt(timestamp.substring(6, 8));
+          const hour = parseInt(timestamp.substring(9, 11));
+          const minute = parseInt(timestamp.substring(11, 13));
+          const second = parseInt(timestamp.substring(13, 15));
+          
+          const date = new Date(Date.UTC(year, month, day, hour, minute, second));
+          return !isNaN(date.getTime()) ? date.getTime() : null;
+        } else {
+          const ts = parseInt(timestamp);
+          return !isNaN(ts) ? (ts < 10000000000 ? ts * 1000 : ts) : null;
+        }
+      } catch (e) {
+        console.error("Failed to parse backup timestamp:", e);
+        return null;
       }
     }
   }
