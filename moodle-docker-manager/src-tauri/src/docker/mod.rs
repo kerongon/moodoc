@@ -1344,3 +1344,75 @@ pub fn debug_rancher_docker_paths() -> Result<String, String> {
     
     Ok(results.join("\n"))
 }
+
+// Function to create a docker-compose wrapper script for compatibility with modern Docker installations
+// Modern Docker (like OrbStack) uses 'docker compose' instead of standalone 'docker-compose'
+pub fn create_docker_compose_wrapper(temp_dir: &Path) -> Result<PathBuf, String> {
+    let wrapper_path = temp_dir.join("docker-compose");
+    
+    // Get the Docker path to ensure we're using the correct Docker installation
+    let docker_path = get_docker_path();
+    
+    let wrapper_content = format!(
+        r#"#!/bin/bash
+# Temporary docker-compose wrapper for moodle-docker compatibility
+# This script calls 'docker compose' (V2) instead of standalone 'docker-compose'
+
+# Use the detected Docker path or fall back to 'docker' in PATH
+DOCKER_CMD="{}"
+if [ ! -x "$DOCKER_CMD" ]; then
+    DOCKER_CMD="docker"
+fi
+
+# Forward all arguments to 'docker compose'
+exec "$DOCKER_CMD" compose "$@"
+"#,
+        docker_path
+    );
+    
+    std::fs::write(&wrapper_path, wrapper_content)
+        .map_err(|e| format!("Failed to create docker-compose wrapper: {}", e))?;
+    
+    // Make the wrapper executable
+    let chmod_output = Command::new("chmod")
+        .arg("+x")
+        .arg(&wrapper_path)
+        .output()
+        .map_err(|e| format!("Failed to make docker-compose wrapper executable: {}", e))?;
+    
+    if !chmod_output.status.success() {
+        return Err("Failed to make docker-compose wrapper executable".to_string());
+    }
+    
+    Ok(wrapper_path)
+}
+
+// Function to create a temporary directory with docker-compose wrapper
+pub fn setup_docker_compose_environment() -> Result<PathBuf, String> {
+    // Create a temporary directory for our wrapper
+    let temp_dir = std::env::temp_dir().join(format!("moodle-docker-{}", std::process::id()));
+    std::fs::create_dir_all(&temp_dir)
+        .map_err(|e| format!("Failed to create temp directory: {}", e))?;
+    
+    // Create the docker-compose wrapper
+    create_docker_compose_wrapper(&temp_dir)?;
+    
+    Ok(temp_dir)
+}
+
+// Function to execute a command with docker-compose wrapper in PATH
+pub fn execute_with_docker_compose_wrapper<F, R>(operation: F) -> Result<R, String>
+where
+    F: FnOnce(&Path) -> Result<R, String>,
+{
+    // Set up the docker-compose wrapper environment
+    let wrapper_dir = setup_docker_compose_environment()?;
+    
+    // Execute the operation with the wrapper in PATH
+    let result = operation(&wrapper_dir);
+    
+    // Clean up the temporary directory
+    let _ = std::fs::remove_dir_all(&wrapper_dir);
+    
+    result
+}

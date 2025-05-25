@@ -10,7 +10,21 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use tauri::{command, AppHandle, Manager};
 
-use super::{safe_emit, SiteState};
+use super::{safe_emit, SiteState, execute_with_docker_compose_wrapper};
+
+// Helper function to execute moodle-docker commands with docker-compose wrapper for backup operations
+fn execute_backup_command(command: &str, site_dir: &std::path::Path) -> Result<std::process::Output, String> {
+    execute_with_docker_compose_wrapper(|wrapper_dir| {
+        // Modify PATH to include our docker-compose wrapper
+        let mut cmd = Command::new("sh");
+        cmd.arg("-c")
+           .arg(command)
+           .current_dir(site_dir)
+           .env("PATH", format!("{}:{}", wrapper_dir.display(), std::env::var("PATH").unwrap_or_default()));
+        
+        cmd.output().map_err(|e| format!("Failed to execute backup command: {}", e))
+    })
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BackupInfo {

@@ -9,7 +9,7 @@ use std::time::Duration;
 use tauri::{command, AppHandle, Manager};
 use tauri_plugin_store::StoreExt;
 
-use super::{get_docker_path, safe_emit, Site, SiteState};
+use super::{get_docker_path, safe_emit, Site, SiteState, execute_with_docker_compose_wrapper};
 
 // Helper function to check if site creation has been cancelled
 fn is_creation_cancelled(app_handle: &AppHandle, name: &str) -> bool {
@@ -26,6 +26,20 @@ fn cleanup_running_creation(running_creations: &super::RunningCreations, name: &
     if let Ok(mut creations) = running_creations.0.lock() {
         creations.remove(name);
     }
+}
+
+// Helper function to execute moodle-docker commands with docker-compose wrapper
+fn execute_moodle_docker_command(command: &str, site_dir: &std::path::Path) -> Result<std::process::Output, String> {
+    execute_with_docker_compose_wrapper(|wrapper_dir| {
+        // Modify PATH to include our docker-compose wrapper
+        let mut cmd = Command::new("sh");
+        cmd.arg("-c")
+           .arg(command)
+           .current_dir(site_dir)
+           .env("PATH", format!("{}:{}", wrapper_dir.display(), std::env::var("PATH").unwrap_or_default()));
+        
+        cmd.output().map_err(|e| format!("Failed to execute command: {}", e))
+    })
 }
 
 #[command]
@@ -438,15 +452,10 @@ echo ""
     );
 
     let start_cmd = format!(
-        r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose up -d"#,
-        moodle_docker_dir.to_str().unwrap_or("")
+        r#"source ./docker-env.sh && ./bin/moodle-docker-compose up -d"#
     );
 
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(&start_cmd)
-        .output()
-        .map_err(|e| format!("Failed to start Docker containers: {}", e))?;
+    let output = execute_moodle_docker_command(&start_cmd, &moodle_docker_dir)?;
 
     println!(
         "Docker containers start command executed for site: {}. Success: {}",
@@ -473,16 +482,11 @@ echo ""
     );
 
     let wait_db_cmd = format!(
-        r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-wait-for-db"#,
-        moodle_docker_dir.to_str().unwrap_or("")
+        r#"source ./docker-env.sh && ./bin/moodle-docker-wait-for-db"#
     );
 
     println!("Executing command: {}", wait_db_cmd);
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(&wait_db_cmd)
-        .output()
-        .map_err(|e| format!("Failed while waiting for database: {}", e))?;
+    let output = execute_moodle_docker_command(&wait_db_cmd, &moodle_docker_dir)?;
 
     let std_output = String::from_utf8_lossy(&output.stdout).to_string();
     let error_output = String::from_utf8_lossy(&output.stderr).to_string();
@@ -504,11 +508,10 @@ echo ""
         // Try to get container logs to see what's happening
         println!("Getting container logs to diagnose the issue...");
         let logs_cmd = format!(
-            r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose logs db"#,
-            moodle_docker_dir.to_str().unwrap_or("")
+            r#"source ./docker-env.sh && ./bin/moodle-docker-compose logs db"#
         );
 
-        let logs_output = Command::new("sh").arg("-c").arg(&logs_cmd).output();
+        let logs_output = execute_moodle_docker_command(&logs_cmd, &moodle_docker_dir);
 
         if let Ok(logs) = logs_output {
             let logs_str = String::from_utf8_lossy(&logs.stdout).to_string();
@@ -531,11 +534,10 @@ echo ""
 
     // Check webserver container status
     let verify_cmd = format!(
-        r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose ps webserver | grep -q "Up ""#,
-        moodle_docker_dir.to_str().unwrap_or("")
+        r#"source ./docker-env.sh && ./bin/moodle-docker-compose ps webserver | grep -q "Up ""#
     );
 
-    let verify_result = Command::new("sh").arg("-c").arg(&verify_cmd).output();
+    let verify_result = execute_moodle_docker_command(&verify_cmd, &moodle_docker_dir);
 
     let webserver_running = match verify_result {
         Ok(output) => output.status.success(),
@@ -545,11 +547,10 @@ echo ""
     if !webserver_running {
         println!("Webserver container is not running, checking logs");
         let logs_cmd = format!(
-            r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose logs webserver"#,
-            moodle_docker_dir.to_str().unwrap_or("")
+            r#"source ./docker-env.sh && ./bin/moodle-docker-compose logs webserver"#
         );
 
-        let logs_output = Command::new("sh").arg("-c").arg(&logs_cmd).output();
+        let logs_output = execute_moodle_docker_command(&logs_cmd, &moodle_docker_dir);
 
         if let Ok(logs) = logs_output {
             let logs_str = String::from_utf8_lossy(&logs.stdout).to_string();
@@ -563,11 +564,10 @@ echo ""
             format!("Restarting webserver container for {}", name),
         );
         let restart_cmd = format!(
-            r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose restart webserver"#,
-            moodle_docker_dir.to_str().unwrap_or("")
+            r#"source ./docker-env.sh && ./bin/moodle-docker-compose restart webserver"#
         );
 
-        let _ = Command::new("sh").arg("-c").arg(&restart_cmd).output();
+        let _ = execute_moodle_docker_command(&restart_cmd, &moodle_docker_dir);
 
         // Give it a moment to start up
         std::thread::sleep(Duration::from_secs(5));
@@ -590,16 +590,11 @@ echo ""
     );
 
     let install_cmd = format!(
-        r#"cd {} && source ./docker-env.sh && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname='Docker Moodle' --shortname='docker_moodle' --summary='Docker Moodle site' --adminpass='test' --adminemail='admin@example.com'"#,
-        moodle_docker_dir.to_str().unwrap_or("")
+        r#"source ./docker-env.sh && ./bin/moodle-docker-compose exec -T webserver php admin/cli/install_database.php --agree-license --fullname='Docker Moodle' --shortname='docker_moodle' --summary='Docker Moodle site' --adminpass='test' --adminemail='admin@example.com'"#
     );
 
     println!("Executing command: {}", install_cmd);
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(&install_cmd)
-        .output()
-        .map_err(|e| format!("Failed to install Moodle: {}", e))?;
+    let output = execute_moodle_docker_command(&install_cmd, &moodle_docker_dir)?;
 
     println!(
         "Moodle installation command executed for site: {}. Success: {}",

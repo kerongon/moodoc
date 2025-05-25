@@ -5,7 +5,7 @@ use std::fs;
 use std::process::Command;
 use tauri::{command, AppHandle, Manager};
 
-use super::SiteState;
+use super::{SiteState, execute_with_docker_compose_wrapper};
 
 #[command]
 pub fn get_docker_logs(
@@ -88,15 +88,19 @@ export MOODLE_DOCKER_DB_PORT={}
 
     // Execute logs command with the environment variables
     let logs_cmd = format!(
-        r#"cd {} && source ./docker-env-temp.sh && ./bin/moodle-docker-compose logs --tail=500 --timestamps {}"#,
-        moodle_docker_dir_str, service
+        r#"source ./docker-env-temp.sh && ./bin/moodle-docker-compose logs --tail=500 --timestamps {}"#,
+        service
     );
 
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(&logs_cmd)
-        .output()
-        .map_err(|e| format!("Failed to execute log command: {}", e))?;
+    let output = execute_with_docker_compose_wrapper(|wrapper_dir| {
+        Command::new("sh")
+            .arg("-c")
+            .arg(&logs_cmd)
+            .current_dir(&moodle_docker_dir)
+            .env("PATH", format!("{}:{}", wrapper_dir.display(), std::env::var("PATH").unwrap_or_default()))
+            .output()
+            .map_err(|e| format!("Failed to execute log command: {}", e))
+    })?;
 
     // Clean up the temporary script
     let _ = fs::remove_file(&docker_env_path);
