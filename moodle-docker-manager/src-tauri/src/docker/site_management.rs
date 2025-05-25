@@ -707,11 +707,9 @@ pub fn start_site(app_handle: AppHandle, name: String) -> Result<String, String>
         .canonicalize()
         .unwrap_or_else(|_| moodle_www_root.clone());
 
-    // Set environment variables and start containers
-    let script_content = format!(
-        r#"#!/bin/bash
-cd {}
-export COMPOSE_PROJECT_NAME={}
+    // Use our docker-compose wrapper to start containers directly
+    let command = format!(
+        r#"export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT={}
 export MOODLE_DOCKER_DB={}
 export MOODLE_DOCKER_WEB_PORT={}
@@ -726,9 +724,7 @@ echo "MOODLE_DOCKER_WEB_PORT=$MOODLE_DOCKER_WEB_PORT"
 echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
 
 # Start containers
-./bin/moodle-docker-compose up -d
-"#,
-        site.path.to_str().unwrap_or(""),
+./bin/moodle-docker-compose up -d"#,
         name,
         abs_moodle_path.to_str().unwrap_or(""),
         site.db_type.to_lowercase(),
@@ -737,34 +733,8 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
         site.db_port.unwrap_or(3306)
     );
 
-    let script_path = site.path.join("start.sh");
-    let mut file =
-        File::create(&script_path).map_err(|e| format!("Failed to create start script: {}", e))?;
-
-    file.write_all(script_content.as_bytes())
-        .map_err(|e| format!("Failed to write start script: {}", e))?;
-
-    // Make script executable and run it
-    let chmod_output = Command::new("chmod")
-        .args(["+x", script_path.to_str().unwrap_or("start.sh")])
-        .output()
-        .map_err(|e| format!("Failed to make script executable: {}", e))?;
-
-    if !chmod_output.status.success() {
-        let _ = fs::remove_file(&script_path);
-        return Err(format!("Failed to make script executable"));
-    }
-
-    // Execute the script
-    let output = Command::new(script_path.to_str().unwrap_or("./start.sh"))
-        .output()
-        .map_err(|e| {
-            let _ = fs::remove_file(&script_path);
-            format!("Failed to execute start script: {}", e)
-        })?;
-
-    // Delete the script
-    let _ = fs::remove_file(script_path);
+    let output = execute_moodle_docker_command(&command, &site.path)
+        .map_err(|e| format!("Failed to start site '{}': {}", name, e))?;
 
     if output.status.success() {
         // Update site status
