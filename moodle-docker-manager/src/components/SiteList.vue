@@ -13,11 +13,7 @@
       </div>
 
       <div class="flex items-center space-x-3">
-        <!-- System Diagnostics Button -->
-        <!-- <button @click="showDiagnosticModal" class="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm" title="System Diagnostics">
-          <PhWrench class="w-4 h-4 mr-2" />
-          Diagnostics
-        </button> -->
+      <!-- Add new site button -->  
         
         <!-- search box -->
         <div v-if="sites.length > 0" class="relative">
@@ -111,7 +107,7 @@
                   @click="sort('path')"
                   :aria-sort="sortKey==='path'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/4"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/5"
                 >
                   Directory
                   <span v-if="sortKey === 'path'" class="ml-1">
@@ -123,7 +119,7 @@
                   @click="sort('status')"
                   :aria-sort="sortKey==='status'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/8"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/5"
                 >
                   Status
                   <span v-if="sortKey === 'status'" class="ml-1">
@@ -192,11 +188,19 @@
                   </button>
                 </td>
                 <td class="px-4 py-4 whitespace-nowrap">
-                  <div class="flex items-center space-x-2">
-                    <span class="compact-status-badge" :class="getStatusClasses(site.status)">
-                      <span class="inline-block w-1.5 h-1.5 rounded-full mr-1" :class="getStatusIndicatorClasses(site.status)"></span>
-                      {{ site.status }}
-                    </span>
+                  <div class="flex items-center flex-wrap gap-2">
+                    <div class="flex items-center">
+                      <span class="compact-status-badge" :class="getStatusClasses(site.status)">
+                        <span class="inline-block w-1.5 h-1.5 rounded-full mr-1" :class="getStatusIndicatorClasses(site.status)"></span>
+                        {{ site.status }}
+                      </span>
+                      <!-- New site indicator - positioned directly next to status -->
+                      <span v-if="isRecentlyCreated(site.name)" 
+                            class="ml-1 text-xs new-badge bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200 py-0.5 px-1.5 rounded-full"
+                            :title="`Created at ${getCreationTime(site.name)}`">
+                        NEW
+                      </span>
+                    </div>
                     <!-- Error details button for error status -->
                     <button v-if="site.status === 'error'" @click="checkDetailedStatus(site.name)" 
                             class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300" 
@@ -204,12 +208,6 @@
                       <PhWarningCircle class="w-4 h-4" />
                     </button>
                   </div>
-                  <!-- New site indicator -->
-                  <span v-if="isRecentlyCreated(site.name)" 
-                        class="ml-1 text-xs new-badge  bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200 py-0.5 px-1.5 rounded-full"
-                        :title="`Created at ${getCreationTime(site.name)}`">
-                    NEW
-                  </span>
                 </td>
                 <td class="px-4 py-4 whitespace-nowrap">
                   <div class="flex items-center space-x-1">
@@ -1252,12 +1250,11 @@ export default {
   align-items: center;
   height: 1.5rem; /* Match the height of the status badge */
   vertical-align: middle;
-}
-
-/* If you need to adjust the vertical position further */
+}  /* If you need to adjust the vertical position further */
 td .compact-status-badge,
 td .new-badge {
   vertical-align: middle;
+  display: inline-flex;
 }
 
 .directory-path {
