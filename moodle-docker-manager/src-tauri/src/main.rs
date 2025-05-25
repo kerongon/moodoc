@@ -109,6 +109,8 @@ fn main() {
             docker::check_site_status,
             docker::check_site_status_detailed,
             docker::run_diagnostics,
+            docker::check_docker_permissions,
+            docker::validate_production_environment,
             docker::backup_site,
             docker::list_site_backups,
             docker::restore_site_backup,

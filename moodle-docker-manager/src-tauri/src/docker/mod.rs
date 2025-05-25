@@ -193,6 +193,124 @@ pub fn validate_environment(app_handle: AppHandle) -> Result<String, String> {
     Ok("Environment validation successful".to_string())
 }
 
+// Enhanced Docker permission checking and solutions
+#[command]
+pub fn check_docker_permissions() -> Result<String, String> {
+    let mut issues = Vec::new();
+    let mut solutions = Vec::new();
+
+    // Check if Docker socket is accessible
+    match Command::new("docker").args(&["info"]).output() {
+        Ok(output) => {
+            if !output.status.success() {
+                let error = String::from_utf8_lossy(&output.stderr);
+                if error.contains("permission denied") || error.contains("Cannot connect to the Docker daemon") {
+                    issues.push("Docker socket permission denied".to_string());
+                    solutions.push("Solution 1: Restart Docker Desktop".to_string());
+                    solutions.push("Solution 2: Check if Docker Desktop is running".to_string());
+                    solutions.push("Solution 3: Try running the app with administrator privileges".to_string());
+                    solutions.push("Solution 4: Verify Docker Desktop allows socket access".to_string());
+                }
+            }
+        }
+        Err(e) => {
+            issues.push(format!("Cannot execute docker command: {}", e));
+            solutions.push("Solution: Ensure Docker Desktop is installed and in PATH".to_string());
+        }
+    }
+
+    // Check Docker compose availability
+    match Command::new("docker").args(&["compose", "version"]).output() {
+        Ok(output) => {
+            if !output.status.success() {
+                issues.push("Docker Compose not available".to_string());
+                solutions.push("Solution: Update Docker Desktop to include Docker Compose V2".to_string());
+            }
+        }
+        Err(_) => {
+            // Try legacy docker-compose
+            match Command::new("docker-compose").args(&["--version"]).output() {
+                Ok(_) => {
+                    solutions.push("Note: Using legacy docker-compose. Consider upgrading to Docker Compose V2".to_string());
+                }
+                Err(_) => {
+                    issues.push("Neither docker compose nor docker-compose found".to_string());
+                    solutions.push("Solution: Install Docker Desktop or Docker Compose".to_string());
+                }
+            }
+        }
+    }
+
+    let result = if issues.is_empty() {
+        "Docker permissions check passed".to_string()
+    } else {
+        format!("Issues found:\n{}\n\nSuggested solutions:\n{}", 
+               issues.join("\n"), 
+               solutions.join("\n"))
+    };
+
+    Ok(result)
+}
+
+// Enhanced environment validation for production
+#[command]
+pub fn validate_production_environment() -> Result<String, String> {
+    let mut results = Vec::new();
+    
+    // Check if we're in a production build
+    let is_production = !cfg!(debug_assertions);
+    results.push(format!("Build type: {}", if is_production { "Production" } else { "Development" }));
+    
+    // Check Docker accessibility with detailed error reporting
+    match Command::new("docker").args(&["version", "--format", "{{.Server.Version}}"]).output() {
+        Ok(output) => {
+            if output.status.success() {
+                let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                results.push(format!("Docker server accessible: Yes ({})", version));
+                
+                // Test container operations
+                match Command::new("docker").args(&["ps", "-q"]).output() {
+                    Ok(ps_output) => {
+                        if ps_output.status.success() {
+                            results.push("Container operations: Accessible".to_string());
+                        } else {
+                            results.push("Container operations: Limited access".to_string());
+                        }
+                    }
+                    Err(e) => {
+                        results.push(format!("Container operations: Failed ({})", e));
+                    }
+                }
+            } else {
+                let error = String::from_utf8_lossy(&output.stderr);
+                results.push(format!("Docker server accessible: No ({})", error));
+            }
+        }
+        Err(e) => {
+            results.push(format!("Docker command failed: {}", e));
+        }
+    }
+    
+    // Check environment variables
+    let important_vars = ["PATH", "HOME", "USER", "PWD"];
+    for var in &important_vars {
+        match std::env::var(var) {
+            Ok(value) => {
+                if var == &"PATH" && !value.contains("docker") {
+                    results.push(format!("{}: Set (Docker not in PATH)", var));
+                } else {
+                    results.push(format!("{}: Set", var));
+                }
+            }
+            Err(_) => {
+                results.push(format!("{}: Not set", var));
+            }
+        }
+    }
+    
+    Ok(results.join("\n"))
+}
+
 // New store-based site configuration functions
 pub fn load_site_configs_from_store(app: &tauri::App) -> Result<(), String> {
     let app_handle = app.handle();
