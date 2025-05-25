@@ -2,9 +2,9 @@
 // This module contains functions for creating, starting, stopping, and managing Moodle sites
 
 use std::fs::{self, create_dir_all, File};
-use std::io::{BufRead, BufReader, Write};
+use std::io::Write;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::Command;
 use std::time::Duration;
 use tauri::{command, AppHandle, Manager};
 use tauri_plugin_store::StoreExt;
@@ -798,27 +798,9 @@ pub fn stop_site(app_handle: AppHandle, name: String) -> Result<String, String> 
         .canonicalize()
         .unwrap_or_else(|_| moodle_www_root.clone());
 
-    // Set environment variables and stop containers
-    let script_content = format!(
-        r#"#!/bin/bash
-cd {}
-export COMPOSE_PROJECT_NAME={}
-export MOODLE_DOCKER_WWWROOT={}
-export MOODLE_DOCKER_DB={}
-export MOODLE_DOCKER_WEB_PORT={}
-export MOODLE_DOCKER_PHP_VERSION={}
-export MOODLE_DOCKER_DB_PORT={}
-
-# Echo environment for debugging
-echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
-echo "MOODLE_DOCKER_WWWROOT=$MOODLE_DOCKER_WWWROOT"
-echo "MOODLE_DOCKER_DB=$MOODLE_DOCKER_DB"
-echo "MOODLE_DOCKER_WEB_PORT=$MOODLE_DOCKER_WEB_PORT"
-echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
-
-# Stop containers
-./bin/moodle-docker-compose down
-"#,
+    // Use our docker-compose wrapper to stop containers directly
+    let stop_cmd = format!(
+        r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT={} && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_WEB_PORT={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose down"#,
         site.path.to_str().unwrap_or(""),
         name,
         abs_moodle_path.to_str().unwrap_or(""),
@@ -828,34 +810,9 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
         site.db_port.unwrap_or(3306)
     );
 
-    let script_path = site.path.join("stop.sh");
-    let mut file =
-        File::create(&script_path).map_err(|e| format!("Failed to create stop script: {}", e))?;
-
-    file.write_all(script_content.as_bytes())
-        .map_err(|e| format!("Failed to write stop script: {}", e))?;
-
-    // Make script executable and run it
-    let chmod_output = Command::new("chmod")
-        .args(["+x", script_path.to_str().unwrap_or("stop.sh")])
-        .output()
-        .map_err(|e| format!("Failed to make script executable: {}", e))?;
-
-    if !chmod_output.status.success() {
-        let _ = fs::remove_file(&script_path);
-        return Err(format!("Failed to make script executable"));
-    }
-
-    // Execute the script
-    let output = Command::new(script_path.to_str().unwrap_or("./stop.sh"))
-        .output()
-        .map_err(|e| {
-            let _ = fs::remove_file(&script_path);
-            format!("Failed to execute stop script: {}", e)
-        })?;
-
-    // Delete the script
-    let _ = fs::remove_file(script_path);
+    // Execute the command with docker-compose wrapper
+    let output = execute_moodle_docker_command(&stop_cmd, &site.path)
+        .map_err(|e| format!("Failed to execute stop command: {}", e))?;
 
     if output.status.success() {
         // Update site status
@@ -924,29 +881,6 @@ fn remove_site_blocking(
         }),
     );
 
-    // Create a cleanup script to ensure proper environment variables are set
-    let cleanup_script = format!(
-        r#"#!/bin/bash
-cd {}
-export COMPOSE_PROJECT_NAME={}
-export MOODLE_DOCKER_WWWROOT=$PWD/moodle
-
-echo "Stopping containers..."
-# Stop and remove containers with volumes
-./bin/moodle-docker-compose down -v
-
-echo "Removing Docker networks..."
-# Clean up any remaining networks
-docker network ls --filter name={} --format "{{{{.ID}}}}" | xargs -r docker network rm || true
-
-echo "Cleanup completed for {}"
-"#,
-        site.path.to_str().unwrap_or(""),
-        name,
-        name,
-        name
-    );
-
     // Only remove containers if explicitly requested
     if should_remove_containers {
         super::safe_emit(
@@ -959,88 +893,41 @@ echo "Cleanup completed for {}"
             }),
         );
 
-        // Use a cleanup script with guaranteed cleanup and progress reporting
-        let script_path = site.path.join("cleanup.sh");
+        // Get the absolute path to the moodle directory
+        let moodle_www_root = site.path.join("moodle");
+        let abs_moodle_path = moodle_www_root
+            .canonicalize()
+            .unwrap_or_else(|_| moodle_www_root.clone());
 
-        let cleanup_result = (|| -> Result<(), String> {
-            let mut file = File::create(&script_path)
-                .map_err(|e| format!("Failed to create cleanup script: {}", e))?;
+        // Use direct command execution with docker-compose wrapper instead of creating script
+        let cleanup_cmd = format!(
+            r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT={} && echo "Stopping containers..." && ./bin/moodle-docker-compose down -v && echo "Cleanup completed for {}""#,
+            site.path.to_str().unwrap_or(""),
+            name,
+            abs_moodle_path.to_str().unwrap_or(""),
+            name
+        );
 
-            file.write_all(cleanup_script.as_bytes())
-                .map_err(|e| format!("Failed to write cleanup script: {}", e))?;
-
-            // Make the script executable
-            let chmod_output = Command::new("chmod")
-                .args(["+x", script_path.to_str().unwrap_or("cleanup.sh")])
-                .output()
-                .map_err(|e| format!("Failed to make cleanup script executable: {}", e))?;
-
-            if !chmod_output.status.success() {
-                return Err("Failed to make cleanup script executable".to_string());
-            }
-
-            // Execute the cleanup script with progress tracking
-            let mut child = Command::new("bash")
-                .arg(script_path.to_str().unwrap_or("./cleanup.sh"))
-                .stdout(Stdio::piped())
-                .spawn()
-                .map_err(|e| format!("Failed to execute cleanup script: {}", e))?;
-
-            // Read output lines for progress tracking
-            if let Some(stdout) = child.stdout.take() {
-                let reader = BufReader::new(stdout);
-                for line in reader.lines() {
-                    if let Ok(text) = line {
-                        let (pct, step) = if text.contains("Stopping containers") {
-                            (40, "stopping_containers")
-                        } else if text.contains("Removing Docker networks") {
-                            (60, "cleaning_networks")
-                        } else if text.contains("Cleanup completed") {
-                            (75, "containers_removed")
-                        } else {
-                            continue;
-                        };
-                        // Emit progress event
-                        super::safe_emit(
-                            &app_handle,
-                            "site_removal_progress",
-                            serde_json::json!({
-                                "site": name,
-                                "percent": pct,
-                                "step": step
-                            }),
-                        );
-                    }
-                }
-            }
-
-            let status = child
-                .wait()
-                .map_err(|e| format!("Error waiting for cleanup script: {}", e))?;
-            if !status.success() {
-                return Err(format!(
-                    "Cleanup script exited with status {:?}",
-                    status.code()
-                ));
-            }
-
-            Ok(())
-        })();
-
-        // Always clean up the script
-        if let Err(e) = fs::remove_file(&script_path) {
-            println!(
-                "Warning: Failed to remove cleanup script {}: {}",
-                script_path.display(),
-                e
-            );
-        }
+        // Execute the cleanup command with docker-compose wrapper
+        let cleanup_result = execute_moodle_docker_command(&cleanup_cmd, &site.path)
+            .map_err(|e| format!("Failed to execute cleanup command: {}", e));
 
         // Only return error if we couldn't execute the cleanup and the error is worth reporting
         if let Err(e) = cleanup_result {
             println!("Warning during container cleanup: {}", e);
             // We don't return the error since we still want to remove the site from state
         }
+
+        // Additional cleanup for any remaining networks
+        let network_cleanup_cmd = format!(
+            r#"docker network ls --filter name={} --format "{{{{.ID}}}}" | xargs -r docker network rm || true"#,
+            name
+        );
+        
+        let _ = Command::new("sh")
+            .arg("-c")
+            .arg(&network_cleanup_cmd)
+            .output();
     }
 
     // Even if the script fails, we'll try to remove the directory and site from state

@@ -242,13 +242,8 @@ fn update_moodle_version_blocking(
         "update_progress",
         format!("Running database upgrade for site '{}'", name),
     );
-    let upgrade_output = Command::new("sh")
-        .current_dir(&site_path)
-        .args([
-            "-c", 
-            &format!("source ./docker-env.sh && ./bin/moodle-docker-compose exec -T webserver php /var/www/html/admin/cli/upgrade.php --non-interactive")
-        ])
-        .output()
+    let upgrade_cmd = "source ./docker-env.sh && ./bin/moodle-docker-compose exec -T webserver php /var/www/html/admin/cli/upgrade.php --non-interactive";
+    let upgrade_output = execute_update_command(upgrade_cmd, &site_path)
         .map_err(|e| {
             cleanup_running_update(&running_updates, &name);
             format!("Failed to run database upgrade: {}", e)

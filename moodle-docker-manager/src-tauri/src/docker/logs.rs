@@ -36,7 +36,7 @@ pub fn get_docker_logs(
     }
 
     let moodle_docker_dir = &site.path;
-    let moodle_docker_dir_str = moodle_docker_dir
+    let _moodle_docker_dir_str = moodle_docker_dir
         .to_str()
         .ok_or_else(|| "Failed to convert site path to string".to_string())?;
 
