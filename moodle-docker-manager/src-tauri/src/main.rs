@@ -112,6 +112,7 @@ fn main() {
             docker::check_docker_permissions,
             docker::validate_production_environment,
             docker::test_docker_path_resolution,
+            docker::debug_rancher_docker_paths,
             docker::backup_site,
             docker::list_site_backups,
             docker::restore_site_backup,

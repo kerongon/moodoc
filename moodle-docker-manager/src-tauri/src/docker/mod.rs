@@ -15,13 +15,19 @@ use tauri_plugin_store::StoreExt;
 // This ensures the app can find Docker even when launched from Applications folder
 // where PATH environment variable might not include Docker's location
 pub fn get_docker_path() -> String {
-    // Common Docker installation paths on macOS
-    let possible_paths = vec![
+    let mut possible_paths = vec![
         "/usr/local/bin/docker",                                    // Intel Macs with Homebrew
         "/opt/homebrew/bin/docker",                                 // Apple Silicon Macs with Homebrew
         "/usr/bin/docker",                                          // System installation
         "/Applications/Docker.app/Contents/Resources/bin/docker",   // Docker Desktop
+        "/home/linuxbrew/.linuxbrew/bin/docker",                   // Additional Homebrew location
     ];
+    
+    // Add Rancher Desktop paths dynamically based on current user
+    if let Ok(home) = std::env::var("HOME") {
+        possible_paths.push(format!("{}/.rd/bin/docker", home));
+        possible_paths.push(format!("{}/bin/docker", home));
+    }
     
     // Check each path to see if Docker exists there
     for path in &possible_paths {
@@ -37,13 +43,19 @@ pub fn get_docker_path() -> String {
 // Helper function to get docker-compose executable path
 // Similar to get_docker_path but for standalone docker-compose installations
 pub fn get_docker_compose_path() -> String {
-    // Common docker-compose installation paths on macOS
-    let possible_paths = vec![
+    let mut possible_paths = vec![
         "/usr/local/bin/docker-compose",                                    // Intel Macs with Homebrew
         "/opt/homebrew/bin/docker-compose",                                 // Apple Silicon Macs with Homebrew
         "/usr/bin/docker-compose",                                          // System installation
         "/Applications/Docker.app/Contents/Resources/bin/docker-compose",   // Docker Desktop
+        "/home/linuxbrew/.linuxbrew/bin/docker-compose",                   // Additional Homebrew location
     ];
+    
+    // Add Rancher Desktop paths dynamically based on current user
+    if let Ok(home) = std::env::var("HOME") {
+        possible_paths.push(format!("{}/.rd/bin/docker-compose", home));
+        possible_paths.push(format!("{}/bin/docker-compose", home));
+    }
     
     // Check each path to see if docker-compose exists there
     for path in &possible_paths {
@@ -793,4 +805,100 @@ pub fn test_docker_path_resolution() -> Result<String, String> {
     );
     
     Ok(result)
+}
+
+// Debug function specifically for testing Rancher Desktop path detection
+#[command]
+pub fn debug_rancher_docker_paths() -> Result<String, String> {
+    let mut results = Vec::new();
+    
+    // Get HOME environment variable
+    let home = std::env::var("HOME").unwrap_or_else(|_| "HOME not available".to_string());
+    results.push(format!("HOME environment variable: {}", home));
+    
+    // Check for Rancher Desktop specific paths
+    let rancher_docker_path = format!("{}/.rd/bin/docker", home);
+    let rancher_compose_path = format!("{}/.rd/bin/docker-compose", home);
+    let user_bin_docker = format!("{}/bin/docker", home);
+    let user_bin_compose = format!("{}/bin/docker-compose", home);
+    
+    // Test Rancher Desktop docker
+    let rancher_docker_exists = Path::new(&rancher_docker_path).exists();
+    results.push(format!(
+        "Rancher Desktop Docker: {} {}",
+        rancher_docker_path,
+        if rancher_docker_exists { "✓ EXISTS" } else { "✗ NOT FOUND" }
+    ));
+    
+    if rancher_docker_exists {
+        match Command::new(&rancher_docker_path).arg("--version").output() {
+            Ok(output) => {
+                if output.status.success() {
+                    let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                    results.push(format!("  └─ Version: {}", version));
+                } else {
+                    results.push(format!("  └─ ✗ Found but not executable"));
+                }
+            }
+            Err(e) => {
+                results.push(format!("  └─ ✗ Error executing: {}", e));
+            }
+        }
+    }
+    
+    // Test Rancher Desktop docker-compose
+    let rancher_compose_exists = Path::new(&rancher_compose_path).exists();
+    results.push(format!(
+        "Rancher Desktop Docker Compose: {} {}",
+        rancher_compose_path,
+        if rancher_compose_exists { "✓ EXISTS" } else { "✗ NOT FOUND" }
+    ));
+    
+    if rancher_compose_exists {
+        match Command::new(&rancher_compose_path).arg("--version").output() {
+            Ok(output) => {
+                if output.status.success() {
+                    let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                    results.push(format!("  └─ Version: {}", version));
+                } else {
+                    results.push(format!("  └─ ✗ Found but not executable"));
+                }
+            }
+            Err(e) => {
+                results.push(format!("  └─ ✗ Error executing: {}", e));
+            }
+        }
+    }
+    
+    // Test user bin paths
+    let user_docker_exists = Path::new(&user_bin_docker).exists();
+    results.push(format!(
+        "User bin Docker: {} {}",
+        user_bin_docker,
+        if user_docker_exists { "✓ EXISTS" } else { "✗ NOT FOUND" }
+    ));
+    
+    let user_compose_exists = Path::new(&user_bin_compose).exists();
+    results.push(format!(
+        "User bin Docker Compose: {} {}",
+        user_bin_compose,
+        if user_compose_exists { "✓ EXISTS" } else { "✗ NOT FOUND" }
+    ));
+    
+    // Test what our path resolution functions actually return
+    let resolved_docker = get_docker_path();
+    let resolved_compose = get_docker_compose_path();
+    
+    results.push(format!("\n--- PATH RESOLUTION RESULTS ---"));
+    results.push(format!("get_docker_path() returns: {}", resolved_docker));
+    results.push(format!("get_docker_compose_path() returns: {}", resolved_compose));
+    
+    // Check if resolved paths match Rancher Desktop
+    let using_rancher_docker = resolved_docker == rancher_docker_path;
+    let using_rancher_compose = resolved_compose == rancher_compose_path;
+    
+    results.push(format!("Using Rancher Desktop Docker: {}", if using_rancher_docker { "✓ YES" } else { "✗ NO" }));
+    results.push(format!("Using Rancher Desktop Compose: {}", if using_rancher_compose { "✓ YES" } else { "✗ NO" }));
+    
+    Ok(results.join("\n"))
 }
