@@ -1127,7 +1127,6 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticResult, 
 
     // Check directory accessibility
     let mut directories_to_check = vec![
-        (std::env::current_dir().unwrap_or_default().to_string_lossy().to_string(), "Current Working Directory"),
         (std::env::var("HOME").unwrap_or_default(), "Home Directory"),
     ];
 

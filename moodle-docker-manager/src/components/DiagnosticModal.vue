@@ -363,8 +363,6 @@ export default {
     const getDirectoryDescription = (path) => {
       if (path.includes('/Users/') || path === diagnosticInfo.value?.current_user) {
         return 'User Home Directory';
-      } else if (path === diagnosticInfo.value?.current_dir) {
-        return 'Current Working Directory';
       } else {
         return 'Directory';
       }
