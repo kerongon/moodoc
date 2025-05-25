@@ -83,7 +83,11 @@
                     </div>
                     <div class="flex justify-between">
                       <span class="text-xs text-gray-600 dark:text-gray-400">Compose Version:</span>
-                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.compose_version || 'Not available' }}</span>
+                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100" :title="diagnosticInfo.compose_version">
+                        {{ (diagnosticInfo.compose_version && diagnosticInfo.compose_version.length > 50) ? 
+                           diagnosticInfo.compose_version.substring(0, 50) + '...' : 
+                           (diagnosticInfo.compose_version || 'Not available') }}
+                      </span>
                     </div>
                   </div>
                 </div>

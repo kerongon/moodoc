@@ -32,11 +32,14 @@ fn cleanup_running_creation(running_creations: &super::RunningCreations, name: &
 fn execute_moodle_docker_command(command: &str, site_dir: &std::path::Path) -> Result<std::process::Output, String> {
     execute_with_docker_compose_wrapper(|wrapper_dir| {
         // Modify PATH to include our docker-compose wrapper
+        let current_path = std::env::var("PATH").unwrap_or_default();
+        let new_path = format!("{}:{}", wrapper_dir.display(), current_path);
+        
         let mut cmd = Command::new("sh");
         cmd.arg("-c")
            .arg(command)
            .current_dir(site_dir)
-           .env("PATH", format!("{}:{}", wrapper_dir.display(), std::env::var("PATH").unwrap_or_default()));
+           .env("PATH", new_path);
         
         cmd.output().map_err(|e| format!("Failed to execute command: {}", e))
     })

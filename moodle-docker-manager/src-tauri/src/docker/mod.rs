@@ -432,28 +432,6 @@ pub struct Site {
     pub path: PathBuf,
 }
 
-// Diagnostic information structure
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DiagnosticInfo {
-    pub docker_version: Option<String>,
-    pub docker_running: bool,
-    pub docker_socket_accessible: bool,
-    pub docker_daemon_info: Option<String>,
-    pub environment_variables: HashMap<String, String>,
-    pub current_user: Option<String>,
-    pub current_working_directory: Option<String>,
-    pub home_directory: Option<String>,
-    pub app_data_directory: Option<String>,
-    pub platform_info: String,
-    pub sites_directory_exists: bool,
-    pub sites_directory_writable: bool,
-    pub docker_groups: Vec<String>,
-    pub running_containers: Vec<String>,
-    pub docker_networks: Vec<String>,
-    pub available_ports: Vec<u16>,
-    pub errors: Vec<String>,
-}
-
 // State management for sites
 pub struct SiteState(pub Mutex<HashMap<String, Site>>);
 
@@ -951,26 +929,57 @@ pub fn save_site_config(app_handle: AppHandle, site: Site) -> Result<(), String>
     Ok(())
 }
 
+// Updated diagnostic structure
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DiagnosticResult {
+    pub docker_version: Option<String>,
+    pub docker_running: bool,
+    pub socket_accessible: bool,
+    pub compose_version: Option<String>,
+    pub platform: String,
+    pub current_user: Option<String>,
+    pub current_dir: Option<String>,
+    pub user_groups: Vec<String>,
+    pub docker_groups: Vec<String>,
+    pub containers: Vec<String>,
+    pub networks: Vec<String>,
+    pub port_checks: Vec<PortCheck>,
+    pub directory_checks: Vec<DirectoryCheck>,
+    pub environment_vars: HashMap<String, String>,
+    pub errors: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PortCheck {
+    pub port: u16,
+    pub available: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DirectoryCheck {
+    pub path: String,
+    pub exists: bool,
+    pub writable: bool,
+}
+
 // Comprehensive diagnostic command
 #[command]
-pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, String> {
-    let mut diagnostics = DiagnosticInfo {
+pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticResult, String> {
+    let mut diagnostics = DiagnosticResult {
         docker_version: None,
         docker_running: false,
-        docker_socket_accessible: false,
-        docker_daemon_info: None,
-        environment_variables: HashMap::new(),
-        current_user: None,
-        current_working_directory: None,
-        home_directory: None,
-        app_data_directory: None,
-        platform_info: format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH),
-        sites_directory_exists: false,
-        sites_directory_writable: false,
+        socket_accessible: false,
+        compose_version: None,
+        platform: format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH),
+        current_user: std::env::var("USER").ok().or_else(|| std::env::var("USERNAME").ok()),
+        current_dir: std::env::current_dir().ok().and_then(|p| p.to_str().map(String::from)),
+        user_groups: Vec::new(),
         docker_groups: Vec::new(),
-        running_containers: Vec::new(),
-        docker_networks: Vec::new(),
-        available_ports: Vec::new(),
+        containers: Vec::new(),
+        networks: Vec::new(),
+        port_checks: Vec::new(),
+        directory_checks: Vec::new(),
+        environment_vars: HashMap::new(),
         errors: Vec::new(),
     };
 
@@ -995,13 +1004,10 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, St
     // Check Docker socket accessibility
     match Command::new(&get_docker_path()).arg("info").output() {
         Ok(output) => {
-            diagnostics.docker_socket_accessible = output.status.success();
-            if output.status.success() {
-                let info_str = String::from_utf8_lossy(&output.stdout);
-                diagnostics.docker_daemon_info = Some(info_str.trim().to_string());
-            } else {
+            diagnostics.socket_accessible = output.status.success();
+            if !output.status.success() {
                 let stderr = String::from_utf8_lossy(&output.stderr);
-                diagnostics.errors.push(format!("Docker info failed: {}", stderr));
+                diagnostics.errors.push(format!("Docker socket not accessible: {}", stderr));
             }
         }
         Err(e) => {
@@ -1009,66 +1015,63 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, St
         }
     }
 
-    // Collect environment variables
-    for (key, value) in std::env::vars() {
-        if key.contains("DOCKER") || key == "PATH" || key == "HOME" || key == "USER" || key == "PWD" {
-            diagnostics.environment_variables.insert(key, value);
-        }
-    }
-
-    // Get current user
-    diagnostics.current_user = std::env::var("USER").ok();
-
-    // Get current working directory
-    diagnostics.current_working_directory = std::env::current_dir()
-        .ok()
-        .and_then(|p| p.to_str().map(|s| s.to_string()));
-
-    // Get home directory
-    diagnostics.home_directory = app_handle.path().home_dir()
-        .ok()
-        .and_then(|p| p.to_str().map(|s| s.to_string()));
-
-    // Get app data directory
-    match app_handle.path().app_data_dir() {
-        Ok(app_dir) => {
-            diagnostics.app_data_directory = app_dir.to_str().map(|s| s.to_string());
-            
-            // Check if sites directory exists and is writable
-            let sites_dir = app_dir.join("sites");
-            diagnostics.sites_directory_exists = sites_dir.exists();
-            
-            if diagnostics.sites_directory_exists {
-                // Test writability by trying to create a test file
-                let test_file = sites_dir.join(".write_test");
-                match std::fs::write(&test_file, "test") {
-                    Ok(_) => {
-                        diagnostics.sites_directory_writable = true;
-                        let _ = std::fs::remove_file(test_file);
+    // Check Docker Compose version
+    match Command::new(&get_docker_path()).args(&["compose", "version"]).output() {
+        Ok(output) => {
+            if output.status.success() {
+                let version_str = String::from_utf8_lossy(&output.stdout);
+                let version_line = version_str.lines().next().unwrap_or(version_str.trim());
+                diagnostics.compose_version = Some(version_line.to_string());
+            } else {
+                // Try legacy docker-compose
+                match Command::new(&get_docker_compose_path()).args(&["--version"]).output() {
+                    Ok(legacy_output) => {
+                        if legacy_output.status.success() {
+                            let version_str = String::from_utf8_lossy(&legacy_output.stdout);
+                            diagnostics.compose_version = Some(format!("Legacy: {}", version_str.trim()));
+                        }
                     }
-                    Err(e) => {
-                        diagnostics.sites_directory_writable = false;
-                        diagnostics.errors.push(format!("Sites directory not writable: {}", e));
+                    Err(_) => {
+                        diagnostics.errors.push("Neither 'docker compose' nor 'docker-compose' available".to_string());
                     }
                 }
             }
         }
         Err(e) => {
-            diagnostics.errors.push(format!("Failed to get app data directory: {}", e));
+            diagnostics.errors.push(format!("Failed to check compose version: {}", e));
         }
     }
 
-    // Check Docker groups (Unix-like systems)
+    // Collect important environment variables
+    let important_vars = ["DOCKER_HOST", "DOCKER_CERT_PATH", "DOCKER_TLS_VERIFY", "DOCKER_MACHINE_NAME", "PATH", "HOME", "USER", "PWD"];
+    for var in &important_vars {
+        if let Ok(value) = std::env::var(var) {
+            // Truncate PATH as it can be very long
+            if var == &"PATH" && value.len() > 200 {
+                diagnostics.environment_vars.insert(var.to_string(), format!("{}...", &value[..200]));
+            } else {
+                diagnostics.environment_vars.insert(var.to_string(), value);
+            }
+        }
+    }
+
+    // Get user groups (Unix-like systems)
     #[cfg(unix)]
     {
         match Command::new("groups").output() {
             Ok(output) => {
                 if output.status.success() {
                     let groups_str = String::from_utf8_lossy(&output.stdout);
-                    diagnostics.docker_groups = groups_str
+                    diagnostics.user_groups = groups_str
                         .split_whitespace()
-                        .filter(|g| g.contains("docker"))
                         .map(|s| s.to_string())
+                        .collect();
+                    
+                    // Filter docker-related groups
+                    diagnostics.docker_groups = diagnostics.user_groups
+                        .iter()
+                        .filter(|g| g.to_lowercase().contains("docker"))
+                        .cloned()
                         .collect();
                 }
             }
@@ -1078,12 +1081,13 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, St
         }
     }
 
-    // List running containers
-    if diagnostics.docker_socket_accessible {
-        match Command::new(&get_docker_path()).args(&["ps", "--format", "{{.Names}}"]).output() {
+    // List containers and networks (only if socket is accessible)
+    if diagnostics.socket_accessible {
+        // List containers
+        match Command::new(&get_docker_path()).args(&["ps", "-a", "--format", "{{.Names}} ({{.Status}})"]).output() {
             Ok(output) => {
                 if output.status.success() {
-                    diagnostics.running_containers = String::from_utf8_lossy(&output.stdout)
+                    diagnostics.containers = String::from_utf8_lossy(&output.stdout)
                         .lines()
                         .filter(|line| !line.trim().is_empty())
                         .map(|s| s.to_string())
@@ -1095,11 +1099,11 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, St
             }
         }
 
-        // List Docker networks
-        match Command::new(&get_docker_path()).args(&["network", "ls", "--format", "{{.Name}}"]).output() {
+        // List networks
+        match Command::new(&get_docker_path()).args(&["network", "ls", "--format", "{{.Name}} ({{.Driver}})"]).output() {
             Ok(output) => {
                 if output.status.success() {
-                    diagnostics.docker_networks = String::from_utf8_lossy(&output.stdout)
+                    diagnostics.networks = String::from_utf8_lossy(&output.stdout)
                         .lines()
                         .filter(|line| !line.trim().is_empty())
                         .map(|s| s.to_string())
@@ -1112,11 +1116,52 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, St
         }
     }
 
-    // Check common port availability
-    let test_ports = vec![8000, 8001, 8002, 3306, 3307, 3308, 5432, 5433];
+    // Check port availability for common Moodle ports
+    let test_ports = vec![8000, 8001, 8002, 8080, 8081, 8082, 3306, 3307, 3308, 5432, 5433, 5434];
     for port in test_ports {
-        if check_port_available(port) {
-            diagnostics.available_ports.push(port);
+        diagnostics.port_checks.push(PortCheck {
+            port,
+            available: check_port_available(port),
+        });
+    }
+
+    // Check directory accessibility
+    let mut directories_to_check = vec![
+        (std::env::current_dir().unwrap_or_default().to_string_lossy().to_string(), "Current Directory"),
+        (std::env::var("HOME").unwrap_or_default(), "Home Directory"),
+    ];
+
+    // Add app data directory
+    if let Ok(app_dir) = app_handle.path().app_data_dir() {
+        directories_to_check.push((app_dir.to_string_lossy().to_string(), "App Data Directory"));
+        
+        let sites_dir = app_dir.join("sites");
+        directories_to_check.push((sites_dir.to_string_lossy().to_string(), "Sites Directory"));
+    }
+
+    for (path, _description) in directories_to_check {
+        if !path.is_empty() {
+            let path_obj = std::path::Path::new(&path);
+            let exists = path_obj.exists();
+            let writable = if exists {
+                // Test writability by trying to create a test file
+                let test_file = path_obj.join(".write_test");
+                match std::fs::write(&test_file, "test") {
+                    Ok(_) => {
+                        let _ = std::fs::remove_file(test_file);
+                        true
+                    }
+                    Err(_) => false
+                }
+            } else {
+                false
+            };
+
+            diagnostics.directory_checks.push(DirectoryCheck {
+                path: path.clone(),
+                exists,
+                writable,
+            });
         }
     }
 
@@ -1364,8 +1409,13 @@ if [ ! -x "$DOCKER_CMD" ]; then
     DOCKER_CMD="docker"
 fi
 
-# Forward all arguments to 'docker compose'
-exec "$DOCKER_CMD" compose "$@"
+# Handle version checking specially to return proper version info
+if [ "$1" = "--version" ] || [ "$1" = "version" ]; then
+    exec "$DOCKER_CMD" compose version
+else
+    # Forward all arguments to 'docker compose'
+    exec "$DOCKER_CMD" compose "$@"
+fi
 "#,
         docker_path
     );
@@ -1415,4 +1465,65 @@ where
     let _ = std::fs::remove_dir_all(&wrapper_dir);
     
     result
+}
+
+// Test Docker Compose specifically
+#[command]
+pub fn test_docker_compose() -> Result<String, String> {
+    let mut results = Vec::new();
+    
+    // Test docker compose version (V2)
+    match Command::new(&get_docker_path()).args(&["compose", "version"]).output() {
+        Ok(output) => {
+            if output.status.success() {
+                let version_str = String::from_utf8_lossy(&output.stdout);
+                results.push(format!("✓ Docker Compose V2: {}", version_str.trim()));
+            } else {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                results.push(format!("✗ Docker Compose V2 failed: {}", stderr));
+            }
+        }
+        Err(e) => {
+            results.push(format!("✗ Docker Compose V2 error: {}", e));
+        }
+    }
+    
+    // Test legacy docker-compose
+    match Command::new(&get_docker_compose_path()).args(&["--version"]).output() {
+        Ok(output) => {
+            if output.status.success() {
+                let version_str = String::from_utf8_lossy(&output.stdout);
+                results.push(format!("✓ Legacy docker-compose: {}", version_str.trim()));
+            } else {
+                results.push("✗ Legacy docker-compose not working".to_string());
+            }
+        }
+        Err(e) => {
+            results.push(format!("✗ Legacy docker-compose error: {}", e));
+        }
+    }
+    
+    // Test our wrapper functionality
+    match execute_with_docker_compose_wrapper(|wrapper_dir| {
+        let wrapper_path = wrapper_dir.join("docker-compose");
+        Command::new(&wrapper_path)
+            .arg("--version")
+            .output()
+            .map_err(|e| format!("Wrapper execution failed: {}", e))
+    }) {
+        Ok(output) => {
+            if output.status.success() {
+                let version_str = String::from_utf8_lossy(&output.stdout);
+                results.push(format!("✓ Docker Compose wrapper: {}", version_str.trim()));
+            } else {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                results.push(format!("✗ Docker Compose wrapper failed: {}", stderr));
+            }
+        }
+        Err(e) => {
+            results.push(format!("✗ Docker Compose wrapper error: {}", e));
+        }
+    }
+    
+    Ok(results.join("\n"))
 }
