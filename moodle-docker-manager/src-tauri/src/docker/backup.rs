@@ -943,15 +943,13 @@ echo "Site restored successfully"
                 format!("Failed to setup docker-compose wrapper: {}", e)
             })?;
 
-        // Execute the restore script with the wrapper environment and capture its output to report progress
+        // Execute the restore script with the wrapper environment
         let current_path = std::env::var("PATH").unwrap_or_default();
-        let mut child = Command::new("bash")
+        let output = Command::new("bash")
             .arg(&restore_script_path)
             .env("PATH", format!("{}:{}", wrapper_dir.display(), current_path))
             .current_dir(&site.path)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
+            .output()
             .map_err(|e| {
                 let _ = fs::remove_file(&restore_script_path);
                 let _ = fs::remove_dir_all(&wrapper_dir);
@@ -959,62 +957,16 @@ echo "Site restored successfully"
                 format!("Failed to execute restore script: {}", e)
             })?;
         
-        // Process stdout for progress updates
-        if let Some(stdout) = child.stdout.take() {
-            let reader = BufReader::new(stdout);
-            for line in reader.lines() {
-                if let Ok(text) = line {
-                    println!("Restore progress: {}", text);
-                    
-                    // Map specific output lines to progress updates
-                    if text.contains("Restoring Moodle code") {
-                        emit_progress("restoring_code", "Restoring Moodle code files", 0.4);
-                    } else if text.contains("Restoring Moodle data") {
-                        emit_progress("restoring_data", "Restoring Moodle data files", 0.5);
-                    } else if text.contains("Starting database container") {
-                        emit_progress("starting_db", "Starting database container", 0.6);
-                    } else if text.contains("Waiting for database") {
-                        emit_progress("waiting_db", "Waiting for database to be ready", 0.65);
-                    } else if text.contains("Restoring database") {
-                        emit_progress("restoring_db", "Restoring database", 0.7);
-                    } else if text.contains("Starting remaining containers") {
-                        emit_progress("starting_containers", "Starting remaining containers", 0.85);
-                    } else if text.contains("Site restored successfully") {
-                        emit_progress("almost_complete", "Site restored successfully, finalizing", 0.95);
-                    }
-                }
-            }
-        }
-        
-        // Wait for the process to complete
-        let status = child.wait().map_err(|e| {
-            let _ = fs::remove_file(&restore_script_path);
-            let _ = fs::remove_dir_all(&wrapper_dir);
-            emit_progress("error", &format!("Error waiting for restore script: {}", e), 0.0);
-            format!("Error waiting for restore script: {}", e)
-        })?;
-        
         // Clean up wrapper directory and script
         let _ = fs::remove_dir_all(&wrapper_dir);
         
         // Delete the script
         let _ = fs::remove_file(restore_script_path);
         
-        if !status.success() {
-            // Try to capture stderr in case of failure
-            if let Some(stderr) = child.stderr {
-                let reader = BufReader::new(stderr);
-                let error_output: Vec<String> = reader.lines()
-                    .filter_map(|line| line.ok())
-                    .collect();
-                
-                let error_message = error_output.join("\n");
-                emit_progress("error", &format!("Failed to restore site: {}", error_message), 0.0);
-                return Err(format!("Failed to restore site: {}", error_message));
-            } else {
-                emit_progress("error", &format!("Restore script failed with exit code: {:?}", status.code()), 0.0);
-                return Err(format!("Restore script failed with exit code: {:?}", status.code()));
-            }
+        if !output.status.success() {
+            let error = String::from_utf8_lossy(&output.stderr).to_string();
+            emit_progress("error", &format!("Failed to restore site: {}", error), 0.0);
+            return Err(format!("Failed to restore site: {}", error));
         }
         
         emit_progress("finalizing", "Finalizing restoration...", 0.9);
