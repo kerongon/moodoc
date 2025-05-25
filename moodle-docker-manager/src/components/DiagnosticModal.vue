@@ -93,95 +93,171 @@
                 </div>
               </div>
 
-              <!-- System Environment Section -->
-              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
-                  <PhGear class="w-4 h-4 mr-2 text-gray-600" />
-                  System Environment
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div class="space-y-1.5">
-                    <div class="flex justify-between">
-                      <span class="text-xs text-gray-600 dark:text-gray-400">Platform:</span>
-                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.platform || 'Unknown' }}</span>
+              <!-- System Environment Section (Accordion) -->
+              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg overflow-hidden">
+                <button 
+                  @click="toggleAccordion('system')"
+                  class="w-full p-3 text-left flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600/50 transition-colors"
+                >
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <PhGear class="w-4 h-4 mr-2 text-gray-600" />
+                    System Environment
+                  </h3>
+                  <svg 
+                    class="w-4 h-4 text-gray-500 transition-transform duration-200"
+                    :class="{ 'rotate-180': activeAccordion === 'system' }"
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div 
+                  v-show="activeAccordion === 'system'"
+                  class="px-3 pb-3 border-t border-gray-200 dark:border-gray-600"
+                >
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                    <div class="space-y-1.5">
+                      <div class="flex justify-between">
+                        <span class="text-xs text-gray-600 dark:text-gray-400">Platform:</span>
+                        <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.platform || 'Unknown' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-xs text-gray-600 dark:text-gray-400">Current User:</span>
+                        <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.current_user || 'Unknown' }}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-xs text-gray-600 dark:text-gray-400">User Groups:</span>
+                        <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.user_groups?.join(', ') || 'None' }}</span>
+                      </div>
                     </div>
-                    <div class="flex justify-between">
-                      <span class="text-xs text-gray-600 dark:text-gray-400">Current User:</span>
-                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.current_user || 'Unknown' }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                      <span class="text-xs text-gray-600 dark:text-gray-400">User Groups:</span>
-                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.user_groups?.join(', ') || 'None' }}</span>
-                    </div>
-                  </div>
-                  <div class="space-y-1.5">
-                    <div class="flex justify-between">
-                      <span class="text-xs text-gray-600 dark:text-gray-400">Docker Group:</span>
-                      <span class="text-xs font-medium" :class="diagnosticInfo.docker_groups?.length > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                        {{ diagnosticInfo.docker_groups?.length > 0 ? 'Member' : 'Not member' }}
-                      </span>
-                    </div>
-                    <div class="flex justify-between">
-                      <span class="text-xs text-gray-600 dark:text-gray-400">Working Directory:</span>
-                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100" :title="diagnosticInfo.current_dir">
-                        {{ formatPath(diagnosticInfo.current_dir) }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Directory Status Section -->
-              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
-                  <PhFolder class="w-4 h-4 mr-2 text-yellow-600" />
-                  Directory Status
-                </h3>
-                <div class="space-y-2">
-                  <div v-for="(dir, index) in diagnosticInfo.directory_checks" :key="index" class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-md border">
-                    <div class="flex items-center">
-                      <PhFolder class="w-3 h-3 mr-2 text-gray-500" />
-                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100" :title="dir.path">{{ formatPath(dir.path) }}</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                      <span class="text-xs px-2 py-1 rounded" :class="dir.exists ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'">
-                        {{ dir.exists ? 'Exists' : 'Missing' }}
-                      </span>
-                      <span v-if="dir.exists" class="text-xs px-2 py-1 rounded" :class="dir.writable ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'">
-                        {{ dir.writable ? 'Writable' : 'Read-only' }}
-                      </span>
+                    <div class="space-y-1.5">
+                      <div class="flex justify-between">
+                        <span class="text-xs text-gray-600 dark:text-gray-400">Docker Group:</span>
+                        <span class="text-xs font-medium" :class="diagnosticInfo.docker_groups?.length > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                          {{ diagnosticInfo.docker_groups?.length > 0 ? 'Member' : 'Not member' }}
+                        </span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span class="text-xs text-gray-600 dark:text-gray-400">Working Directory:</span>
+                        <span class="text-xs font-medium text-gray-900 dark:text-gray-100" :title="diagnosticInfo.current_dir">
+                          {{ formatPath(diagnosticInfo.current_dir) }}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Environment Variables Section -->
-              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
-                  <PhCode class="w-4 h-4 mr-2 text-purple-600" />
-                  Environment Variables
-                </h3>
-                <div class="space-y-1 max-h-32 overflow-y-auto">
-                  <div v-for="[key, value] in Object.entries(diagnosticInfo.environment_vars || {})" :key="key" class="flex justify-between py-1 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
-                    <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ key }}:</span>
-                    <span class="text-xs text-gray-900 dark:text-gray-100 max-w-xs truncate" :title="value">{{ value }}</span>
+              <!-- Directory Status Section (Accordion) -->
+              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg overflow-hidden">
+                <button 
+                  @click="toggleAccordion('directories')"
+                  class="w-full p-3 text-left flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600/50 transition-colors"
+                >
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <PhFolder class="w-4 h-4 mr-2 text-yellow-600" />
+                    Directory Status
+                  </h3>
+                  <svg 
+                    class="w-4 h-4 text-gray-500 transition-transform duration-200"
+                    :class="{ 'rotate-180': activeAccordion === 'directories' }"
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div 
+                  v-show="activeAccordion === 'directories'"
+                  class="px-3 pb-3 border-t border-gray-200 dark:border-gray-600"
+                >
+                  <div class="space-y-2 mt-3">
+                    <div v-for="(dir, index) in diagnosticInfo.directory_checks" :key="index" class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-md border">
+                      <div class="flex items-center">
+                        <PhFolder class="w-3 h-3 mr-2 text-gray-500" />
+                        <span class="text-xs font-medium text-gray-900 dark:text-gray-100" :title="dir.path">{{ formatPath(dir.path) }}</span>
+                      </div>
+                      <div class="flex items-center space-x-2">
+                        <span class="text-xs px-2 py-1 rounded" :class="dir.exists ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'">
+                          {{ dir.exists ? 'Exists' : 'Missing' }}
+                        </span>
+                        <span v-if="dir.exists" class="text-xs px-2 py-1 rounded" :class="dir.writable ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'">
+                          {{ dir.writable ? 'Writable' : 'Read-only' }}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Port Availability Section -->
-              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
-                  <PhPlugs class="w-4 h-4 mr-2 text-green-600" />
-                  Port Availability
-                </h3>
-                <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
-                  <div v-for="port in diagnosticInfo.port_checks" :key="port.port" class="text-center p-2 rounded-md border" :class="port.available ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'">
-                    <div class="text-sm font-medium" :class="port.available ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'">
-                      {{ port.port }}
+              <!-- Environment Variables Section (Accordion) -->
+              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg overflow-hidden">
+                <button 
+                  @click="toggleAccordion('environment')"
+                  class="w-full p-3 text-left flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600/50 transition-colors"
+                >
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <PhCode class="w-4 h-4 mr-2 text-purple-600" />
+                    Environment Variables
+                  </h3>
+                  <svg 
+                    class="w-4 h-4 text-gray-500 transition-transform duration-200"
+                    :class="{ 'rotate-180': activeAccordion === 'environment' }"
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div 
+                  v-show="activeAccordion === 'environment'"
+                  class="px-3 pb-3 border-t border-gray-200 dark:border-gray-600"
+                >
+                  <div class="space-y-1 max-h-32 overflow-y-auto mt-3">
+                    <div v-for="[key, value] in Object.entries(diagnosticInfo.environment_vars || {})" :key="key" class="flex justify-between py-1 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
+                      <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ key }}:</span>
+                      <span class="text-xs text-gray-900 dark:text-gray-100 max-w-xs truncate" :title="value">{{ value }}</span>
                     </div>
-                    <div class="text-xs" :class="port.available ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                      {{ port.available ? 'Free' : 'In use' }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Port Availability Section (Accordion) -->
+              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg overflow-hidden">
+                <button 
+                  @click="toggleAccordion('ports')"
+                  class="w-full p-3 text-left flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600/50 transition-colors"
+                >
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <PhPlugs class="w-4 h-4 mr-2 text-green-600" />
+                    Port Availability
+                  </h3>
+                  <svg 
+                    class="w-4 h-4 text-gray-500 transition-transform duration-200"
+                    :class="{ 'rotate-180': activeAccordion === 'ports' }"
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div 
+                  v-show="activeAccordion === 'ports'"
+                  class="px-3 pb-3 border-t border-gray-200 dark:border-gray-600"
+                >
+                  <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mt-3">
+                    <div v-for="port in diagnosticInfo.port_checks" :key="port.port" class="text-center p-2 rounded-md border" :class="port.available ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'">
+                      <div class="text-sm font-medium" :class="port.available ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'">
+                        {{ port.port }}
+                      </div>
+                      <div class="text-xs" :class="port.available ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                        {{ port.available ? 'Free' : 'In use' }}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -263,9 +339,15 @@ export default {
     const loading = ref(false);
     const error = ref(null);
     const diagnosticInfo = ref(null);
+    const activeAccordion = ref(null); // Track which accordion is open
 
     const closeModal = () => {
       emit('close');
+    };
+
+    const toggleAccordion = (section) => {
+      // If clicking the same section, close it; otherwise open the new section
+      activeAccordion.value = activeAccordion.value === section ? null : section;
     };
 
     const formatPath = (path) => {
@@ -276,6 +358,16 @@ export default {
       const parts = path.split('/');
       const filename = parts.pop();
       return `.../${parts.slice(-2).join('/')}/${filename}`;
+    };
+
+    const getDirectoryDescription = (path) => {
+      if (path.includes('/Users/') || path === diagnosticInfo.value?.current_user) {
+        return 'User Home Directory';
+      } else if (path === diagnosticInfo.value?.current_dir) {
+        return 'Current Working Directory';
+      } else {
+        return 'Directory';
+      }
     };
 
     const runDiagnostics = async () => {
@@ -306,9 +398,12 @@ export default {
       loading,
       error,
       diagnosticInfo,
+      activeAccordion,
       closeModal,
       runDiagnostics,
-      formatPath
+      toggleAccordion,
+      formatPath,
+      getDirectoryDescription
     };
   }
 };

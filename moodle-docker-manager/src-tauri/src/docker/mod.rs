@@ -1127,17 +1127,9 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticResult, 
 
     // Check directory accessibility
     let mut directories_to_check = vec![
-        (std::env::current_dir().unwrap_or_default().to_string_lossy().to_string(), "Current Directory"),
+        (std::env::current_dir().unwrap_or_default().to_string_lossy().to_string(), "Current Working Directory"),
         (std::env::var("HOME").unwrap_or_default(), "Home Directory"),
     ];
-
-    // Add app data directory
-    if let Ok(app_dir) = app_handle.path().app_data_dir() {
-        directories_to_check.push((app_dir.to_string_lossy().to_string(), "App Data Directory"));
-        
-        let sites_dir = app_dir.join("sites");
-        directories_to_check.push((sites_dir.to_string_lossy().to_string(), "Sites Directory"));
-    }
 
     for (path, _description) in directories_to_check {
         if !path.is_empty() {
