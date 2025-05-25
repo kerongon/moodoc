@@ -214,10 +214,9 @@
                     <!-- Start button with prominent spinner -->
                     <button v-if="site.status !== 'running'" 
                         @click="startSite(site.name)" 
-                        class="icon-action-btn" 
+                        class="icon-action-btn bg-green-500 hover:bg-green-600" 
                         :class="{
-                            'bg-green-500 hover:bg-green-600': activeActionSite !== site.name, 
-                            'bg-blue-600 spinner-container': activeActionSite === site.name
+                            'spinner-container': activeActionSite === site.name
                         }"
                         :disabled="activeActionSite === site.name"
                         title="Start">
@@ -229,14 +228,21 @@
                       </template>
                     </button>
                     
-                    <!-- Stop button -->
+                    <!-- Stop button with spinner -->
                     <button v-else 
                         @click="stopSite(site.name)" 
                         class="icon-action-btn bg-red-500 hover:bg-red-600" 
+                        :class="{
+                            'spinner-container': activeActionSite === site.name
+                        }"
                         :disabled="activeActionSite === site.name"
-                        :class="{ 'opacity-50 cursor-not-allowed': activeActionSite === site.name }"
                         title="Stop">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                      <template v-if="activeActionSite === site.name">
+                        <div class="custom-spinner"></div>
+                      </template>
+                      <template v-else>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                      </template>
                     </button>
                     <button @click="viewLogs(site.name)" class="icon-action-btn bg-blue-500 hover:bg-blue-600" title="Logs">
                       <PhFileText class="w-5 h-5" weight="fill" />
@@ -654,27 +660,34 @@ export default {
       activeActionSite.value = name;
       emit('action-start', name);
       
-      // Minimum time to show spinner (for visual feedback)
-      const minSpinnerTime = Date.now() + 1000; // At least 1 second
-      
       try {
-        await invoke('stop_site', { name });
-        // Poll status until stopped or timeout
-        for (let i = 0; i < 20; i++) {
-          await refreshStatuses();
-          const siteObj = sites.value.find(s => s.name === name);
-          if (siteObj && siteObj.status !== 'running') break;
-          await new Promise(r => setTimeout(r, 500));
-        }
+        // Start the async stop operation in the background immediately
+        setTimeout(async () => {
+          try {
+            await invoke('stop_site', { name });
+            // Poll status until stopped or timeout
+            for (let i = 0; i < 20; i++) {
+              await refreshStatuses();
+              const siteObj = sites.value.find(s => s.name === name);
+              if (siteObj && siteObj.status !== 'running') break;
+              await new Promise(r => setTimeout(r, 500));
+            }
+            // Clear spinner after operation completes
+            emit('action-end', name);
+            activeActionSite.value = null;
+          } catch (err) {
+            console.error(`Failed to stop site ${name}:`, err);
+            showError(`Failed to stop site: ${name}`, String(err));
+            // Clear spinner on error
+            emit('action-end', name);
+            activeActionSite.value = null;
+          }
+        }, 0);
+        
+        // Return immediately to avoid blocking the UI
       } catch (err) {
-        console.error(`Failed to stop site ${name}:`, err);
+        console.error(`Failed to initiate stop for site ${name}:`, err);
         showError(`Failed to stop site: ${name}`, String(err));
-      } finally {
-        // Ensure spinner shows for minimum time for better UX
-        const remainingTime = minSpinnerTime - Date.now();
-        if (remainingTime > 0) {
-          await new Promise(r => setTimeout(r, remainingTime));
-        }
         emit('action-end', name);
         activeActionSite.value = null;
       }
@@ -1128,19 +1141,20 @@ export default {
 </script>
 
 <style scoped>
-/* Custom spinner for buttons - more prominent version */
+/* Custom spinner for buttons - smaller, contained size */
 .custom-spinner {
-  width: 20px;
-  height: 20px;
-  border: 4px solid rgba(255, 255, 255, 0.8);
-  border-bottom-color: transparent;
-  border-left-color: rgba(255, 255, 255, 0.5);
-  border-right-color: rgba(255, 255, 255, 0.5);
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
   border-radius: 50%;
-  box-sizing: border-box;
-  animation: spinner-rotation 1s linear infinite;
-  display: inline-flex;
-  align-self: center;
+  animation: spinner-rotation 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spinner-rotation {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .spinner-container {
@@ -1160,6 +1174,9 @@ export default {
   margin-right: 4px;
   transition: background-color 0.15s ease;
   cursor: pointer;
+  flex-shrink: 0;
+  min-width: 28px;
+  min-height: 28px;
 }
 
 /* Ensure action buttons are visible in light mode */
