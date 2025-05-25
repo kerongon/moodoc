@@ -99,10 +99,10 @@
                   @click="toggleAccordion('system')"
                   class="w-full p-3 text-left flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600/50 transition-colors"
                 >
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                    <PhGear class="w-4 h-4 mr-2 text-gray-600" />
-                    System Environment
-                  </h3>
+                  <div class="flex items-center">
+                    <PhGear class="w-5 h-5 mr-2 text-gray-600" />
+                    <span class="text-base font-semibold text-gray-900 dark:text-gray-100">System Environment</span>
+                  </div>
                   <svg 
                     class="w-4 h-4 text-gray-500 transition-transform duration-200"
                     :class="{ 'rotate-180': activeAccordion === 'system' }"
@@ -156,10 +156,10 @@
                   @click="toggleAccordion('directories')"
                   class="w-full p-3 text-left flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600/50 transition-colors"
                 >
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                    <PhFolder class="w-4 h-4 mr-2 text-yellow-600" />
-                    Directory Status
-                  </h3>
+                  <div class="flex items-center">
+                    <PhFolder class="w-5 h-5 mr-2 text-yellow-600" />
+                    <span class="text-base font-semibold text-gray-900 dark:text-gray-100">Directory Status</span>
+                  </div>
                   <svg 
                     class="w-4 h-4 text-gray-500 transition-transform duration-200"
                     :class="{ 'rotate-180': activeAccordion === 'directories' }"
@@ -199,10 +199,10 @@
                   @click="toggleAccordion('environment')"
                   class="w-full p-3 text-left flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600/50 transition-colors"
                 >
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                    <PhCode class="w-4 h-4 mr-2 text-purple-600" />
-                    Environment Variables
-                  </h3>
+                  <div class="flex items-center">
+                    <PhCode class="w-5 h-5 mr-2 text-purple-600" />
+                    <span class="text-base font-semibold text-gray-900 dark:text-gray-100">Environment Variables</span>
+                  </div>
                   <svg 
                     class="w-4 h-4 text-gray-500 transition-transform duration-200"
                     :class="{ 'rotate-180': activeAccordion === 'environment' }"
@@ -232,10 +232,10 @@
                   @click="toggleAccordion('ports')"
                   class="w-full p-3 text-left flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600/50 transition-colors"
                 >
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                    <PhPlugs class="w-4 h-4 mr-2 text-green-600" />
-                    Port Availability
-                  </h3>
+                  <div class="flex items-center">
+                    <PhPlugs class="w-5 h-5 mr-2 text-green-600" />
+                    <span class="text-base font-semibold text-gray-900 dark:text-gray-100">Port Availability</span>
+                  </div>
                   <svg 
                     class="w-4 h-4 text-gray-500 transition-transform duration-200"
                     :class="{ 'rotate-180': activeAccordion === 'ports' }"
