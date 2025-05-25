@@ -16,22 +16,57 @@ use tauri_plugin_store::StoreExt;
 // where PATH environment variable might not include Docker's location
 pub fn get_docker_path() -> String {
     let mut possible_paths = vec![
-        "/usr/local/bin/docker",                                    // Intel Macs with Homebrew
-        "/opt/homebrew/bin/docker",                                 // Apple Silicon Macs with Homebrew
-        "/usr/bin/docker",                                          // System installation
-        "/Applications/Docker.app/Contents/Resources/bin/docker",   // Docker Desktop
-        "/home/linuxbrew/.linuxbrew/bin/docker",                   // Additional Homebrew location
+        // Standard system locations
+        "/usr/local/bin/docker".to_string(),                                    // Homebrew (Intel), OrbStack symlinks
+        "/opt/homebrew/bin/docker".to_string(),                                 // Homebrew (Apple Silicon)
+        "/usr/bin/docker".to_string(),                                          // System installation
+        
+        // Docker Desktop
+        "/Applications/Docker.app/Contents/Resources/bin/docker".to_string(),   // Docker Desktop
+        
+        // OrbStack installations
+        "/opt/orbstack/bin/docker".to_string(),                                 // OrbStack system installation
+        
+        // Additional package manager locations
+        "/home/linuxbrew/.linuxbrew/bin/docker".to_string(),                   // Linuxbrew
+        "/opt/local/bin/docker".to_string(),                                    // MacPorts
     ];
     
-    // Add Rancher Desktop paths dynamically based on current user
+    // Add user-specific paths dynamically based on current user
     if let Ok(home) = std::env::var("HOME") {
+        // Rancher Desktop
         possible_paths.push(format!("{}/.rd/bin/docker", home));
+        
+        // OrbStack user installation
+        possible_paths.push(format!("{}/.orbstack/bin/docker", home));
+        
+        // User bin directories
         possible_paths.push(format!("{}/bin/docker", home));
+        possible_paths.push(format!("{}/.local/bin/docker", home));
+        
+        // Homebrew user installation
+        possible_paths.push(format!("{}/homebrew/bin/docker", home));
+        
+        // Podman Desktop (if using Docker compatibility)
+        possible_paths.push(format!("{}/.local/share/containers/podman/machine/bin/docker", home));
+        
+        // Lima/Colima installations
+        possible_paths.push(format!("{}/.lima/*/bin/docker", home));
+        possible_paths.push(format!("{}/.colima/bin/docker", home));
     }
     
     // Check each path to see if Docker exists there
     for path in &possible_paths {
-        if Path::new(path).exists() {
+        // Handle glob patterns like ~/.lima/*/bin/docker
+        if path.contains('*') {
+            if let Ok(entries) = glob::glob(path) {
+                for entry in entries.flatten() {
+                    if entry.exists() {
+                        return entry.to_string_lossy().to_string();
+                    }
+                }
+            }
+        } else if Path::new(path).exists() {
             return path.to_string();
         }
     }
@@ -44,28 +79,337 @@ pub fn get_docker_path() -> String {
 // Similar to get_docker_path but for standalone docker-compose installations
 pub fn get_docker_compose_path() -> String {
     let mut possible_paths = vec![
-        "/usr/local/bin/docker-compose",                                    // Intel Macs with Homebrew
-        "/opt/homebrew/bin/docker-compose",                                 // Apple Silicon Macs with Homebrew
-        "/usr/bin/docker-compose",                                          // System installation
-        "/Applications/Docker.app/Contents/Resources/bin/docker-compose",   // Docker Desktop
-        "/home/linuxbrew/.linuxbrew/bin/docker-compose",                   // Additional Homebrew location
+        // Standard system locations
+        "/usr/local/bin/docker-compose".to_string(),                                    // Homebrew (Intel), OrbStack symlinks
+        "/opt/homebrew/bin/docker-compose".to_string(),                                 // Homebrew (Apple Silicon)
+        "/usr/bin/docker-compose".to_string(),                                          // System installation
+        
+        // Docker Desktop
+        "/Applications/Docker.app/Contents/Resources/bin/docker-compose".to_string(),   // Docker Desktop
+        
+        // OrbStack installations
+        "/opt/orbstack/bin/docker-compose".to_string(),                                 // OrbStack system installation
+        
+        // Additional package manager locations
+        "/home/linuxbrew/.linuxbrew/bin/docker-compose".to_string(),                   // Linuxbrew
+        "/opt/local/bin/docker-compose".to_string(),                                    // MacPorts
     ];
     
-    // Add Rancher Desktop paths dynamically based on current user
+    // Add user-specific paths dynamically based on current user
     if let Ok(home) = std::env::var("HOME") {
+        // Rancher Desktop
         possible_paths.push(format!("{}/.rd/bin/docker-compose", home));
+        
+        // OrbStack user installation
+        possible_paths.push(format!("{}/.orbstack/bin/docker-compose", home));
+        
+        // User bin directories
         possible_paths.push(format!("{}/bin/docker-compose", home));
+        possible_paths.push(format!("{}/.local/bin/docker-compose", home));
+        
+        // Homebrew user installation
+        possible_paths.push(format!("{}/homebrew/bin/docker-compose", home));
+        
+        // Podman Desktop (if using Docker compatibility)
+        possible_paths.push(format!("{}/.local/share/containers/podman/machine/bin/docker-compose", home));
+        
+        // Lima/Colima installations
+        possible_paths.push(format!("{}/.lima/*/bin/docker-compose", home));
+        possible_paths.push(format!("{}/.colima/bin/docker-compose", home));
     }
     
     // Check each path to see if docker-compose exists there
     for path in &possible_paths {
-        if Path::new(path).exists() {
+        // Handle glob patterns like ~/.lima/*/bin/docker-compose
+        if path.contains('*') {
+            if let Ok(entries) = glob::glob(path) {
+                for entry in entries.flatten() {
+                    if entry.exists() {
+                        return entry.to_string_lossy().to_string();
+                    }
+                }
+            }
+        } else if Path::new(path).exists() {
             return path.to_string();
         }
     }
     
     // If none of the specific paths work, fall back to "docker-compose" and hope it's in PATH
     "docker-compose".to_string()
+}
+
+// Helper function to detect Docker engine type
+#[command]
+pub fn detect_docker_engine() -> Result<String, String> {
+    let docker_path = get_docker_path();
+    let mut engine_info = Vec::new();
+    
+    // Check what Docker engine we're using
+    match Command::new(&docker_path).args(&["version", "--format", "json"]).output() {
+        Ok(output) => {
+            if output.status.success() {
+                let version_json = String::from_utf8_lossy(&output.stdout);
+                
+                // Parse basic version info
+                if version_json.contains("orbstack") || version_json.contains("OrbStack") {
+                    engine_info.push("Engine: OrbStack".to_string());
+                } else if version_json.contains("rancher") || docker_path.contains(".rd/bin") {
+                    engine_info.push("Engine: Rancher Desktop".to_string());
+                } else if docker_path.contains("Docker.app") {
+                    engine_info.push("Engine: Docker Desktop".to_string());
+                } else if docker_path.contains("homebrew") || docker_path.contains("/usr/local/bin") {
+                    engine_info.push("Engine: Homebrew Docker".to_string());
+                } else if docker_path.contains("podman") {
+                    engine_info.push("Engine: Podman Desktop".to_string());
+                } else if docker_path.contains("lima") {
+                    engine_info.push("Engine: Lima".to_string());
+                } else if docker_path.contains("colima") {
+                    engine_info.push("Engine: Colima".to_string());
+                } else {
+                    engine_info.push("Engine: Unknown/System Docker".to_string());
+                }
+                
+                engine_info.push(format!("Docker Path: {}", docker_path));
+                engine_info.push(format!("Docker Compose Path: {}", get_docker_compose_path()));
+            }
+        }
+        Err(e) => {
+            return Err(format!("Failed to detect Docker engine: {}", e));
+        }
+    }
+    
+    // Check Docker info for additional details
+    match Command::new(&docker_path).args(&["info", "--format", "{{.ServerVersion}}"]).output() {
+        Ok(output) => {
+            if output.status.success() {
+                let version_str = String::from_utf8_lossy(&output.stdout);
+                let version = version_str.trim();
+                engine_info.push(format!("Server Version: {}", version));
+            }
+        }
+        Err(_) => {} // Don't fail if this doesn't work
+    }
+    
+    // Check if we can access Docker socket
+    match Command::new(&docker_path).args(&["ps", "-q"]).output() {
+        Ok(output) => {
+            if output.status.success() {
+                engine_info.push("Socket Access: ✓ Working".to_string());
+            } else {
+                engine_info.push("Socket Access: ✗ Failed".to_string());
+            }
+        }
+        Err(_) => {
+            engine_info.push("Socket Access: ✗ Failed".to_string());
+        }
+    }
+    
+    Ok(engine_info.join("\n"))
+}
+
+// Enhanced Docker path debugging with support for all engines
+#[command]
+pub fn debug_docker_engine_paths() -> Result<String, String> {
+    let mut results = Vec::new();
+    
+    // Get HOME environment variable
+    let home = std::env::var("HOME").unwrap_or_else(|_| "HOME not available".to_string());
+    results.push(format!("HOME environment variable: {}", home));
+    
+    // Create dynamic paths
+    let orbstack_user_path = format!("{}/.orbstack/bin/docker", home);
+    let rancher_path = format!("{}/.rd/bin/docker", home);
+    let user_bin_path = format!("{}/bin/docker", home);
+    let local_bin_path = format!("{}/.local/bin/docker", home);
+    let homebrew_user_path = format!("{}/homebrew/bin/docker", home);
+    let podman_path = format!("{}/.local/share/containers/podman/machine/bin/docker", home);
+    let colima_path = format!("{}/.colima/bin/docker", home);
+    
+    // Check for different Docker engine installations
+    let engine_paths = vec![
+        // Docker Desktop
+        ("/Applications/Docker.app/Contents/Resources/bin/docker", "Docker Desktop"),
+        
+        // OrbStack
+        ("/opt/orbstack/bin/docker", "OrbStack System"),
+        (orbstack_user_path.as_str(), "OrbStack User"),
+        
+        // Rancher Desktop
+        (rancher_path.as_str(), "Rancher Desktop"),
+        
+        // Homebrew installations
+        ("/usr/local/bin/docker", "Homebrew (Intel) / OrbStack Symlinks"),
+        ("/opt/homebrew/bin/docker", "Homebrew (Apple Silicon)"),
+        
+        // System installations
+        ("/usr/bin/docker", "System Installation"),
+        
+        // Package managers
+        ("/opt/local/bin/docker", "MacPorts"),
+        ("/home/linuxbrew/.linuxbrew/bin/docker", "Linuxbrew"),
+        
+        // User directories
+        (user_bin_path.as_str(), "User Bin"),
+        (local_bin_path.as_str(), "Local User Bin"),
+        (homebrew_user_path.as_str(), "User Homebrew"),
+        
+        // Podman Desktop
+        (podman_path.as_str(), "Podman Desktop"),
+        
+        // Lima/Colima (we'll check these separately due to glob patterns)
+        (colima_path.as_str(), "Colima"),
+    ];
+    
+    results.push(format!("\n--- DOCKER ENGINE DETECTION ---"));
+    
+    for (path, engine_type) in engine_paths {
+        let exists = Path::new(path).exists();
+        results.push(format!(
+            "{}: {} {}",
+            engine_type,
+            path,
+            if exists { "✓ EXISTS" } else { "✗ NOT FOUND" }
+        ));
+        
+        if exists {
+            // Test if it's executable and get version
+            match Command::new(path).arg("--version").output() {
+                Ok(output) => {
+                    if output.status.success() {
+                        let version_output = String::from_utf8_lossy(&output.stdout);
+                        let version = version_output.trim().to_string();
+                        let short_version = version.lines().next().unwrap_or(&version);
+                        results.push(format!("  └─ Version: {}", short_version));
+                        
+                        // Try to detect engine type from version
+                        if version.to_lowercase().contains("orbstack") {
+                            results.push(format!("  └─ 🎯 DETECTED: OrbStack Engine"));
+                        } else if version.to_lowercase().contains("rancher") {
+                            results.push(format!("  └─ 🐄 DETECTED: Rancher Desktop"));
+                        } else if version.to_lowercase().contains("podman") {
+                            results.push(format!("  └─ 🐧 DETECTED: Podman Engine"));
+                        }
+                    } else {
+                        results.push(format!("  └─ ✗ Found but not executable"));
+                    }
+                }
+                Err(e) => {
+                    results.push(format!("  └─ ✗ Error executing: {}", e));
+                }
+            }
+        }
+    }
+    
+    // Check Lima installations (glob pattern)
+    results.push(format!("\n--- LIMA INSTALLATIONS ---"));
+    let lima_pattern = format!("{}/.lima/*/bin/docker", home);
+    match glob::glob(&lima_pattern) {
+        Ok(entries) => {
+            let mut found_lima = false;
+            for entry in entries.flatten() {
+                if entry.exists() {
+                    found_lima = true;
+                    results.push(format!("Lima: {} ✓ EXISTS", entry.display()));
+                    
+                    // Test Lima docker
+                    match Command::new(&entry).arg("--version").output() {
+                        Ok(output) => {
+                            if output.status.success() {
+                                let version_output = String::from_utf8_lossy(&output.stdout);
+                                let version = version_output.trim();
+                                let short_version = version.lines().next().unwrap_or(&version);
+                                results.push(format!("  └─ Version: {}", short_version));
+                                results.push(format!("  └─ 🐧 DETECTED: Lima Engine"));
+                            }
+                        }
+                        Err(e) => {
+                            results.push(format!("  └─ ✗ Error executing: {}", e));
+                        }
+                    }
+                }
+            }
+            if !found_lima {
+                results.push(format!("Lima: No installations found"));
+            }
+        }
+        Err(e) => {
+            results.push(format!("Lima: Error checking installations: {}", e));
+        }
+    }
+    
+    // Test what our path resolution functions actually return
+    let resolved_docker = get_docker_path();
+    let resolved_compose = get_docker_compose_path();
+    
+    results.push(format!("\n--- PATH RESOLUTION RESULTS ---"));
+    results.push(format!("get_docker_path() returns: {}", resolved_docker));
+    results.push(format!("get_docker_compose_path() returns: {}", resolved_compose));
+    
+    // Check if resolved paths match specific engines
+    if resolved_docker.contains("orbstack") {
+        results.push(format!("🎯 Using OrbStack: ✓ YES"));
+    } else if resolved_docker.contains(".rd/bin") {
+        results.push(format!("🐄 Using Rancher Desktop: ✓ YES"));
+    } else if resolved_docker.contains("Docker.app") {
+        results.push(format!("🐳 Using Docker Desktop: ✓ YES"));
+    } else if resolved_docker.contains("homebrew") {
+        results.push(format!("🍺 Using Homebrew Docker: ✓ YES"));
+    } else if resolved_docker.contains("podman") {
+        results.push(format!("🐧 Using Podman Desktop: ✓ YES"));
+    } else if resolved_docker.contains("lima") {
+        results.push(format!("🐧 Using Lima: ✓ YES"));
+    } else if resolved_docker.contains("colima") {
+        results.push(format!("🦙 Using Colima: ✓ YES"));
+    } else {
+        results.push(format!("❓ Using: {} (Unknown engine)", resolved_docker));
+    }
+    
+    // Test Docker functionality
+    results.push(format!("\n--- FUNCTIONALITY TEST ---"));
+    match Command::new(&resolved_docker).args(&["ps", "-q"]).output() {
+        Ok(output) => {
+            if output.status.success() {
+                results.push(format!("Docker ps: ✓ Working"));
+            } else {
+                results.push(format!("Docker ps: ✗ Failed - {}", String::from_utf8_lossy(&output.stderr)));
+            }
+        }
+        Err(e) => {
+            results.push(format!("Docker ps: ✗ Error - {}", e));
+        }
+    }
+    
+    // Test docker-compose functionality
+    match Command::new(&resolved_compose).args(&["--version"]).output() {
+        Ok(output) => {
+            if output.status.success() {
+                let version_output = String::from_utf8_lossy(&output.stdout);
+                let version = version_output.trim();
+                results.push(format!("Docker Compose: ✓ Working - {}", version.lines().next().unwrap_or(&version)));
+            } else {
+                results.push(format!("Docker Compose: ✗ Failed"));
+            }
+        }
+        Err(_) => {
+            // Try docker compose (v2)
+            match Command::new(&resolved_docker).args(&["compose", "--version"]).output() {
+                Ok(output) => {
+                    if output.status.success() {
+                        let version_output = String::from_utf8_lossy(&output.stdout);
+                        let version = version_output.trim();
+                        results.push(format!("Docker Compose V2: ✓ Working - {}", version.lines().next().unwrap_or(&version)));
+                    } else {
+                        results.push(format!("Docker Compose: ✗ Neither legacy nor v2 working"));
+                    }
+                }
+                Err(e) => {
+                    results.push(format!("Docker Compose: ✗ Error - {}", e));
+                }
+            }
+        }
+    }
+    
+    Ok(results.join("\n"))
 }
 
 // Re-export submodules
@@ -322,7 +666,8 @@ pub fn validate_production_environment() -> Result<String, String> {
     match Command::new(&get_docker_path()).args(&["version", "--format", "{{.Server.Version}}"]).output() {
         Ok(output) => {
             if output.status.success() {
-                let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                let version_str = String::from_utf8_lossy(&output.stdout);
+                let version = version_str.trim().to_string();
                 results.push(format!("Docker server accessible: Yes ({})", version));
                 
                 // Test container operations
@@ -540,7 +885,8 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, St
     match Command::new(&get_docker_path()).arg("--version").output() {
         Ok(output) => {
             if output.status.success() {
-                diagnostics.docker_version = Some(String::from_utf8_lossy(&output.stdout).trim().to_string());
+                let version_str = String::from_utf8_lossy(&output.stdout);
+                diagnostics.docker_version = Some(version_str.trim().to_string());
             } else {
                 diagnostics.errors.push("Docker version command failed".to_string());
             }
@@ -558,7 +904,8 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, St
         Ok(output) => {
             diagnostics.docker_socket_accessible = output.status.success();
             if output.status.success() {
-                diagnostics.docker_daemon_info = Some(String::from_utf8_lossy(&output.stdout).trim().to_string());
+                let info_str = String::from_utf8_lossy(&output.stdout);
+                diagnostics.docker_daemon_info = Some(info_str.trim().to_string());
             } else {
                 let stderr = String::from_utf8_lossy(&output.stderr);
                 diagnostics.errors.push(format!("Docker info failed: {}", stderr));
@@ -770,7 +1117,8 @@ pub fn test_docker_path_resolution() -> Result<String, String> {
     let docker_accessible = match Command::new(&docker_path).arg("--version").output() {
         Ok(output) => {
             if output.status.success() {
-                let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                let version_str = String::from_utf8_lossy(&output.stdout);
+                let version = version_str.trim().to_string();
                 format!("✓ Docker accessible at: {} ({})", docker_path, version)
             } else {
                 format!("✗ Docker found but not working at: {}", docker_path)
@@ -783,7 +1131,8 @@ pub fn test_docker_path_resolution() -> Result<String, String> {
     let docker_compose_accessible = match Command::new(&docker_compose_path).arg("--version").output() {
         Ok(output) => {
             if output.status.success() {
-                let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                let version_str = String::from_utf8_lossy(&output.stdout);
+                let version = version_str.trim().to_string();
                 format!("✓ Docker Compose accessible at: {} ({})", docker_compose_path, version)
             } else {
                 format!("✗ Docker Compose found but not working at: {}", docker_compose_path)
