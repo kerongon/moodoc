@@ -1,0 +1,30 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <!-- Re-using the M path, will be scaled and positioned -->
+    <path id="moodleM" d="M184 568V200H256L384 408L512 200H584V568H496V312L384 492L272 312V568H184Z" />
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="230" fill="url(#purpleGradient)"/>
+
+  <!-- Moodle M -->
+  <!-- M scaled to width 380px, height becomes 349.6px -->
+  <!-- Positioned: top-left of M content box (322, 262.2) -->
+  <!-- Original M top-left (184, 200) -->
+  <!-- Scale factor s = 0.95 -->
+  <!-- Translate x = 322 - (184 * 0.95) = 322 - 174.8 = 147.2 -->
+  <!-- Translate y = 262.2 - (200 * 0.95) = 262.2 - 190 = 72.2 -->
+  <use href="#moodleM" transform="translate(147.2, 72.2) scale(0.95)" fill="white"/>
+
+  <!-- Server Rack (width 380px, height 120px) -->
+  <!-- Positioned: top-left of rack content box (322, 641.8) -->
+  <!-- Rack made of 4 white bars, each 26.25px high, with 5px gaps -->
+  <rect x="322" y="641.8" width="380" height="26.25" rx="3" fill="white"/>
+  <rect x="322" y="673.05" width="380" height="26.25" rx="3" fill="white"/>
+  <rect x="322" y="704.3" width="380" height="26.25" rx="3" fill="white"/>
+  <rect x="322" y="735.55" width="380" height="26.25" rx="3" fill="white"/>
+</svg>
