@@ -229,22 +229,14 @@
                       </template>
                     </button>
                     
-                    <!-- Stop button with prominent spinner -->
+                    <!-- Stop button -->
                     <button v-else 
                         @click="stopSite(site.name)" 
-                        class="icon-action-btn" 
-                        :class="{
-                            'bg-red-500 hover:bg-red-600': activeActionSite !== site.name, 
-                            'bg-blue-600 spinner-container': activeActionSite === site.name
-                        }"
+                        class="icon-action-btn bg-red-500 hover:bg-red-600" 
                         :disabled="activeActionSite === site.name"
+                        :class="{ 'opacity-50 cursor-not-allowed': activeActionSite === site.name }"
                         title="Stop">
-                      <template v-if="activeActionSite === site.name">
-                        <div class="custom-spinner"></div>
-                      </template>
-                      <template v-else>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-                      </template>
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
                     </button>
                     <button @click="viewLogs(site.name)" class="icon-action-btn bg-blue-500 hover:bg-blue-600" title="Logs">
                       <PhFileText class="w-5 h-5" weight="fill" />
