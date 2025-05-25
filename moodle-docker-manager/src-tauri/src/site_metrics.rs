@@ -1,4 +1,4 @@
-use crate::docker::SiteState;
+use crate::docker::{get_docker_path, SiteState};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::process::Command;
@@ -157,7 +157,7 @@ pub fn get_storage_info() -> Result<StorageInfo, String> {
 // Helper function to get database size
 fn get_database_size(db_container: &str) -> Result<u64, String> {
     // First, check if container exists and is running
-    let container_check = Command::new("docker")
+    let container_check = Command::new(&get_docker_path())
         .args(&[
             "ps",
             "--filter",
@@ -176,7 +176,7 @@ fn get_database_size(db_container: &str) -> Result<u64, String> {
             }
 
             // Try to get database size from running container
-            let size_output = Command::new("docker")
+            let size_output = Command::new(&get_docker_path())
                 .args(&[
                     "exec",
                     db_container,

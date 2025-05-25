@@ -5,11 +5,56 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{self, create_dir_all};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
 use tauri::{command, AppHandle, Manager, Emitter};
 use tauri_plugin_store::StoreExt;
+
+// Helper function to get Docker executable path
+// This ensures the app can find Docker even when launched from Applications folder
+// where PATH environment variable might not include Docker's location
+pub fn get_docker_path() -> String {
+    // Common Docker installation paths on macOS
+    let possible_paths = vec![
+        "/usr/local/bin/docker",                                    // Intel Macs with Homebrew
+        "/opt/homebrew/bin/docker",                                 // Apple Silicon Macs with Homebrew
+        "/usr/bin/docker",                                          // System installation
+        "/Applications/Docker.app/Contents/Resources/bin/docker",   // Docker Desktop
+    ];
+    
+    // Check each path to see if Docker exists there
+    for path in &possible_paths {
+        if Path::new(path).exists() {
+            return path.to_string();
+        }
+    }
+    
+    // If none of the specific paths work, fall back to "docker" and hope it's in PATH
+    "docker".to_string()
+}
+
+// Helper function to get docker-compose executable path
+// Similar to get_docker_path but for standalone docker-compose installations
+pub fn get_docker_compose_path() -> String {
+    // Common docker-compose installation paths on macOS
+    let possible_paths = vec![
+        "/usr/local/bin/docker-compose",                                    // Intel Macs with Homebrew
+        "/opt/homebrew/bin/docker-compose",                                 // Apple Silicon Macs with Homebrew
+        "/usr/bin/docker-compose",                                          // System installation
+        "/Applications/Docker.app/Contents/Resources/bin/docker-compose",   // Docker Desktop
+    ];
+    
+    // Check each path to see if docker-compose exists there
+    for path in &possible_paths {
+        if Path::new(path).exists() {
+            return path.to_string();
+        }
+    }
+    
+    // If none of the specific paths work, fall back to "docker-compose" and hope it's in PATH
+    "docker-compose".to_string()
+}
 
 // Re-export submodules
 pub mod backup;
@@ -116,7 +161,7 @@ pub fn check_docker_installed() -> bool {
 
 #[command]
 pub fn check_docker_running() -> bool {
-    let output = Command::new("docker").arg("info").output();
+    let output = Command::new(&get_docker_path()).arg("info").output();
 
     match output {
         Ok(output) => output.status.success(),
@@ -200,7 +245,7 @@ pub fn check_docker_permissions() -> Result<String, String> {
     let mut solutions = Vec::new();
 
     // Check if Docker socket is accessible
-    match Command::new("docker").args(&["info"]).output() {
+    match Command::new(&get_docker_path()).args(&["info"]).output() {
         Ok(output) => {
             if !output.status.success() {
                 let error = String::from_utf8_lossy(&output.stderr);
@@ -220,7 +265,7 @@ pub fn check_docker_permissions() -> Result<String, String> {
     }
 
     // Check Docker compose availability
-    match Command::new("docker").args(&["compose", "version"]).output() {
+    match Command::new(&get_docker_path()).args(&["compose", "version"]).output() {
         Ok(output) => {
             if !output.status.success() {
                 issues.push("Docker Compose not available".to_string());
@@ -229,7 +274,7 @@ pub fn check_docker_permissions() -> Result<String, String> {
         }
         Err(_) => {
             // Try legacy docker-compose
-            match Command::new("docker-compose").args(&["--version"]).output() {
+            match Command::new(&get_docker_compose_path()).args(&["--version"]).output() {
                 Ok(_) => {
                     solutions.push("Note: Using legacy docker-compose. Consider upgrading to Docker Compose V2".to_string());
                 }
@@ -262,14 +307,14 @@ pub fn validate_production_environment() -> Result<String, String> {
     results.push(format!("Build type: {}", if is_production { "Production" } else { "Development" }));
     
     // Check Docker accessibility with detailed error reporting
-    match Command::new("docker").args(&["version", "--format", "{{.Server.Version}}"]).output() {
+    match Command::new(&get_docker_path()).args(&["version", "--format", "{{.Server.Version}}"]).output() {
         Ok(output) => {
             if output.status.success() {
                 let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
                 results.push(format!("Docker server accessible: Yes ({})", version));
                 
                 // Test container operations
-                match Command::new("docker").args(&["ps", "-q"]).output() {
+                match Command::new(&get_docker_path()).args(&["ps", "-q"]).output() {
                     Ok(ps_output) => {
                         if ps_output.status.success() {
                             results.push("Container operations: Accessible".to_string());
@@ -480,7 +525,7 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, St
     };
 
     // Check Docker version
-    match Command::new("docker").arg("--version").output() {
+    match Command::new(&get_docker_path()).arg("--version").output() {
         Ok(output) => {
             if output.status.success() {
                 diagnostics.docker_version = Some(String::from_utf8_lossy(&output.stdout).trim().to_string());
@@ -497,7 +542,7 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, St
     diagnostics.docker_running = check_docker_running();
 
     // Check Docker socket accessibility
-    match Command::new("docker").arg("info").output() {
+    match Command::new(&get_docker_path()).arg("info").output() {
         Ok(output) => {
             diagnostics.docker_socket_accessible = output.status.success();
             if output.status.success() {
@@ -583,7 +628,7 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, St
 
     // List running containers
     if diagnostics.docker_socket_accessible {
-        match Command::new("docker").args(&["ps", "--format", "{{.Names}}"]).output() {
+        match Command::new(&get_docker_path()).args(&["ps", "--format", "{{.Names}}"]).output() {
             Ok(output) => {
                 if output.status.success() {
                     diagnostics.running_containers = String::from_utf8_lossy(&output.stdout)
@@ -599,7 +644,7 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticInfo, St
         }
 
         // List Docker networks
-        match Command::new("docker").args(&["network", "ls", "--format", "{{.Name}}"]).output() {
+        match Command::new(&get_docker_path()).args(&["network", "ls", "--format", "{{.Name}}"]).output() {
             Ok(output) => {
                 if output.status.success() {
                     diagnostics.docker_networks = String::from_utf8_lossy(&output.stdout)
@@ -665,7 +710,7 @@ pub async fn check_site_status_detailed(
     // If basic files exist, check Docker containers
     if errors.is_empty() {
         // Set environment and check containers
-        let output = Command::new("docker")
+        let output = Command::new(&get_docker_path())
             .args(&["ps", "-a", "--filter", &format!("name={}", site_name), "--format", "{{.State}}"])
             .current_dir(&site.path)
             .output();
@@ -701,4 +746,51 @@ pub async fn check_site_status_detailed(
     }
 
     Ok((status, errors))
+}
+
+// Test command to verify Docker path resolution
+#[command]
+pub fn test_docker_path_resolution() -> Result<String, String> {
+    let docker_path = get_docker_path();
+    let docker_compose_path = get_docker_compose_path();
+    
+    // Test if Docker is accessible at the resolved path
+    let docker_accessible = match Command::new(&docker_path).arg("--version").output() {
+        Ok(output) => {
+            if output.status.success() {
+                let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                format!("✓ Docker accessible at: {} ({})", docker_path, version)
+            } else {
+                format!("✗ Docker found but not working at: {}", docker_path)
+            }
+        }
+        Err(e) => format!("✗ Docker not accessible at: {} ({})", docker_path, e)
+    };
+    
+    // Test docker-compose
+    let docker_compose_accessible = match Command::new(&docker_compose_path).arg("--version").output() {
+        Ok(output) => {
+            if output.status.success() {
+                let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                format!("✓ Docker Compose accessible at: {} ({})", docker_compose_path, version)
+            } else {
+                format!("✗ Docker Compose found but not working at: {}", docker_compose_path)
+            }
+        }
+        Err(e) => format!("✗ Docker Compose not accessible at: {} ({})", docker_compose_path, e)
+    };
+    
+    // Get current PATH for comparison
+    let current_path = std::env::var("PATH").unwrap_or_else(|_| "PATH not available".to_string());
+    let path_contains_docker = current_path.contains("/docker") || current_path.contains("docker");
+    
+    let result = format!(
+        "Docker Path Resolution Test Results:\n\n{}\n{}\n\nCurrent PATH contains docker paths: {}\nPATH variable: {}\n\nThis test verifies that the app can find Docker even when PATH doesn't include Docker locations (like when launched from Applications folder).",
+        docker_accessible,
+        docker_compose_accessible,
+        path_contains_docker,
+        if current_path.len() > 200 { format!("{}...", &current_path[..200]) } else { current_path }
+    );
+    
+    Ok(result)
 }

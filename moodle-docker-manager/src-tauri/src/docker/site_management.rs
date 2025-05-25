@@ -9,7 +9,7 @@ use std::time::Duration;
 use tauri::{command, AppHandle, Manager};
 use tauri_plugin_store::StoreExt;
 
-use super::{safe_emit, Site, SiteState};
+use super::{get_docker_path, safe_emit, Site, SiteState};
 
 // Helper function to check if site creation has been cancelled
 fn is_creation_cancelled(app_handle: &AppHandle, name: &str) -> bool {
@@ -674,7 +674,7 @@ pub fn list_sites(app_handle: AppHandle) -> Result<Vec<Site>, String> {
     for site in sites_map.values_mut() {
         // Get container status for this site
         let filter = format!("name={}", site.name);
-        let output = Command::new("docker")
+        let output = Command::new(&get_docker_path())
             .args(&["ps", "-a", "--filter", &filter, "--format", "{{.Status}}"])
             .output();
         if let Ok(o) = output {
@@ -1240,7 +1240,7 @@ fn cleanup_cancelled_site_creation(app_handle: &AppHandle, name: &str) -> Result
     );
 
     // Try to remove the Docker network
-    let network_cleanup = Command::new("docker")
+    let network_cleanup = Command::new(&get_docker_path())
         .args(&["network", "rm", &format!("{}_network", name)])
         .output();
     // Ignore errors as network might not exist
