@@ -5,18 +5,18 @@
       <div class="fixed inset-0 bg-black/50 transition-opacity" @click="closeModal"></div>
       
       <!-- Modal panel -->
-      <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[850px] overflow-hidden">
         <!-- Modal content -->
         <div class="flex flex-col h-full">
           <!-- Header -->
-          <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center">
-              <div class="bg-blue-600 rounded-lg p-1.5 mr-3 shadow-sm">
-                <PhWrench class="text-white w-6 h-6" weight="fill" />
+              <div class="bg-blue-600 rounded-lg p-1 mr-2 shadow-sm">
+                <PhWrench class="text-white w-5 h-5" weight="fill" />
               </div>
               <div>
                 <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">System Diagnostics</h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Diagnose production environment issues</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Diagnose production environment issues</p>
               </div>
             </div>
             <button @click="closeModal" class="text-gray-400 hover:text-gray-500">
@@ -27,9 +27,9 @@
           </div>
           
           <!-- Content -->
-          <div class="flex-1 overflow-y-auto p-6">
+          <div class="flex-1 overflow-y-auto p-4">
             <!-- Loading state -->
-            <div v-if="loading" class="flex items-center justify-center py-12">
+            <div v-if="loading" class="flex items-center justify-center py-8">
               <div class="flex items-center space-x-3">
                 <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 <span class="text-gray-600 dark:text-gray-400">Running diagnostics...</span>
@@ -37,89 +37,89 @@
             </div>
             
             <!-- Error state -->
-            <div v-else-if="error" class="text-center py-12">
+            <div v-else-if="error" class="text-center py-8">
               <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                <PhWarningCircle class="mx-auto h-12 w-12 text-red-500 mb-2" />
-                <h3 class="text-lg font-medium text-red-900 dark:text-red-400 mb-2">Diagnostic Failed</h3>
+                <PhWarningCircle class="mx-auto h-10 w-10 text-red-500 mb-2" />
+                <h3 class="text-base font-medium text-red-900 dark:text-red-400 mb-2">Diagnostic Failed</h3>
                 <p class="text-sm text-red-700 dark:text-red-300">{{ error }}</p>
               </div>
             </div>
             
             <!-- Diagnostic results -->
-            <div v-else-if="diagnosticInfo" class="space-y-6">
+            <div v-else-if="diagnosticInfo" class="space-y-4">
               <!-- Docker Status Section -->
-              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                  <PhDocker class="w-5 h-5 mr-2 text-blue-600" />
+              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
+                  <PhDocker class="w-4 h-4 mr-2 text-blue-600" />
                   Docker Status
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div class="space-y-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div class="space-y-1.5">
                     <div class="flex justify-between">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Docker Version:</span>
-                      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.docker_version || 'Not available' }}</span>
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Docker Version:</span>
+                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.docker_version || 'Not available' }}</span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Running:</span>
-                      <span class="text-sm font-medium" :class="diagnosticInfo.docker_running ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Running:</span>
+                      <span class="text-xs font-medium" :class="diagnosticInfo.docker_running ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
                         {{ diagnosticInfo.docker_running ? 'Yes' : 'No' }}
                       </span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Socket Accessible:</span>
-                      <span class="text-sm font-medium" :class="diagnosticInfo.socket_accessible ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Socket Accessible:</span>
+                      <span class="text-xs font-medium" :class="diagnosticInfo.socket_accessible ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
                         {{ diagnosticInfo.socket_accessible ? 'Yes' : 'No' }}
                       </span>
                     </div>
                   </div>
-                  <div class="space-y-2">
+                  <div class="space-y-1.5">
                     <div class="flex justify-between">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Containers:</span>
-                      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.containers?.length || 0 }}</span>
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Containers:</span>
+                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.containers?.length || 0 }}</span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Networks:</span>
-                      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.networks?.length || 0 }}</span>
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Networks:</span>
+                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.networks?.length || 0 }}</span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Compose Version:</span>
-                      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.compose_version || 'Not available' }}</span>
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Compose Version:</span>
+                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.compose_version || 'Not available' }}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- System Environment Section -->
-              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                  <PhGear class="w-5 h-5 mr-2 text-gray-600" />
+              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
+                  <PhGear class="w-4 h-4 mr-2 text-gray-600" />
                   System Environment
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div class="space-y-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div class="space-y-1.5">
                     <div class="flex justify-between">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Platform:</span>
-                      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.platform || 'Unknown' }}</span>
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Platform:</span>
+                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.platform || 'Unknown' }}</span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Current User:</span>
-                      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.current_user || 'Unknown' }}</span>
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Current User:</span>
+                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.current_user || 'Unknown' }}</span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">User Groups:</span>
-                      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.user_groups?.join(', ') || 'None' }}</span>
+                      <span class="text-xs text-gray-600 dark:text-gray-400">User Groups:</span>
+                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100">{{ diagnosticInfo.user_groups?.join(', ') || 'None' }}</span>
                     </div>
                   </div>
-                  <div class="space-y-2">
+                  <div class="space-y-1.5">
                     <div class="flex justify-between">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Docker Group:</span>
-                      <span class="text-sm font-medium" :class="diagnosticInfo.docker_groups?.length > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Docker Group:</span>
+                      <span class="text-xs font-medium" :class="diagnosticInfo.docker_groups?.length > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
                         {{ diagnosticInfo.docker_groups?.length > 0 ? 'Member' : 'Not member' }}
                       </span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-sm text-gray-600 dark:text-gray-400">Working Directory:</span>
-                      <span class="text-sm font-medium text-gray-900 dark:text-gray-100" :title="diagnosticInfo.current_dir">
+                      <span class="text-xs text-gray-600 dark:text-gray-400">Working Directory:</span>
+                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100" :title="diagnosticInfo.current_dir">
                         {{ formatPath(diagnosticInfo.current_dir) }}
                       </span>
                     </div>
@@ -128,18 +128,18 @@
               </div>
 
               <!-- Directory Status Section -->
-              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                  <PhFolder class="w-5 h-5 mr-2 text-yellow-600" />
+              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
+                  <PhFolder class="w-4 h-4 mr-2 text-yellow-600" />
                   Directory Status
                 </h3>
-                <div class="space-y-3">
-                  <div v-for="(dir, index) in diagnosticInfo.directory_checks" :key="index" class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-md border">
+                <div class="space-y-2">
+                  <div v-for="(dir, index) in diagnosticInfo.directory_checks" :key="index" class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-md border">
                     <div class="flex items-center">
-                      <PhFolder class="w-4 h-4 mr-2 text-gray-500" />
-                      <span class="text-sm font-medium text-gray-900 dark:text-gray-100" :title="dir.path">{{ formatPath(dir.path) }}</span>
+                      <PhFolder class="w-3 h-3 mr-2 text-gray-500" />
+                      <span class="text-xs font-medium text-gray-900 dark:text-gray-100" :title="dir.path">{{ formatPath(dir.path) }}</span>
                     </div>
-                    <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2">
                       <span class="text-xs px-2 py-1 rounded" :class="dir.exists ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'">
                         {{ dir.exists ? 'Exists' : 'Missing' }}
                       </span>
@@ -152,23 +152,23 @@
               </div>
 
               <!-- Environment Variables Section -->
-              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                  <PhCode class="w-5 h-5 mr-2 text-purple-600" />
+              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
+                  <PhCode class="w-4 h-4 mr-2 text-purple-600" />
                   Environment Variables
                 </h3>
-                <div class="space-y-2 max-h-48 overflow-y-auto">
+                <div class="space-y-1 max-h-32 overflow-y-auto">
                   <div v-for="[key, value] in Object.entries(diagnosticInfo.environment_vars || {})" :key="key" class="flex justify-between py-1 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
-                    <span class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ key }}:</span>
-                    <span class="text-sm text-gray-900 dark:text-gray-100 max-w-xs truncate" :title="value">{{ value }}</span>
+                    <span class="text-xs font-medium text-gray-600 dark:text-gray-400">{{ key }}:</span>
+                    <span class="text-xs text-gray-900 dark:text-gray-100 max-w-xs truncate" :title="value">{{ value }}</span>
                   </div>
                 </div>
               </div>
 
               <!-- Port Availability Section -->
-              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                  <PhPlugs class="w-5 h-5 mr-2 text-green-600" />
+              <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
+                  <PhPlugs class="w-4 h-4 mr-2 text-green-600" />
                   Port Availability
                 </h3>
                 <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
@@ -184,14 +184,14 @@
               </div>
 
               <!-- Errors Section -->
-              <div v-if="diagnosticInfo.errors && diagnosticInfo.errors.length > 0" class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
-                <h3 class="text-lg font-semibold text-red-900 dark:text-red-400 mb-3 flex items-center">
-                  <PhWarningCircle class="w-5 h-5 mr-2" />
+              <div v-if="diagnosticInfo.errors && diagnosticInfo.errors.length > 0" class="bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
+                <h3 class="text-base font-semibold text-red-900 dark:text-red-400 mb-2 flex items-center">
+                  <PhWarningCircle class="w-4 h-4 mr-2" />
                   Errors Found
                 </h3>
                 <div class="space-y-2">
-                  <div v-for="(error, index) in diagnosticInfo.errors" :key="index" class="p-3 bg-red-100 dark:bg-red-900/30 rounded-md">
-                    <p class="text-sm text-red-800 dark:text-red-300">{{ error }}</p>
+                  <div v-for="(error, index) in diagnosticInfo.errors" :key="index" class="p-2 bg-red-100 dark:bg-red-900/30 rounded-md">
+                    <p class="text-xs text-red-800 dark:text-red-300">{{ error }}</p>
                   </div>
                 </div>
               </div>
@@ -199,7 +199,7 @@
           </div>
           
           <!-- Footer -->
-          <div class="border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between">
+          <div class="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between">
             <button @click="runDiagnostics" :disabled="loading" class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
               <PhArrowClockwise class="w-4 h-4 mr-2" :class="{ 'animate-spin': loading }" />
               {{ loading ? 'Running...' : 'Refresh Diagnostics' }}
