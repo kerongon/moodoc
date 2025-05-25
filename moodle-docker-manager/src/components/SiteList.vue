@@ -14,10 +14,10 @@
 
       <div class="flex items-center space-x-3">
         <!-- System Diagnostics Button -->
-        <button @click="showDiagnosticModal" class="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm" title="System Diagnostics">
+        <!-- <button @click="showDiagnosticModal" class="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm" title="System Diagnostics">
           <PhWrench class="w-4 h-4 mr-2" />
           Diagnostics
-        </button>
+        </button> -->
         
         <!-- search box -->
         <div v-if="sites.length > 0" class="relative">
