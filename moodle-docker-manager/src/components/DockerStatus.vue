@@ -1,9 +1,10 @@
 <template>
   <div class="docker-status-container" 
+       @click="handleClick"
        :title="loading ? 'Checking Docker status...' : 
-               dockerInstalled && dockerRunning ? 'Docker is installed and running' : 
-               dockerInstalled ? 'Docker is installed but not running' : 
-               'Docker is not installed'">
+               dockerInstalled && dockerRunning ? 'Docker is installed and running - Click for diagnostics' : 
+               dockerInstalled ? 'Docker is installed but not running - Click for diagnostics' : 
+               'Docker is not installed - Click for diagnostics'">
     <!-- Status indicator dot -->
     <div v-if="!loading" class="status-dot-container">
       <div v-if="dockerInstalled && dockerRunning" class="status-dot running"></div>
@@ -35,6 +36,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 export default {
   name: 'DockerStatus',
+  emits: ['click'],
   data() {
     return {
       loading: true,
@@ -43,6 +45,9 @@ export default {
     };
   },
   methods: {
+    handleClick() {
+      this.$emit('click');
+    },
     async fetchDockerStatus() {
       try {
         this.dockerInstalled = await invoke('check_docker_installed');

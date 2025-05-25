@@ -61,7 +61,7 @@
           
           <!-- Header actions -->
           <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <DockerStatus />
+            <DockerStatus @click="openDiagnostics" />
             
             <router-link to="/create" title="Create New Site" class="modern-new-site-button">
               <PhPlus class="button-icon" weight="fill" />
@@ -80,6 +80,8 @@
     </div>
     <!-- Settings modal popup -->
     <SettingsModal ref="settingsModal"></SettingsModal>
+    <!-- Diagnostic modal popup -->
+    <DiagnosticModal :show="showDiagnostics" @close="closeDiagnostics" />
   </div>
 </template>
 
@@ -90,6 +92,7 @@ import { PhList, PhPlus, PhGear, PhArrowClockwise, PhSquare, PhArrowsOut } from 
 import SiteList from './SiteList.vue';
 import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
+import DiagnosticModal from './DiagnosticModal.vue';
 const appWindow = getCurrentWebviewWindow()
 
 export default {
@@ -98,6 +101,7 @@ export default {
     SiteList,
     DockerStatus,
     SettingsModal,
+    DiagnosticModal,
     PhList,
     PhPlus,
     PhGear,
@@ -109,6 +113,7 @@ export default {
     return {
       dockerInstalled: false,
       dockerRunning: false,
+      showDiagnostics: false,
       newSiteButtonStyle: {
         transform: 'translateY(0px)'
       }
@@ -120,6 +125,12 @@ export default {
       if (modal && typeof modal.openModal === 'function') {
         modal.openModal();
       }
+    },
+    openDiagnostics() {
+      this.showDiagnostics = true;
+    },
+    closeDiagnostics() {
+      this.showDiagnostics = false;
     },
     goBack() {
       this.$router.go(-1);
