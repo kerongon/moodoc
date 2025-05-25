@@ -34,11 +34,11 @@ pub fn get_docker_path() -> String {
     
     // Add user-specific paths dynamically based on current user
     if let Ok(home) = std::env::var("HOME") {
+        // OrbStack user installation (prioritized over Rancher Desktop)
+        possible_paths.push(format!("{}/.orbstack/bin/docker", home));
+        
         // Rancher Desktop
         possible_paths.push(format!("{}/.rd/bin/docker", home));
-        
-        // OrbStack user installation
-        possible_paths.push(format!("{}/.orbstack/bin/docker", home));
         
         // User bin directories
         possible_paths.push(format!("{}/bin/docker", home));
@@ -97,11 +97,11 @@ pub fn get_docker_compose_path() -> String {
     
     // Add user-specific paths dynamically based on current user
     if let Ok(home) = std::env::var("HOME") {
+        // OrbStack user installation (prioritized over Rancher Desktop)
+        possible_paths.push(format!("{}/.orbstack/bin/docker-compose", home));
+        
         // Rancher Desktop
         possible_paths.push(format!("{}/.rd/bin/docker-compose", home));
-        
-        // OrbStack user installation
-        possible_paths.push(format!("{}/.orbstack/bin/docker-compose", home));
         
         // User bin directories
         possible_paths.push(format!("{}/bin/docker-compose", home));
@@ -509,8 +509,18 @@ pub use logs::{__cmd__get_docker_logs, get_docker_logs};
 // Basic Docker utility functions
 #[command]
 pub fn check_docker_installed() -> bool {
-    Command::new("which")
-        .arg("docker")
+    let docker_path = get_docker_path();
+    // First check if we can find a Docker binary using our enhanced path resolution
+    if !docker_path.is_empty() && docker_path != "docker" {
+        // We found a specific path, verify it exists and is executable
+        if let Ok(metadata) = std::fs::metadata(&docker_path) {
+            return metadata.is_file();
+        }
+    }
+    
+    // Fallback to checking if docker command works at all
+    Command::new(&docker_path)
+        .arg("--version")
         .output()
         .map_or(false, |output| output.status.success())
 }
@@ -522,6 +532,89 @@ pub fn check_docker_running() -> bool {
     match output {
         Ok(output) => output.status.success(),
         Err(_) => false,
+    }
+}
+
+// Add comprehensive Docker status check
+#[derive(serde::Serialize)]
+pub struct DockerStatus {
+    pub installed: bool,
+    pub running: bool,
+    pub socket_accessible: bool,
+    pub path: String,
+    pub version: Option<String>,
+    pub engine_type: Option<String>,
+}
+
+#[command]
+pub fn get_docker_status() -> DockerStatus {
+    let docker_path = get_docker_path();
+    let installed = check_docker_installed();
+    let running = if installed { check_docker_running() } else { false };
+    
+    // Check socket accessibility
+    let socket_accessible = if installed && running {
+        Command::new(&docker_path)
+            .arg("info")
+            .output()
+            .map_or(false, |output| output.status.success())
+    } else {
+        false
+    };
+    
+    // Get version if available
+    let version = if installed {
+        Command::new(&docker_path)
+            .arg("--version")
+            .output()
+            .ok()
+            .and_then(|output| {
+                if output.status.success() {
+                    Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
+                } else {
+                    None
+                }
+            })
+    } else {
+        None
+    };
+    
+    // Detect engine type
+    let engine_type = if installed {
+        detect_docker_engine_type(&docker_path)
+    } else {
+        None
+    };
+    
+    DockerStatus {
+        installed,
+        running,
+        socket_accessible,
+        path: docker_path,
+        version,
+        engine_type,
+    }
+}
+
+fn detect_docker_engine_type(docker_path: &str) -> Option<String> {
+    if docker_path.contains("orbstack") {
+        Some("OrbStack".to_string())
+    } else if docker_path.contains("rancher") || docker_path.contains(".rd") {
+        Some("Rancher Desktop".to_string())
+    } else if docker_path.contains("Docker.app") || docker_path.contains("docker-desktop") {
+        Some("Docker Desktop".to_string())
+    } else if docker_path.contains("homebrew") || docker_path.contains("brew") {
+        Some("Homebrew".to_string())
+    } else if docker_path.contains("lima") {
+        Some("Lima".to_string())
+    } else if docker_path.contains("colima") {
+        Some("Colima".to_string())
+    } else if docker_path.contains("podman") {
+        Some("Podman Desktop".to_string())
+    } else if docker_path == "docker" {
+        Some("System PATH".to_string())
+    } else {
+        Some("Unknown".to_string())
     }
 }
 
