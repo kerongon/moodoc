@@ -123,12 +123,28 @@ export MOODLE_DOCKER_DB_PORT={}
         return Err(format!("Failed to make status script executable"));
     }
 
-    // Execute the script
-    let output = Command::new(status_script_path.to_str().unwrap_or("./check_status.sh"))
-        .output()
-        .map_err(|e| format!("Failed to execute status script: {}", e))?;
+    // Setup docker-compose wrapper environment before executing status script
+    let wrapper_dir = super::setup_docker_compose_environment()
+        .map_err(|e| {
+            let _ = fs::remove_file(&status_script_path);
+            format!("Failed to setup docker-compose wrapper: {}", e)
+        })?;
 
-    // Delete the temporary script
+    // Execute the status script with the wrapper environment
+    let current_path = std::env::var("PATH").unwrap_or_default();
+    let output = Command::new("bash")
+        .arg(&status_script_path)
+        .env("PATH", format!("{}:{}", wrapper_dir.display(), current_path))
+        .current_dir(&site.path)
+        .output()
+        .map_err(|e| {
+            let _ = fs::remove_file(&status_script_path);
+            let _ = fs::remove_dir_all(&wrapper_dir);
+            format!("Failed to execute status script: {}", e)
+        })?;
+
+    // Clean up wrapper directory and delete the temporary script
+    let _ = fs::remove_dir_all(&wrapper_dir);
     let _ = fs::remove_file(status_script_path);
 
     let is_running = output.status.success() && !output.stdout.is_empty();
@@ -239,6 +255,10 @@ echo "Backup completed successfully"
     // Write the backup script
     let backup_script_path = site.path.join("backup.sh");
 
+    // Setup docker-compose wrapper environment
+    let wrapper_dir = super::setup_docker_compose_environment()
+        .map_err(|e| format!("Failed to setup docker-compose environment: {}", e))?;
+
     // Create and execute within a block to ensure cleanup
     let backup_result = (|| -> Result<String, String> {
         // First prepare the script
@@ -258,9 +278,11 @@ echo "Backup completed successfully"
             return Err(format!("Failed to make backup script executable"));
         }
 
-        // Execute the backup script and stream stdout for progress
+        // Execute the backup script with docker-compose wrapper and stream stdout for progress
         let mut child = Command::new("bash")
             .arg(backup_script_path.to_str().unwrap_or("./backup.sh"))
+            .current_dir(&site.path)
+            .env("PATH", format!("{}:{}", wrapper_dir.display(), std::env::var("PATH").unwrap_or_default()))
             .stdout(Stdio::piped())
             .spawn()
             .map_err(|e| format!("Failed to execute backup script: {}", e))?;
@@ -311,8 +333,9 @@ echo "Backup completed successfully"
         ))
     })();
 
-    // Always clean up the temporary script
+    // Always clean up the temporary script and wrapper directory
     let _ = fs::remove_file(&backup_script_path);
+    let _ = fs::remove_dir_all(&wrapper_dir);
 
     backup_result
 }
@@ -476,13 +499,28 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
         ));
     }
 
-    // Execute the stop script
-    let output = Command::new(stop_script_path.to_str().unwrap_or("./stop_for_restore.sh"))
+    // Setup docker-compose wrapper environment before executing stop script
+    let wrapper_dir = super::setup_docker_compose_environment()
+        .map_err(|e| {
+            let _ = fs::remove_file(&stop_script_path);
+            format!("Failed to setup docker-compose wrapper: {}", e)
+        })?;
+
+    // Execute the stop script with the wrapper environment
+    let current_path = std::env::var("PATH").unwrap_or_default();
+    let output = Command::new("bash")
+        .arg(&stop_script_path)
+        .env("PATH", format!("{}:{}", wrapper_dir.display(), current_path))
+        .current_dir(&site.path)
         .output()
         .map_err(|e| {
             let _ = fs::remove_file(&stop_script_path);
+            let _ = fs::remove_dir_all(&wrapper_dir);
             format!("Failed to execute stop script: {}", e)
         })?;
+
+    // Clean up wrapper directory
+    let _ = fs::remove_dir_all(&wrapper_dir);
 
     // Delete the script
     let _ = fs::remove_file(stop_script_path);
@@ -592,13 +630,28 @@ echo "Site restored successfully"
         return Err(format!("Failed to make restore script executable"));
     }
 
-    // Execute the restore script
-    let output = Command::new(restore_script_path.to_str().unwrap_or("./restore.sh"))
+    // Setup docker-compose wrapper environment before executing restore script
+    let wrapper_dir = super::setup_docker_compose_environment()
+        .map_err(|e| {
+            let _ = fs::remove_file(&restore_script_path);
+            format!("Failed to setup docker-compose wrapper: {}", e)
+        })?;
+
+    // Execute the restore script with the wrapper environment
+    let current_path = std::env::var("PATH").unwrap_or_default();
+    let output = Command::new("bash")
+        .arg(&restore_script_path)
+        .env("PATH", format!("{}:{}", wrapper_dir.display(), current_path))
+        .current_dir(&site.path)
         .output()
         .map_err(|e| {
             let _ = fs::remove_file(&restore_script_path);
+            let _ = fs::remove_dir_all(&wrapper_dir);
             format!("Failed to execute restore script: {}", e)
         })?;
+
+    // Clean up wrapper directory and script
+    let _ = fs::remove_dir_all(&wrapper_dir);
 
     // Delete the script
     let _ = fs::remove_file(restore_script_path);
@@ -747,14 +800,30 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
             return Err(format!("Docker compose script not found at: {:?}", compose_script));
         }
         
-        // Execute the stop script
-        let output = Command::new(stop_script_path.to_str().unwrap_or("./stop_for_restore.sh"))
+        // Setup docker-compose wrapper environment before executing stop script
+        let wrapper_dir = super::setup_docker_compose_environment()
+            .map_err(|e| {
+                let _ = fs::remove_file(&stop_script_path);
+                emit_progress("error", &format!("Failed to setup docker-compose wrapper: {}", e), 0.0);
+                format!("Failed to setup docker-compose wrapper: {}", e)
+            })?;
+
+        // Execute the stop script with the wrapper environment
+        let current_path = std::env::var("PATH").unwrap_or_default();
+        let output = Command::new("bash")
+            .arg(&stop_script_path)
+            .env("PATH", format!("{}:{}", wrapper_dir.display(), current_path))
+            .current_dir(&site.path)
             .output()
             .map_err(|e| {
                 let _ = fs::remove_file(&stop_script_path);
+                let _ = fs::remove_dir_all(&wrapper_dir);
                 emit_progress("error", &format!("Failed to execute stop script: {}", e), 0.0);
                 format!("Failed to execute stop script: {}", e)
             })?;
+
+        // Clean up wrapper directory
+        let _ = fs::remove_dir_all(&wrapper_dir);
         
         // Delete the script
         let _ = fs::remove_file(stop_script_path);
@@ -866,13 +935,26 @@ echo "Site restored successfully"
         
         emit_progress("restoring_database", "Restoring database... This may take a few minutes", 0.5);
         
-        // Execute the restore script and capture its output to report progress
-        let mut child = Command::new(restore_script_path.to_str().unwrap_or("./restore.sh"))
+        // Setup docker-compose wrapper environment before executing restore script
+        let wrapper_dir = super::setup_docker_compose_environment()
+            .map_err(|e| {
+                let _ = fs::remove_file(&restore_script_path);
+                emit_progress("error", &format!("Failed to setup docker-compose wrapper: {}", e), 0.0);
+                format!("Failed to setup docker-compose wrapper: {}", e)
+            })?;
+
+        // Execute the restore script with the wrapper environment and capture its output to report progress
+        let current_path = std::env::var("PATH").unwrap_or_default();
+        let mut child = Command::new("bash")
+            .arg(&restore_script_path)
+            .env("PATH", format!("{}:{}", wrapper_dir.display(), current_path))
+            .current_dir(&site.path)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
             .map_err(|e| {
                 let _ = fs::remove_file(&restore_script_path);
+                let _ = fs::remove_dir_all(&wrapper_dir);
                 emit_progress("error", &format!("Failed to execute restore script: {}", e), 0.0);
                 format!("Failed to execute restore script: {}", e)
             })?;
@@ -907,9 +989,13 @@ echo "Site restored successfully"
         // Wait for the process to complete
         let status = child.wait().map_err(|e| {
             let _ = fs::remove_file(&restore_script_path);
+            let _ = fs::remove_dir_all(&wrapper_dir);
             emit_progress("error", &format!("Error waiting for restore script: {}", e), 0.0);
             format!("Error waiting for restore script: {}", e)
         })?;
+        
+        // Clean up wrapper directory and script
+        let _ = fs::remove_dir_all(&wrapper_dir);
         
         // Delete the script
         let _ = fs::remove_file(restore_script_path);
