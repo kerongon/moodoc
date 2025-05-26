@@ -125,3 +125,16 @@ html:not(.dark) .status-text,
 body[data-theme="light"] .status-text {
   color: #374151 !important; /* Dark gray text by default */
 }
+
+/* Cursor grab for "New Site" button in dashboard */
+.light .modern-new-site-button,
+html:not(.dark) .modern-new-site-button,
+body[data-theme="light"] .modern-new-site-button {
+  cursor: grab !important;
+}
+
+.light .modern-new-site-button:active,
+html:not(.dark) .modern-new-site-button:active,
+body[data-theme="light"] .modern-new-site-button:active {
+  cursor: grabbing !important;
+}
