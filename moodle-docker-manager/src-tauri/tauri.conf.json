@@ -30,7 +30,7 @@
         "minHeight": 820,
         "resizable": true,
         "decorations": false,
-        "minimizable": false,
+        "minimizable": true,
         "maximizable": true,
         "fullscreen": false,
         "useHttpsScheme": true
