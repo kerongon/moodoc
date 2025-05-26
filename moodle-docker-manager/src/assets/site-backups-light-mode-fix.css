@@ -1,7 +1,14 @@
 /* Light mode fixes for SiteBackups component */
 
 /* Main container background in light mode */
-.light .site-back/* Fix stat cards */
+.light .site-backups,
+html:not(.dark) .site-backups,
+body[data-theme="light"] .site-backups {
+  background: linear-gradient(to bottom right, #f9fafb, #f3f4f6) !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Fix stat cards */
 .light .site-backups .stat-card,
 html:not(.dark) .site-backups .stat-card,
 body[data-theme="light"] .site-backups .stat-card {
@@ -16,10 +23,6 @@ html:not(.dark) .stat-card.bg-gray-800\/60.backdrop-blur-sm,
 body[data-theme="light"] .stat-card.bg-gray-800\/60.backdrop-blur-sm {
   background-color: white !important;
   border: 1px solid #e5e7eb !important;
-}ml:not(.dark) .site-backups,
-body[data-theme="light"] .site-backups {
-  background: linear-gradient(to bottom right, #f9fafb, #f3f4f6) !important;
-  border-color: #e5e7eb !important;
 }
 
 /* Fix Create Backup button in light mode */
@@ -69,12 +72,22 @@ body[data-theme="light"] .site-backups .text-gray-400 {
 }
 
 /* Fix site name and description in header */
+.site-backups .page-header h2 {
+  font-size: 1rem !important; /* 16px */
+}
+
+/* Light mode specific color */
 .light .site-backups .page-header h2,
 html:not(.dark) .site-backups .page-header h2,
 body[data-theme="light"] .site-backups .page-header h2 {
   color: #111827 !important; /* gray-900 */
 }
 
+.site-backups .page-header p {
+  font-size: 0.75rem !important; /* 12px - consistent with other text */
+}
+
+/* Light mode specific color */
 .light .site-backups .page-header p,
 html:not(.dark) .site-backups .page-header p,
 body[data-theme="light"] .site-backups .page-header p {
@@ -162,6 +175,30 @@ body[data-theme="light"] .site-backups .stat-card .stat-title {
 html:not(.dark) .site-backups .stat-card .stat-value,
 body[data-theme="light"] .site-backups .stat-card .stat-value {
   color: #1f2937 !important; /* gray-800 */
+}
+
+/* Increase font size for stat cards (theme-independent) */
+.site-backups .stat-card .stat-title {
+  font-size: 0.875rem !important; /* 14px - increased from 12px (0.75rem) */
+}
+
+.site-backups .stat-card .stat-value {
+  font-size: 1.25rem !important; /* 20px - increased from 1.125rem (18px) */
+  font-weight: bold !important;
+}
+
+.site-backups .stat-card .stat-desc {
+  font-size: 0.75rem !important; /* 12px - increased from 0.7rem or 0.65rem */
+}
+
+/* Increase stat icon size (theme-independent) */
+.site-backups .stat-card .stat-icon {
+  padding: 0.3rem !important; /* Slightly larger padding */
+}
+
+.site-backups .stat-card .stat-icon svg {
+  width: 1rem !important; /* 16px - increased from 14px */
+  height: 1rem !important; /* 16px - increased from 14px */
 }
 
 /* Fix step indicators */
@@ -253,6 +290,12 @@ body[data-theme="light"] .settings-card {
   backdrop-filter: none !important;
 }
 
+.settings-card .card-title {
+  font-size: 0.875rem !important; /* 14px */
+  font-weight: 600 !important;
+}
+
+/* Light mode specific color */
 .light .settings-card .card-title,
 html:not(.dark) .settings-card .card-title,
 body[data-theme="light"] .settings-card .card-title {
@@ -306,3 +349,75 @@ html:not(.dark) .site-backups .step-desc,
 body[data-theme="light"] .site-backups .step-desc {
   color: #4b5563 !important; /* gray-600 */
 }
+
+/* Increase font size for better readability - Theme-independent */
+
+/* Settings and activity sections */
+.site-backups .setting-label, 
+.site-backups .setting-value {
+  font-size: 0.75rem !important; /* text-xs (12px) */
+}
+
+/* Step content */
+.site-backups .step-title {
+  font-size: 0.75rem !important; /* text-xs (12px) */
+  font-weight: 600 !important;
+}
+
+.site-backups .step-desc {
+  font-size: 0.75rem !important; /* text-xs (12px) */
+}
+
+/* Help section text */
+.site-backups .help-section p {
+  font-size: 0.75rem !important; /* text-xs (12px) */
+}
+
+.site-backups .help-link {
+  font-size: 0.75rem !important; /* text-xs (12px) */
+}
+
+/* Table content */
+.site-backups table {
+  font-size: 0.75rem !important; /* text-xs (12px) */
+}
+
+/* Table headers */
+.site-backups th {
+  font-size: 0.75rem !important; /* text-xs (12px) */
+  font-weight: 600 !important;
+}
+
+/* Light mode specific color */
+.light .site-backups th,
+html:not(.dark) .site-backups th,
+body[data-theme="light"] .site-backups th {
+  color: #374151 !important; /* gray-700 */
+}
+
+/* Table cells */
+.site-backups td {
+  font-size: 0.75rem !important; /* text-xs (12px) */
+}
+
+/* Light mode specific color */
+.light .site-backups td,
+html:not(.dark) .site-backups td,
+body[data-theme="light"] .site-backups td {
+  color: #1f2937 !important; /* gray-800 */
+}
+
+/* Improve stat card spacing (theme-independent) */
+.site-backups .stat-card {
+  padding: 0.75rem !important; /* Slightly more padding overall */
+}
+
+.site-backups .stat-card .stat-header {
+  margin-bottom: 0.5rem !important; /* More space between header and value */
+}
+
+.site-backups .stat-card .stat-value {
+  margin-bottom: 0.25rem !important; /* Space between value and description */
+}
+
+/* Fix stats cards - Color adjustments for light mode only */
