@@ -891,12 +891,43 @@ export default {
   background-color: #f5f5f5;
   border-radius: 0 0 8px 8px;
   padding: 15px;
-  max-height: 200px;
+  max-height: 300px;
   font-family: monospace;
   font-size: 0.9rem;
   white-space: pre-wrap;
   user-select: text;
   -webkit-user-select: text;
+  
+  /* Adjust scrollbar styling for better appearance */
+  scrollbar-width: thin;
+  scrollbar-color: #5755d9 #f5f5f5;
+}
+
+/* Custom scrollbar for webkit browsers (Chrome, Safari, etc.) */
+.logs-container::-webkit-scrollbar {
+  width: 6px; /* Narrower width */
+}
+
+.logs-container::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 0 0 8px 0;
+}
+
+.logs-container::-webkit-scrollbar-thumb {
+  background-color: #5755d9;
+  border-radius: 20px;
+  min-height: 30px; /* Shorter minimum height */
+  height: 20%; /* Make scrollbar thumb proportionally shorter */
+  max-height: 80px; /* Maximum height */
+}
+
+.dark .logs-container::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark .logs-container::-webkit-scrollbar-thumb {
+  background-color: #6366f1;
+  border: none; /* Remove border to prevent sizing issues */
 }
 
 .dark .logs-container {
