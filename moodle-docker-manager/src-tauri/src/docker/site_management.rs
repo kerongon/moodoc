@@ -34,6 +34,9 @@ fn execute_moodle_docker_command(command: &str, site_dir: &std::path::Path) -> R
         // Modify PATH to include our docker-compose wrapper
         let current_path = std::env::var("PATH").unwrap_or_default();
         let new_path = format!("{}:{}", wrapper_dir.display(), current_path);
+        // Debug: show wrapper path and PATH environment
+        println!("DEBUG: execute_moodle_docker_command wrapper_dir={}", wrapper_dir.display());
+        println!("DEBUG: execute_moodle_docker_command PATH={}", new_path);
         
         let mut cmd = Command::new("sh");
         cmd.arg("-c")
@@ -890,34 +893,72 @@ fn remove_site_blocking(
             }),
         );
 
-        // Get the absolute path to the moodle directory
-        let moodle_www_root = site.path.join("moodle");
-        let abs_moodle_path = moodle_www_root
+        // Wrapper directory is stored in site.path (moodle-docker root)
+        let moodle_docker_dir = site.path.clone();
+        let moodle_www = moodle_docker_dir.join("moodle");
+        let abs_moodle_path = moodle_www
             .canonicalize()
-            .unwrap_or_else(|_| moodle_www_root.clone());
+            .unwrap_or_else(|_| moodle_www.clone());
 
-        // Use direct command execution with docker-compose wrapper instead of creating script
-        let cleanup_cmd = format!(
-            r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT={} && echo "Stopping containers..." && ./bin/moodle-docker-compose down -v && echo "Cleanup completed for {}""#,
-            site.path.to_str().unwrap_or(""),
-            name,
-            abs_moodle_path.to_str().unwrap_or(""),
-            name
+        // Step 1: Tear down containers + volumes in one go
+        super::safe_emit(
+            &app_handle,
+            "site_removal_progress",
+            serde_json::json!({ "site": name, "percent": 35, "step": "removing_containers" }),
         );
-
-        // Execute the cleanup command with docker-compose wrapper
-        let cleanup_result = execute_moodle_docker_command(&cleanup_cmd, &site.path)
-            .map_err(|e| format!("Failed to execute cleanup command: {}", e));
-
-        // Only return error if we couldn't execute the cleanup and the error is worth reporting
-        if let Err(e) = cleanup_result {
-            println!("Warning during container cleanup: {}", e);
-            // We don't return the error since we still want to remove the site from state
+        let down_cmd = format!(
+            "export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT={} && export MOODLE_DOCKER_DB={} && echo \"Tearing down containers & volumes...\" && ./bin/moodle-docker-compose down -v --remove-orphans",
+            name,
+            abs_moodle_path.display(),
+            site.db_type.to_lowercase(),
+        );
+        // Debug: print working directory and full command
+        println!("Running down command in {}: {}", moodle_docker_dir.display(), down_cmd);
+        match execute_moodle_docker_command(&down_cmd, &moodle_docker_dir) {
+            Ok(output) => {
+                println!("Down command exit status: {}", output.status);
+                println!("Down command stdout: {}", String::from_utf8_lossy(&output.stdout));
+                println!("Down command stderr: {}", String::from_utf8_lossy(&output.stderr));
+            }
+            Err(e) => {
+                println!("Error executing down command: {}", e);
+            }
         }
 
-        // Additional cleanup for any remaining networks
+        super::safe_emit(
+            &app_handle,
+            "site_removal_progress",
+            serde_json::json!({
+                "site": name,
+                "percent": 45,
+                "step": "cleaning_volumes"
+            }),
+        );
+
+        // Step 2: Remove any remaining volumes associated with this site
+        let volume_cleanup_cmd = format!(
+            r#"docker volume ls --filter name={} --format "{{{{.Name}}}}" | xargs -r docker volume rm 2>/dev/null || true"#,
+            name
+        );
+        
+        let _ = Command::new("sh")
+            .arg("-c")
+            .arg(&volume_cleanup_cmd)
+            .output();
+
+        super::safe_emit(
+            &app_handle,
+            "site_removal_progress",
+            serde_json::json!({
+                "site": name,
+                "percent": 65,
+                "step": "cleaning_networks"
+            }),
+        );
+
+        // Step 3: Remove any remaining networks associated with this site
         let network_cleanup_cmd = format!(
-            r#"docker network ls --filter name={} --format "{{{{.ID}}}}" | xargs -r docker network rm || true"#,
+            r#"docker network ls --filter name={} --format "{{{{.ID}}}}" | xargs -r docker network rm 2>/dev/null || true"#,
             name
         );
         
@@ -925,6 +966,34 @@ fn remove_site_blocking(
             .arg("-c")
             .arg(&network_cleanup_cmd)
             .output();
+
+        super::safe_emit(
+            &app_handle,
+            "site_removal_progress",
+            serde_json::json!({
+                "site": name,
+                "percent": 75,
+                "step": "cleaning_images"
+            }),
+        );
+
+        // Step 4: Remove any dangling images that might be left from this site
+        let image_cleanup_cmd = format!(
+            r#"docker images --filter label=com.docker.compose.project={} --format "{{{{.ID}}}}" | xargs -r docker rmi 2>/dev/null || true"#,
+            name
+        );
+        
+        let _ = Command::new("sh")
+            .arg("-c")
+            .arg(&image_cleanup_cmd)
+            .output();
+
+        // Step 5: General cleanup of dangling resources
+        let _ = Command::new("docker")
+            .args(&["system", "prune", "-f", "--filter", &format!("label=com.docker.compose.project={}", name)])
+            .output();
+
+        println!("Docker cleanup completed for site: {}", name);
     }
 
     // Even if the script fails, we'll try to remove the directory and site from state

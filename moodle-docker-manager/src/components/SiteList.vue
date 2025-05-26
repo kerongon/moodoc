@@ -408,7 +408,7 @@
                   <label for="removeContainers" class="ml-2 font-medium">Clean up Docker resources</label>
                 </div>
                 <p class="mt-1 text-xs text-blue-600 dark:text-blue-400 ml-6">
-                  This will stop and remove all Docker containers, volumes, and networks associated with this site.
+                  This will stop and remove all Docker containers, volumes, networks, and associated images for this site.
                 </p>
               </div>
             </div>
