@@ -106,8 +106,8 @@
                 <h2 class="text-base font-medium text-white">Site Backups: {{ siteName }}</h2>
                 <p class="text-2xs text-gray-300">
                   <span>Manage backups for this Moodle site</span>
-                  <span> • Last backup: {{ formatRelativeTime(lastActivityTimestamp) }}</span>
-                  <span v-if="lastRestoreTimestamp"> • Last restore: {{ formatRelativeTime(lastRestoreTimestamp) }}</span>
+                  <!-- <span> • Last backup: {{ formatRelativeTime(lastActivityTimestamp) }}</span>
+                  <span v-if="lastRestoreTimestamp"> • Last restore: {{ formatRelativeTime(lastRestoreTimestamp) }}</span> -->
                 </p>
               </div>
             </div>

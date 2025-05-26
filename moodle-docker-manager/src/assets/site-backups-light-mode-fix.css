@@ -421,3 +421,197 @@ body[data-theme="light"] .site-backups td {
 }
 
 /* Fix stats cards - Color adjustments for light mode only */
+
+/* Increase button text sizes (theme-independent) - more subtle */
+.site-backups .ultra-compact-button,
+.site-backups button.ultra-compact-button {
+  font-size: 0.8125rem !important; /* 13px - slightly increased from 12px */
+  font-weight: 500 !important; /* Medium weight for better readability */
+}
+
+/* Specifically target the Back to Dashboard button */
+.site-backups .back-button,
+button.back-button {
+  font-size: 0.8125rem !important; /* 13px */
+  font-weight: 500 !important;
+}
+
+/* Improve button padding and spacing for slightly larger text (theme-independent) */
+.site-backups .ultra-compact-button,
+.site-backups button.ultra-compact-button {
+  padding: 0.4rem 0.75rem !important; /* Moderate horizontal padding */
+  height: auto !important; /* Let height adjust naturally to content */
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important; /* Moderate space between icon and text */
+}
+
+/* Make sure icons in buttons are proportionally sized */
+.site-backups .ultra-compact-button svg,
+.site-backups button.ultra-compact-button svg {
+  width: 0.875rem !important; /* 14px */
+  height: 0.875rem !important; /* 14px */
+}
+
+/* Back button specific adjustments */
+.site-backups .back-button,
+button.back-button {
+  padding: 0.4rem 0.75rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+/* Fix confirmation modals in light mode */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 {
+  background-color: rgba(0, 0, 0, 0.5) !important; /* Semi-transparent background */
+}
+
+/* Modal content styling for light mode */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 > div,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 > div,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 > div {
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #1f2937 !important; /* gray-800 */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Modal header for light mode */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 h3,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 h3,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 h3 {
+  color: #111827 !important; /* gray-900 */
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+}
+
+/* Modal text for light mode */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 p,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 p,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 p {
+  color: #374151 !important; /* gray-700 */
+  font-size: 0.875rem !important;
+}
+
+/* Warning text in modal for light mode */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 .text-red-400,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 .text-red-400,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 .text-red-400 {
+  color: #ef4444 !important; /* red-500 */
+}
+
+/* Warning icon in modal for light mode */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 .text-red-400 svg,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 .text-red-400 svg,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 .text-red-400 svg {
+  color: #ef4444 !important; /* red-500 */
+}
+
+/* Cancel button in modal for light mode */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-secondary,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-secondary,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-secondary {
+  background-color: #f3f4f6 !important; /* gray-100 */
+  color: #1f2937 !important; /* gray-800 */
+  border: 1px solid #d1d5db !important; /* gray-300 */
+}
+
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-secondary:hover,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-secondary:hover,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-secondary:hover {
+  background-color: #e5e7eb !important; /* gray-200 */
+}
+
+/* Restore backup button in modal for light mode */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-primary,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-primary,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-primary {
+  background-image: linear-gradient(to right, #10b981, #059669) !important;
+  color: white !important;
+}
+
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-primary:hover,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-primary:hover,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-primary:hover {
+  background-image: linear-gradient(to right, #059669, #047857) !important;
+}
+
+/* Delete backup button in modal for light mode */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-danger,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-danger,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-danger {
+  background-image: linear-gradient(to right, #ef4444, #dc2626) !important;
+  color: white !important;
+}
+
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-danger:hover,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-danger:hover,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 .btn-danger:hover {
+  background-image: linear-gradient(to right, #dc2626, #b91c1c) !important;
+}
+
+/* Consistent button text size in modals (theme-independent) */
+.fixed.inset-0.flex.items-center.justify-center.z-50 button {
+  font-size: 0.8125rem !important; /* 13px - matching other buttons */
+  font-weight: 500 !important;
+  padding: 0.4rem 1rem !important;
+}
+
+/* Ensure proper spacing between modal buttons */
+.fixed.inset-0.flex.items-center.justify-center.z-50 .flex.justify-end.space-x-3 {
+  display: flex !important;
+  gap: 0.5rem !important;
+}
+
+/* Warning message styling in modals (theme-independent) */
+.fixed.inset-0.flex.items-center.justify-center.z-50 .text-sm.text-red-400.font-medium {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin-top: 0.5rem !important;
+  padding: 0.75rem !important;
+  border-radius: 0.375rem !important;
+}
+
+/* Warning message light mode specific colors */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 .text-sm.text-red-400.font-medium,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 .text-sm.text-red-400.font-medium,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 .text-sm.text-red-400.font-medium {
+  background-color: #fee2e2 !important; /* red-100 */
+  border: 1px solid #fecaca !important; /* red-200 */
+  color: #b91c1c !important; /* red-700 for better contrast */
+}
+
+/* Ensure warning icons are visible */
+.fixed.inset-0.flex.items-center.justify-center.z-50 .text-sm.text-red-400.font-medium svg {
+  flex-shrink: 0 !important;
+  color: #b91c1c !important; /* red-700 for better contrast */
+}
+
+/* Target modal specifically by its title content for restore and delete operations */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 h3:contains("Confirm Restore"),
+.light .fixed.inset-0.flex.items-center.justify-center.z-50 h3:contains("Confirm Delete"),
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 h3:contains("Confirm Restore"),
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50 h3:contains("Confirm Delete"),
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 h3:contains("Confirm Restore"),
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50 h3:contains("Confirm Delete") {
+  color: #111827 !important; /* gray-900 */
+}
+
+/* Specifically target the modal content div with bg-gray-800 class */
+.light div.bg-gray-800.border.border-gray-700.rounded-xl,
+html:not(.dark) div.bg-gray-800.border.border-gray-700.rounded-xl,
+body[data-theme="light"] div.bg-gray-800.border.border-gray-700.rounded-xl {
+  background-color: white !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Direct override for the backdrop blur modal with opacity */
+.light .fixed.inset-0.flex.items-center.justify-center.z-50.bg-black.bg-opacity-70,
+html:not(.dark) .fixed.inset-0.flex.items-center.justify-center.z-50.bg-black.bg-opacity-70,
+body[data-theme="light"] .fixed.inset-0.flex.items-center.justify-center.z-50.bg-black.bg-opacity-70 {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
