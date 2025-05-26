@@ -1029,4 +1029,7 @@ export default {
 .dark .cancel-button:hover {
   background-color: #374151;
 }
+
+/* Import light mode fixes */
+@import '../assets/site-creation-progress-light-mode-fix.css';
 </style>

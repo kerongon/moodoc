@@ -1,0 +1,151 @@
+/* Light mode fixes for site creation progress modal */
+
+@media (prefers-color-scheme: light) {
+  .modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.4) !important;
+  }
+  
+  .modal-content {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    border: 1px solid #e5e7eb !important;
+  }
+  
+  .progress-bar {
+    background-color: #e5e7eb !important;
+  }
+  
+  .progress-fill {
+    background: linear-gradient(90deg, #6366f1, #4f46e5) !important;
+  }
+  
+  .progress-fill.complete {
+    background: #10b981 !important;
+  }
+  
+  .progress-fill.has-error {
+    background: #ef4444 !important;
+  }
+  
+  .progress-text {
+    color: #374151 !important;
+  }
+  
+  .time-info {
+    color: #4b5563 !important;
+  }
+  
+  .status-text {
+    color: #111827 !important;
+  }
+  
+  .animation-container {
+    background-color: #f8fafc !important;
+    border: 1px solid #e5e7eb !important;
+  }
+  
+  .status-message {
+    color: #4b5563 !important;
+  }
+  
+  .logs-toggle {
+    color: #4b5563 !important;
+    border-top: 1px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+  }
+  
+  .logs-container {
+    background-color: #1e1e1e !important;
+    border-top: 1px solid #e5e7eb !important;
+  }
+}
+
+/* Light mode class-based selectors */
+.light .modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+}
+
+.light .modal-content {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.light .progress-bar {
+  background-color: #e5e7eb !important;
+}
+
+.light .progress-fill {
+  background: linear-gradient(90deg, #6366f1, #4f46e5) !important;
+}
+
+.light .progress-fill.complete {
+  background: #10b981 !important;
+}
+
+.light .progress-fill.has-error {
+  background: #ef4444 !important;
+}
+
+.light .progress-text {
+  color: #374151 !important;
+}
+
+.light .time-info {
+  color: #4b5563 !important;
+}
+
+.light .status-text {
+  color: #111827 !important;
+}
+
+.light .animation-container {
+  background-color: #f8fafc !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.light .status-message {
+  color: #4b5563 !important;
+}
+
+.light .logs-toggle {
+  color: #4b5563 !important;
+  border-top: 1px solid #e5e7eb !important;
+  background-color: #f9fafb !important;
+}
+
+.light .logs-container {
+  background-color: #1e1e1e !important;
+  border-top: 1px solid #e5e7eb !important;
+}
+
+.light .done-button {
+  background-color: #5755d9 !important;
+  color: white !important;
+}
+
+.light .cancel-button {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+/* Header navigation buttons */
+.light .header-nav-button,
+html:not(.dark) .header-nav-button,
+body[data-theme="light"] .header-nav-button {
+  background: rgba(229, 231, 235, 0.8) !important; /* Light gray background */
+  color: #374151 !important; /* Dark text */
+}
+
+.light .header-nav-button:hover,
+html:not(.dark) .header-nav-button:hover,
+body[data-theme="light"] .header-nav-button:hover {
+  background: rgba(209, 213, 219, 0.9) !important; /* Lighter gray on hover */
+}
+
+/* Ensure the icons inside navigation buttons are visible in light mode */
+.light .header-nav-button .button-icon,
+html:not(.dark) .header-nav-button .button-icon,
+body[data-theme="light"] .header-nav-button .button-icon {
+  color: #374151 !important;
+}

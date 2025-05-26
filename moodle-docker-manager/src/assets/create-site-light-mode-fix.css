@@ -1,0 +1,430 @@
+/* Light mode fixes for create site form */
+
+/* Override dark-mode specific styles for light theme */
+@media (prefers-color-scheme: light) {
+  /* Already using Tailwind classes for background now */
+}
+
+/* Light theme class-based overrides */
+.light {
+  /* Form container background */
+  .dashboard-full.bg-gradient-to-br {
+    background: linear-gradient(to bottom right, #f8fafc, #e2e8f0) !important;
+  }
+
+  /* Create site container */
+  .create-site-container {
+    background-color: #fff !important;
+    background-image: none !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  /* Section backgrounds */
+  .config-section {
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  /* Labels */
+  .modern-form-label, .section-title {
+    color: #374151 !important;
+  }
+
+  /* Form inputs */
+  .modern-input {
+    background-color: #fff !important;
+    border: 1px solid #d1d5db !important;
+    color: #111827 !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .modern-input:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+    background-color: #fff !important;
+  }
+
+  /* Select dropdowns */
+  .modern-select {
+    background-color: #fff !important;
+    border: 1px solid #d1d5db !important;
+    color: #111827 !important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  }
+
+  .modern-select:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+  }
+
+  /* Tab navigation */
+  .modern-tabs-container {
+    background-color: #e5e7eb !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .modern-tab-button {
+    color: #4b5563 !important;
+  }
+
+  .modern-tab-button:hover:not(.active-tab) {
+    color: #111827 !important;
+    background-color: rgba(243, 244, 246, 0.8) !important;
+  }
+
+  /* Status indicators */
+  .status-available {
+    color: #047857 !important;
+  }
+
+  .status-error {
+    color: #dc2626 !important;
+  }
+
+  .status-warning {
+    color: #d97706 !important;
+  }
+
+  /* Messages */
+  .info-message {
+    color: #6b7280 !important;
+  }
+
+  .warning-message {
+    color: #d97706 !important;
+  }
+
+  .error-message {
+    color: #dc2626 !important;
+  }
+
+  /* Button styles */
+  .generate-button {
+    color: #6b7280 !important;
+  }
+
+  .generate-button:hover {
+    color: #111827 !important;
+    background-color: rgba(229, 231, 235, 0.5) !important;
+  }
+
+  /* Action buttons */
+  .create-button {
+    background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+    color: white !important;
+  }
+
+  .cancel-button {
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+  }
+
+  .cancel-button:hover {
+    background-color: #e5e7eb !important;
+  }
+
+  /* Toggle switches */
+  /* Toggle styles now handled directly in create-site.css */
+
+  /* Port configuration */
+  .port-config-row {
+    background-color: #f9fafb !important;
+  }
+
+  .db-type-label {
+    color: #6b7280 !important;
+  }
+
+  /* Directory info */
+  .directory-info {
+    background-color: #f3f4f6 !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  .directory-path {
+    color: #4b5563 !important;
+  }
+
+  .path-value {
+    color: #111827 !important;
+  }
+
+  /* Error highlighting */
+  .error-input {
+    border-color: #ef4444 !important;
+  }
+
+  .success-input {
+    border-color: #10b981 !important;
+  }
+
+  /* Header navigation buttons */
+  .header-nav-button {
+    background: rgba(229, 231, 235, 0.8) !important; /* Light gray background */
+    color: #374151 !important; /* Dark text */
+  }
+
+  .header-nav-button:hover {
+    background: rgba(209, 213, 219, 0.9) !important; /* Lighter gray on hover */
+  }
+
+  /* Ensure the icons inside navigation buttons are visible in light mode */
+  .header-nav-button .button-icon {
+    color: #374151 !important;
+  }
+
+  /* Subsection titles - Database Configuration and Web Server */
+  .subsection-title {
+    color: #374151 !important; /* Dark gray text for good contrast in light mode */
+    font-weight: 500 !important;
+  }
+
+  /* Info tooltip icons */
+  .info-tooltip {
+    color: #6b7280 !important; /* Medium gray for light mode */
+  }
+
+  /* Database type label */
+  .db-type-label {
+    color: #6b7280 !important; /* Medium gray for light mode */
+  }
+
+  /* Port status messages */
+  .status-checking {
+    color: #6b7280 !important; /* Medium gray */
+  }
+
+  /* These status colors may already exist elsewhere in the CSS but adding to ensure proper display */
+  .status-available {
+    color: #059669 !important; /* green-600 - good visibility on light backgrounds */
+  }
+
+  .status-warning {
+    color: #d97706 !important; /* amber-600 - good visibility on light backgrounds */
+  }
+
+  .status-error {
+    color: #dc2626 !important; /* red-600 - good visibility on light backgrounds */
+  }
+}
+
+/* Light theme class-based overrides - duplicating selectors for .light class */
+.light .dashboard-full.bg-gradient-to-br {
+  background: linear-gradient(to bottom right, #f8fafc, #e2e8f0) !important;
+}
+
+.light .create-site-container {
+  background-color: #fff !important;
+  background-image: none !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+.light .config-section {
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.light .modern-form-label, 
+.light .section-title {
+  color: #374151 !important;
+}
+
+.light .modern-input {
+  background-color: #fff !important;
+  border: 1px solid #d1d5db !important;
+  color: #111827 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.light .modern-input:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+  background-color: #fff !important;
+}
+
+.light .modern-select {
+  background-color: #fff !important;
+  border: 1px solid #d1d5db !important;
+  color: #111827 !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+}
+
+.light .modern-select:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+}
+
+.light .modern-tabs-container {
+  background-color: #e5e7eb !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.light .modern-tab-button {
+  color: #4b5563 !important;
+}
+
+.light .modern-tab-button:hover:not(.active-tab) {
+  color: #111827 !important;
+  background-color: rgba(243, 244, 246, 0.8) !important;
+}
+
+.light .status-available {
+  color: #047857 !important;
+}
+
+.light .status-error {
+  color: #dc2626 !important;
+}
+
+.light .status-warning {
+  color: #d97706 !important;
+}
+
+.light .info-message {
+  color: #6b7280 !important;
+}
+
+.light .warning-message {
+  color: #d97706 !important;
+}
+
+.light .error-message {
+  color: #dc2626 !important;
+}
+
+.light .generate-button {
+  color: #6b7280 !important;
+}
+
+.light .generate-button:hover {
+  color: #111827 !important;
+  background-color: rgba(229, 231, 235, 0.5) !important;
+}
+
+.light .create-button {
+  background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+  color: white !important;
+}
+
+.light .cancel-button {
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+.light .cancel-button:hover {
+  background-color: #e5e7eb !important;
+}
+
+/* Toggle styles now handled directly in create-site.css */
+
+.light .port-config-row {
+  background-color: #f9fafb !important;
+}
+
+.light .db-type-label {
+  color: #6b7280 !important;
+}
+
+.light .directory-info {
+  background-color: #f3f4f6 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.light .directory-path {
+  color: #4b5563 !important;
+}
+
+.light .path-value {
+  color: #111827 !important;
+}
+
+.light .error-input {
+  border-color: #ef4444 !important;
+}
+
+.light .success-input {
+  border-color: #10b981 !important;
+}
+
+/* Header navigation buttons */
+.light .header-nav-button,
+html:not(.dark) .header-nav-button,
+body[data-theme="light"] .header-nav-button {
+  background: rgba(229, 231, 235, 0.8) !important; /* Light gray background */
+  color: #374151 !important; /* Dark text */
+}
+
+.light .header-nav-button:hover,
+html:not(.dark) .header-nav-button:hover,
+body[data-theme="light"] .header-nav-button:hover {
+  background: rgba(209, 213, 219, 0.9) !important; /* Lighter gray on hover */
+}
+
+/* Ensure the icons inside navigation buttons are visible in light mode */
+.light .header-nav-button .button-icon,
+html:not(.dark) .header-nav-button .button-icon,
+body[data-theme="light"] .header-nav-button .button-icon {
+  color: #374151 !important;
+}
+
+/* Subsection titles - Database Configuration and Web Server */
+.light .subsection-title,
+html:not(.dark) .subsection-title,
+body[data-theme="light"] .subsection-title {
+  color: #374151 !important; /* Dark gray text for good contrast in light mode */
+  font-weight: 500 !important;
+}
+
+/* Info tooltip icons */
+.light .info-tooltip,
+html:not(.dark) .info-tooltip,
+body[data-theme="light"] .info-tooltip {
+  color: #6b7280 !important; /* Medium gray for light mode */
+  background-color: rgba(229, 231, 235, 0.6) !important; /* Light gray background */
+}
+
+.light .info-tooltip:hover,
+html:not(.dark) .info-tooltip:hover,
+body[data-theme="light"] .info-tooltip:hover {
+  background-color: rgba(99, 102, 241, 0.6) !important; /* Lighter purple on hover */
+  color: #ffffff !important; /* White text on hover */
+}
+
+/* Database type label */
+.light .db-type-label,
+html:not(.dark) .db-type-label,
+body[data-theme="light"] .db-type-label {
+  color: #6b7280 !important; /* Medium gray for light mode */
+}
+
+/* Port status messages */
+.light .status-checking,
+html:not(.dark) .status-checking,
+body[data-theme="light"] .status-checking {
+  color: #3b82f6 !important; /* blue-500 - good visibility on light backgrounds */
+}
+
+/* These status colors may already exist elsewhere in the CSS but adding to ensure proper display */
+.light .status-available,
+html:not(.dark) .status-available, 
+body[data-theme="light"] .status-available {
+  color: #059669 !important; /* green-600 - good visibility on light backgrounds */
+}
+
+.light .status-warning,
+html:not(.dark) .status-warning,
+body[data-theme="light"] .status-warning {
+  color: #d97706 !important; /* amber-600 - good visibility on light backgrounds */
+}
+
+.light .status-error,
+html:not(.dark) .status-error,
+body[data-theme="light"] .status-error {
+  color: #dc2626 !important; /* red-600 - good visibility on light backgrounds */
+}

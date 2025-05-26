@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-full hide-scrollbar bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-900 dark:to-black min-h-screen w-full p-0">
+  <div class="dashboard-full hide-scrollbar bg-gradient-to-br from-white to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen w-full p-0">
     <!-- Modern macOS-style header (copied from Dashboard, no New Site button) -->
     <header class="app-header" data-tauri-drag-region>
       <div class="header-content">
@@ -1657,6 +1657,7 @@ export default {
 <style>
 @import '../assets/create-site.css';
 @import '../assets/create-site-compact.css'; /* Add this new import for fixes */
+@import '../assets/create-site-light-mode-fix.css'; /* Import light mode fixes */
 
 .window-control-button {
   position: relative;
