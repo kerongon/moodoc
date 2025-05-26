@@ -1417,3 +1417,6 @@ export default {
   display: block;
 }
 </style>
+
+<!-- Global light mode fixes for SiteBackups -->
+<style src="../assets/site-backups-light-mode-fix.css"></style>
