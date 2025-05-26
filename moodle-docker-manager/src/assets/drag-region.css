@@ -8,6 +8,17 @@
 [data-tauri-drag-region] button,
 [data-tauri-drag-region] select,
 [data-tauri-drag-region] input,
-[data-tauri-drag-region] a {
+[data-tauri-drag-region] a,
+[data-tauri-drag-region] .logs-container {
   pointer-events: auto;
+  user-select: text;
+  cursor: text;
+}
+
+/* Ensure logs container is never draggable */
+.logs-container {
+  -webkit-app-region: no-drag;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }

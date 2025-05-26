@@ -422,7 +422,7 @@ export default {
             <span class="toggle-icon">{{ showLogs ? '▼' : '▶' }}</span>
           </div>
         </div>
-        <div class="logs-container hide-scrollbar" v-if="showLogs">
+        <div class="logs-container hide-scrollbar" v-if="showLogs" @mousedown.stop>
           <div v-for="(log, index) in logs" :key="index" class="log-entry">
             <span class="log-time">{{ log.time }}</span>
             <span class="log-message">{{ log.message }}</span>
@@ -895,6 +895,9 @@ export default {
   font-family: monospace;
   font-size: 0.9rem;
   white-space: pre-wrap;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 
 .dark .logs-container {
