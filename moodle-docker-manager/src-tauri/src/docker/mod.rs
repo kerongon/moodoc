@@ -860,7 +860,8 @@ pub fn remove_site_from_store(app_handle: AppHandle, site_name: String) -> Resul
     Ok(())
 }
 
-// Legacy file-based loading for migration
+// Legacy file-based loading for migration (currently unused but may be needed for data migration)
+#[allow(dead_code)]
 pub fn load_site_configs(app: &tauri::App) -> Result<(), String> {
     let app_handle = app.handle();
     let state = app_handle.state::<SiteState>();
@@ -964,7 +965,7 @@ pub struct DirectoryCheck {
 
 // Comprehensive diagnostic command
 #[command]
-pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticResult, String> {
+pub async fn run_diagnostics(_app_handle: AppHandle) -> Result<DiagnosticResult, String> {
     let mut diagnostics = DiagnosticResult {
         docker_version: None,
         docker_running: false,
@@ -1126,7 +1127,7 @@ pub async fn run_diagnostics(app_handle: AppHandle) -> Result<DiagnosticResult, 
     }
 
     // Check directory accessibility
-    let mut directories_to_check = vec![
+    let directories_to_check = vec![
         (std::env::var("HOME").unwrap_or_default(), "Home Directory"),
     ];
 

@@ -9,41 +9,8 @@ mod site_metrics;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use tauri::{generate_handler, Manager, WebviewWindowBuilder, WebviewUrl};
-use docker::{
-    check_docker_installed,
-    check_docker_running,
-    get_docker_status,
-    check_platform_compatibility,
-    validate_environment,
-    create_site,
-    cancel_site_creation,
-    list_sites,
-    start_site,
-    stop_site,
-    remove_site,
-    get_docker_logs,
-    check_site_status,
-    check_site_status_detailed,
-    run_diagnostics,
-    check_docker_permissions,
-    validate_production_environment,
-    test_docker_path_resolution,
-    debug_rancher_docker_paths,
-    detect_docker_engine,
-    debug_docker_engine_paths,
-    backup_site,
-    list_site_backups,
-    restore_site_backup,
-    restore_site_backup_async,
-    delete_site_backup,
-    open_backup_location,
-    update_moodle_version,
-    open_site_folder,
-    open_in_editor,
-    cancel_update,
-    check_port_available,
-    test_docker_compose,
-};
+// Since all docker functions are used in generate_handler! with docker:: prefix,
+// we don't need to import them individually
 
 #[tauri::command]
 async fn open_logs_window(

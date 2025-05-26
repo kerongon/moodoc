@@ -13,6 +13,8 @@ use tauri::{command, AppHandle, Manager};
 use super::{safe_emit, SiteState, execute_with_docker_compose_wrapper};
 
 // Helper function to execute moodle-docker commands with docker-compose wrapper for backup operations
+// Currently unused but kept for potential future backup functionality
+#[allow(dead_code)]
 fn execute_backup_command(command: &str, site_dir: &std::path::Path) -> Result<std::process::Output, String> {
     execute_with_docker_compose_wrapper(|wrapper_dir| {
         // Modify PATH to include our docker-compose wrapper
