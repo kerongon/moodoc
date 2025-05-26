@@ -231,7 +231,7 @@ fn update_moodle_version_blocking(
         "update_progress",
         format!("Restarting site '{}' with updated configuration", name),
     );
-    if let Err(e) = super::site_management::start_site(app_handle.clone(), name.clone()) {
+    if let Err(e) = super::site_management::start_site_blocking(app_handle.clone(), name.clone()) {
         cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to restart site after update: {}", e));
     }

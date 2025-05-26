@@ -659,8 +659,8 @@ echo ""
     Ok(format!("Site '{}' created successfully", name))
 }
 
-#[command]
-pub fn list_sites(app_handle: AppHandle) -> Result<Vec<Site>, String> {
+/// Helper blocking version of list_sites to avoid UI lock during status inspection
+pub(crate) fn list_sites_blocking(app_handle: AppHandle) -> Result<Vec<Site>, String> {
     let state = app_handle.state::<SiteState>();
     let mut sites_map = state
         .0
@@ -670,18 +670,13 @@ pub fn list_sites(app_handle: AppHandle) -> Result<Vec<Site>, String> {
 
     // Refresh status by inspecting Docker
     for site in sites_map.values_mut() {
-        // Get container status for this site
         let filter = format!("name={}", site.name);
         let output = Command::new(&get_docker_path())
             .args(&["ps", "-a", "--filter", &filter, "--format", "{{.Status}}"])
             .output();
         if let Ok(o) = output {
             let status_str = String::from_utf8_lossy(&o.stdout);
-            if status_str.contains("Up") {
-                site.status = "running".into();
-            } else {
-                site.status = "stopped".into();
-            }
+            site.status = if status_str.contains("Up") { "running".into() } else { "stopped".into() };
         } else {
             site.status = "error".into();
         }
@@ -691,7 +686,15 @@ pub fn list_sites(app_handle: AppHandle) -> Result<Vec<Site>, String> {
 }
 
 #[command]
-pub fn start_site(app_handle: AppHandle, name: String) -> Result<String, String> {
+pub async fn list_sites(app_handle: AppHandle) -> Result<Vec<Site>, String> {
+    let handle = app_handle.clone();
+    tokio::task::spawn_blocking(move || list_sites_blocking(handle))
+        .await
+        .map_err(|e| format!("Task execution error: {}", e))?
+}
+
+// Helper blocking version of start_site to avoid UI lock during container start
+pub(crate) fn start_site_blocking(app_handle: AppHandle, name: String) -> Result<String, String> {
     let state = app_handle.state::<SiteState>();
     let mut sites = state
         .0
@@ -740,7 +743,6 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
         .map_err(|e| format!("Failed to start site '{}': {}", name, e))?;
 
     if output.status.success() {
-        // Update site status
         if let Some(site) = sites.get_mut(&name) {
             site.status = "running".to_string();
         }
@@ -783,12 +785,10 @@ pub(crate) fn stop_site_blocking(app_handle: AppHandle, name: String) -> Result<
         site.db_port.unwrap_or(3306)
     );
 
-    // Execute the command with docker-compose wrapper
     let output = execute_moodle_docker_command(&stop_cmd, &site.path)
         .map_err(|e| format!("Failed to execute stop command: {}", e))?;
 
     if output.status.success() {
-        // Update site status
         if let Some(site) = sites.get_mut(&name) {
             site.status = "stopped".to_string();
         }
@@ -797,6 +797,15 @@ pub(crate) fn stop_site_blocking(app_handle: AppHandle, name: String) -> Result<
         let error = String::from_utf8_lossy(&output.stderr).to_string();
         Err(format!("Failed to stop site '{}': {}", name, error))
     }
+}
+
+#[command]
+pub async fn start_site(app_handle: AppHandle, name: String) -> Result<String, String> {
+    let handle = app_handle.clone();
+    let name_clone = name.clone();
+    tokio::task::spawn_blocking(move || start_site_blocking(handle, name_clone))
+        .await
+        .map_err(|e| format!("Task execution error: {}", e))?
 }
 
 #[command]
@@ -829,7 +838,12 @@ pub async fn remove_site(
     name: String,
     remove_containers: Option<bool>,
 ) -> Result<String, String> {
-    remove_site_blocking(app_handle, name, remove_containers)
+    let handle = app_handle.clone();
+    let name_clone = name.clone();
+    let remove_clone = remove_containers.clone();
+    tokio::task::spawn_blocking(move || remove_site_blocking(handle, name_clone, remove_clone))
+        .await
+        .map_err(|e| format!("Task execution error: {}", e))?
 }
 
 // synchronous removal logic matching docker_original.rs implementation with progress reporting
