@@ -89,6 +89,13 @@ fn main() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+            println!("Other instance launched with arguments: {:?} in current working directory {:?}", argv, cwd);
+            // Focus the main window when another instance tries to launch
+            if let Some(main_window) = app.get_webview_window("main") {
+                main_window.set_focus().unwrap();
+            }
+        }))
         .setup(|app| {
             let handle = app.handle().clone();
             std::thread::spawn(move || {
