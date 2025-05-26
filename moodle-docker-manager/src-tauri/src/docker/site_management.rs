@@ -723,11 +723,8 @@ pub async fn list_sites(app_handle: AppHandle) -> Result<Vec<Site>, String> {
 // Helper blocking version of start_site to avoid UI lock during container start
 pub(crate) fn start_site_blocking(app_handle: AppHandle, name: String) -> Result<String, String> {
     let state = app_handle.state::<SiteState>();
-    let mut sites = state
-        .0
-        .lock()
-        .map_err(|_| "Failed to lock sites state".to_string())?;
-
+    let mut sites = state.0.lock().map_err(|_| "Failed to lock sites state".to_string())?;
+    
     // Check if site exists
     let site = match sites.get(&name) {
         Some(site) => site.clone(),
@@ -736,11 +733,20 @@ pub(crate) fn start_site_blocking(app_handle: AppHandle, name: String) -> Result
 
     // Get the absolute path to the moodle directory
     let moodle_www_root = site.path.join("moodle");
-    let abs_moodle_path = moodle_www_root
-        .canonicalize()
-        .unwrap_or_else(|_| moodle_www_root.clone());
-
-    // Use our docker-compose wrapper to start containers directly
+    let abs_moodle_path = moodle_www_root.canonicalize().unwrap_or_else(|_| moodle_www_root.clone());
+    
+    // Emit starting progress (25%)
+    super::safe_emit(
+        &app_handle,
+        "site_start_progress",
+        serde_json::json!({
+            "site": name,
+            "percent": 25,
+            "step": "starting_containers"
+        })
+    );
+    
+    // Start containers
     let command = format!(
         r#"export COMPOSE_PROJECT_NAME={}
 export MOODLE_DOCKER_WWWROOT={}
@@ -750,11 +756,7 @@ export MOODLE_DOCKER_PHP_VERSION={}
 export MOODLE_DOCKER_DB_PORT={}
 
 # Echo environment for debugging
-echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
-echo "MOODLE_DOCKER_WWWROOT=$MOODLE_DOCKER_WWWROOT"
-echo "MOODLE_DOCKER_DB=$MOODLE_DOCKER_DB"
-echo "MOODLE_DOCKER_WEB_PORT=$MOODLE_DOCKER_WEB_PORT"
-echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
+echo "Starting containers for site: {}"
 
 # Start containers
 ./bin/moodle-docker-compose up -d"#,
@@ -763,21 +765,62 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
         site.db_type.to_lowercase(),
         site.web_port.unwrap_or(8000),
         site.php_version,
-        site.db_port.unwrap_or(3306)
+        site.db_port.unwrap_or(3306),
+        name
     );
 
     let output = execute_moodle_docker_command(&command, &site.path)
         .map_err(|e| format!("Failed to start site '{}': {}", name, e))?;
-
-    if output.status.success() {
-        if let Some(site) = sites.get_mut(&name) {
-            site.status = "running".to_string();
-        }
-        Ok(format!("Site '{}' started successfully", name))
-    } else {
+    if !output.status.success() {
         let error = String::from_utf8_lossy(&output.stderr).to_string();
-        Err(format!("Failed to start site '{}': {}", name, error))
+        return Err(format!("Failed to start site '{}': {}", name, error));
     }
+    
+    // Emit waiting for database progress (50%)
+    super::safe_emit(
+        &app_handle,
+        "site_start_progress",
+        serde_json::json!({
+            "site": name,
+            "percent": 50,
+            "step": "waiting_for_database"
+        })
+    );
+    
+    // Wait for database to be ready
+    let wait_db_cmd = format!(
+        r#"export COMPOSE_PROJECT_NAME={} \
+&& export MOODLE_DOCKER_WWWROOT={} \
+&& export MOODLE_DOCKER_DB={} \
+&& echo "Waiting for database to be ready..." \
+&& ./bin/moodle-docker-wait-for-db"#,
+        name,
+        abs_moodle_path.to_str().unwrap_or(""),
+        site.db_type.to_lowercase()
+    );
+    
+    let db_output = execute_moodle_docker_command(&wait_db_cmd, &site.path)
+        .map_err(|e| format!("Failed waiting for database: {}", e))?;
+    if !db_output.status.success() {
+        let error = String::from_utf8_lossy(&db_output.stderr).to_string();
+        return Err(format!("Database failed to start properly: {}", error));
+    }
+    
+    // Emit final progress (100%) when site is ready
+    super::safe_emit(
+        &app_handle,
+        "site_start_progress",
+        serde_json::json!({
+            "site": name,
+            "percent": 100,
+            "step": "ready"
+        })
+    );
+    
+    if let Some(site) = sites.get_mut(&name) {
+        site.status = "running".to_string();
+    }
+    Ok(format!("Site '{}' started successfully", name))
 }
 
 // Helper blocking version of stop_site to avoid UI lock during container stop
