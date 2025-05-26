@@ -52,7 +52,17 @@
           <!-- Logo and app title -->
           <div class="app-branding">
             <div class="logo-container">
-              <PhSquare class="logo-icon text-white" weight="fill" />
+              <svg class="logo-icon text-white" width="24" height="24" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="1024" height="1024" rx="224" fill="#7066C6"/>
+                <g id="icon-elements">
+                  <!-- M Letter: Scaled and positioned to be 450px wide, 300px tall. Top at y=277 -->
+                  <path transform="translate(287, 227) scale(0.78125)" d="M0 64H134.4L288 344.3L441.6 64H576V448H480V204.3L326.4 448H249.6L96 204.3V448H0V64Z" fill="white"/>
+                  <!-- Server Rack: 450px wide, 120px tall. Top at y=627 -->
+                  <rect x="287" y="627" width="450" height="120" rx="20" fill="white"/>
+                  <line x1="307" y1="663" x2="717" y2="663" stroke="#5A52A3" stroke-width="10" stroke-linecap="round"/>
+                  <line x1="307" y1="703" x2="717" y2="703" stroke="#5A52A3" stroke-width="10" stroke-linecap="round"/>
+                </g>
+              </svg>
             </div>
             <div class="title-container">
               <h1 class="app-title">Moodle Docker Manager</h1>
@@ -88,7 +98,7 @@
 <script>
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { invoke } from '@tauri-apps/api/core';
-import { PhList, PhPlus, PhGear, PhArrowClockwise, PhSquare, PhArrowsOut } from '@phosphor-icons/vue';
+import { PhList, PhPlus, PhGear, PhArrowClockwise, PhArrowsOut } from '@phosphor-icons/vue';
 import SiteList from './SiteList.vue';
 import DockerStatus from './DockerStatus.vue';
 import SettingsModal from './SettingsModal.vue';
@@ -106,7 +116,6 @@ export default {
     PhPlus,
     PhGear,
     PhArrowClockwise,
-    PhSquare,
     PhArrowsOut
   },
   data() {
