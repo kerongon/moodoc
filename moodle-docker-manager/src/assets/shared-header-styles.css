@@ -1,0 +1,32 @@
+/* 
+ * SHARED HEADER NAVIGATION BUTTON STYLES
+ * These styles ensure consistent cursor behavior across all themes
+ * Make sure all rules use !important to override any theme-specific styles
+ */
+
+/* Ensure cursor grab consistency regardless of theme */
+.header-nav-button {
+  cursor: grab !important;
+}
+
+.header-nav-button:active {
+  cursor: grabbing !important;
+}
+
+/* Make sure modern new site button has cursor grab in both light and dark themes */
+.modern-new-site-button {
+  cursor: grab !important;
+}
+
+.modern-new-site-button:active {
+  cursor: grabbing !important;
+}
+
+/* Settings button cursor consistency */
+.modern-settings-button {
+  cursor: grab !important;
+}
+
+.modern-settings-button:active {
+  cursor: grabbing !important;
+}

@@ -88,6 +88,7 @@
   overflow: hidden !important;
   z-index: 1 !important;
   text-decoration: none !important;
+  cursor: grab !important; /* Add grab cursor regardless of theme */
 }
 
 .modern-new-site-button:hover {
@@ -100,6 +101,7 @@
   transform: translateY(1px) !important;
   box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3) !important;
   transition: all 0.1s ease-out !important;
+  cursor: grabbing !important; /* Add grabbing cursor when active */
 }
 
 .modern-new-site-button .button-icon {
@@ -123,13 +125,19 @@
   border: none !important;
   color: var(--settings-color) !important;
   position: relative !important;
-  cursor: pointer !important;
+  cursor: grab !important; /* Changed from pointer to grab for consistency */
 }
 
 .modern-settings-button:hover {
   color: var(--settings-color) !important; /* Changed from var(--settings-hover) */
   background-color: transparent !important; /* Changed from rgba(99, 102, 241, 0.05) */
   transform: rotate(15deg) !important; /* Changed from translateY(-2px) to rotate(15deg) */
+  cursor: grab !important; /* Ensure grab cursor on hover */
+}
+
+.modern-settings-button:active {
+  cursor: grabbing !important;
+  transform: rotate(0deg) !important;
 }
 
 .modern-settings-button .button-icon {
@@ -143,8 +151,6 @@
   color: var(--settings-color) !important; /* Changed from var(--settings-hover) */
   -webkit-filter: none !important;
   filter: none !important;
-  /* -webkit-filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.5)) !important;
-          filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.5)) !important; */
 }
 
 /* Add a subtle glow effect on hover */

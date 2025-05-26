@@ -178,6 +178,7 @@ export default {
 
 <style scoped>
 @import '../assets/dashboard-light-mode-fix.css';
+@import '../assets/shared-header-styles.css';
 
 .dashboard-full {
   display: flex;
@@ -285,11 +286,11 @@ export default {
   height: 32px;
   border-radius: 8px;
   color: #FFFFFF;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s ease;
+  /* cursor: grab moved to shared-header-styles.css */
 }
 .header-nav-button .button-icon {
   width: 16px;
@@ -298,6 +299,7 @@ export default {
 .header-nav-button:hover {
   background: rgba(50, 56, 74, 0.95);
 }
+/* .header-nav-button:active { cursor: grabbing; } moved to shared-header-styles.css */
 
 .chevron {
   font-size: 16px;

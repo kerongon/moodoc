@@ -127,14 +127,4 @@ body[data-theme="light"] .status-text {
 }
 
 /* Cursor grab for "New Site" button in dashboard */
-.light .modern-new-site-button,
-html:not(.dark) .modern-new-site-button,
-body[data-theme="light"] .modern-new-site-button {
-  cursor: grab !important;
-}
-
-.light .modern-new-site-button:active,
-html:not(.dark) .modern-new-site-button:active,
-body[data-theme="light"] .modern-new-site-button:active {
-  cursor: grabbing !important;
-}
+/* Cursor grab/grabbing styling moved to shared-header-styles.css */

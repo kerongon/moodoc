@@ -1420,3 +1420,4 @@ export default {
 
 <!-- Global light mode fixes for SiteBackups -->
 <style src="../assets/site-backups-light-mode-fix.css"></style>
+<style src="../assets/shared-header-styles.css"></style>
