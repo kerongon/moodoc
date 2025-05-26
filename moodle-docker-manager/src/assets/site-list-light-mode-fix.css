@@ -55,6 +55,20 @@ body[data-theme="light"] .text-gray-500 {
   color: #6b7280 !important; /* Gray-500 */
 }
 
+/* Fix heading in the No sites section */
+.light .text-gray-800.dark\:text-gray-50,
+html:not(.dark) .text-gray-800.dark\:text-gray-50,
+body[data-theme="light"] .text-gray-800.dark\:text-gray-50 {
+  color: #1f2937 !important; /* gray-800 */
+}
+
+/* Fix description text in the No sites section */
+.light .text-gray-500.dark\:text-gray-400,
+html:not(.dark) .text-gray-500.dark\:text-gray-400,
+body[data-theme="light"] .text-gray-500.dark\:text-gray-400 {
+  color: #6b7280 !important; /* gray-500 */
+}
+
 /* Styles for the compact version (SiteList.vue.new) */
 .light .bg-blue-600,
 html:not(.dark) .bg-blue-600,
@@ -79,7 +93,239 @@ body[data-theme="light"] .bg-blue-600 .text-white {
 .light .no-sites,
 html:not(.dark) .no-sites,
 body[data-theme="light"] .no-sites {
-  color: #111827 !important; /* Gray-900 for better readability */
-  text-align: center !important;
+  color: #1f2937 !important; /* gray-800 */
+  background-color: white !important;
+}
+
+.light .no-sites p,
+html:not(.dark) .no-sites p,
+body[data-theme="light"] .no-sites p {
+  color: #4b5563 !important; /* gray-600 */
+  margin-bottom: 0.75rem !important;
+}
+
+.light .no-sites .compact-button,
+html:not(.dark) .no-sites .compact-button,
+body[data-theme="light"] .no-sites .compact-button {
+  background-color: #2563eb !important; /* blue-600 */
+  color: white !important;
+  border: none !important;
+  cursor: pointer !important;
+}
+
+.light .no-sites .compact-button:hover,
+html:not(.dark) .no-sites .compact-button:hover,
+body[data-theme="light"] .no-sites .compact-button:hover {
+  background-color: #1d4ed8 !important; /* blue-700 */
+}
+
+/* Status badges in site list */
+.light .compact-status-badge,
+html:not(.dark) .compact-status-badge,
+body[data-theme="light"] .compact-status-badge {
+  border: 1px solid transparent !important;
+  padding: 0.125rem 0.5rem !important;
+}
+
+/* Running status badge style */
+.light .compact-status-badge.bg-green-100,
+html:not(.dark) .compact-status-badge.bg-green-100,
+body[data-theme="light"] .compact-status-badge.bg-green-100 {
+  background-color: #d1fae5 !important; /* green-100 */
+  color: #047857 !important;           /* green-600 */
+  border-color: #10b981 !important;    /* green-500 */
+}
+
+/* Non-running status badge style */
+.light .compact-status-badge.bg-gray-100,
+html:not(.dark) .compact-status-badge.bg-gray-100,
+body[data-theme="light"] .compact-status-badge.bg-gray-100 {
+  background-color: #f3f4f6 !important; /* gray-100 */
+  color: #374151 !important;            /* gray-700 */
+  border-color: #d1d5db !important;     /* gray-300 */
+}
+
+/* Light mode styles for "NEW" badge */
+.light .new-badge,
+html:not(.dark) .new-badge,
+body[data-theme="light"] .new-badge {
+  background-color: #22c55e !important; /* Green background - more vibrant */
+  color: white !important; /* White text for better contrast on green */
+  border: 1px solid #16a34a !important; /* Slightly darker green border */
+  text-transform: uppercase !important;
+  font-weight: 500 !important;
+  font-size: 0.75rem !important; /* 12px */
+  line-height: 1rem !important; /* 16px */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+}
+
+/* Fix the No sites card background in light mode */
+.light .bg-white.dark\:bg-slate-800,
+html:not(.dark) .bg-white.dark\:bg-slate-800,
+body[data-theme="light"] .bg-white.dark\:bg-slate-800 {
+  background-color: white !important;
+  border-color: #e5e7eb !important; /* gray-200 */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Fix the site-list-container background in light mode */
+.light .site-list-container,
+html:not(.dark) .site-list-container,
+body[data-theme="light"] .site-list-container {
+  background-color: white !important;
+}
+
+/* Target the No sites box more specifically */
+.light .flex-1.flex.flex-col.items-center.justify-center p-6,
+html:not(.dark) .flex-1.flex.flex-col.items-center.justify-center p-6,
+body[data-theme="light"] .flex-1.flex.flex-col.items-center.justify-center p-6 {
+  background-color: white !important;
+}
+
+/* Highly specific selectors for the No sites section in light mode */
+.light .site-list-container .bg-indigo-500,
+html:not(.dark) .site-list-container .bg-indigo-500,
+body[data-theme="light"] .site-list-container .bg-indigo-500 {
+  background-color: #6366f1 !important; /* indigo-500 */
+}
+
+.light .site-list-container .bg-indigo-500 .text-white,
+html:not(.dark) .site-list-container .bg-indigo-500 .text-white,
+body[data-theme="light"] .site-list-container .bg-indigo-500 .text-white {
+  color: white !important;
+}
+
+/* Fix the container for the empty state message */
+.light .site-list-container > div > .p-8,
+html:not(.dark) .site-list-container > div > .p-8,
+body[data-theme="light"] .site-list-container > div > .p-8 {
+  background-color: white !important;
+  border-color: #e5e7eb !important;
+}
+
+/* Ensure proper text colors for the No sites heading */
+.light h3.text-xl.font-semibold.mb-2,
+html:not(.dark) h3.text-xl.font-semibold.mb-2,
+body[data-theme="light"] h3.text-xl.font-semibold.mb-2 {
+  color: #1f2937 !important; /* gray-800 */
+}
+
+/* Ensure proper text colors for the No sites description */
+.light p.text-sm.text-gray-500.dark\:text-gray-400,
+html:not(.dark) p.text-sm.text-gray-500.dark\:text-gray-400,
+body[data-theme="light"] p.text-sm.text-gray-500.dark\:text-gray-400 {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+/* Additional comprehensive styles for light mode fixes */
+
+/* For the main SiteList.vue component */
+.light div.site-list-container.bg-white.dark\:bg-gray-900,
+html:not(.dark) div.site-list-container.bg-white.dark\:bg-gray-900,
+body[data-theme="light"] div.site-list-container.bg-white.dark\:bg-gray-900 {
+  background-color: white !important;
+  color: #111827 !important; /* gray-900 */
+}
+
+/* For the SiteList.vue.new component */
+.light div.site-list-container.bg-white.dark\:bg-gray-800,
+html:not(.dark) div.site-list-container.bg-white.dark\:bg-gray-800,
+body[data-theme="light"] div.site-list-container.bg-white.dark\:bg-gray-800 {
+  background-color: white !important;
+  color: #111827 !important; /* gray-900 */
+  border-color: #e5e7eb !important; /* gray-200 */
+}
+
+/* Empty state box in main component */
+.light .flex-1.flex.flex-col.items-center.justify-center div.bg-white.dark\:bg-slate-800.p-8,
+html:not(.dark) .flex-1.flex.flex-col.items-center.justify-center div.bg-white.dark\:bg-slate-800.p-8,
+body[data-theme="light"] .flex-1.flex.flex-col.items-center.justify-center div.bg-white.dark\:bg-slate-800.p-8 {
+  background-color: white !important;
+  border-color: #e5e7eb !important; /* gray-200 */
+}
+
+/* Specific styles for the new "No sites" section in SiteList.vue.new */
+.light .no-sites.flex.flex-col.items-center.justify-center,
+html:not(.dark) .no-sites.flex.flex-col.items-center.justify-center,
+body[data-theme="light"] .no-sites.flex.flex-col.items-center.justify-center {
+  background-color: white !important;
+  color: #1f2937 !important; /* gray-800 */
   padding: 2rem !important;
+}
+
+.light .no-sites .bg-blue-500,
+html:not(.dark) .no-sites .bg-blue-500,
+body[data-theme="light"] .no-sites .bg-blue-500 {
+  background-color: #3b82f6 !important; /* blue-500 */
+}
+
+.light .no-sites .bg-blue-500 .text-white,
+html:not(.dark) .no-sites .bg-blue-500 .text-white,
+body[data-theme="light"] .no-sites .bg-blue-500 .text-white {
+  color: white !important;
+}
+
+.light .no-sites p.font-medium,
+html:not(.dark) .no-sites p.font-medium,
+body[data-theme="light"] .no-sites p.font-medium {
+  color: #1f2937 !important; /* gray-900 */
+}
+
+.light .no-sites p.text-gray-500,
+html:not(.dark) .no-sites p.text-gray-500,
+body[data-theme="light"] .no-sites p.text-gray-500 {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+.light .no-sites .compact-button.bg-blue-600,
+html:not(.dark) .no-sites .compact-button.bg-blue-600,
+body[data-theme="light"] .no-sites .compact-button.bg-blue-600 {
+  background-color: #2563eb !important; /* blue-600 */
+  color: white !important;
+  cursor: pointer !important;
+}
+
+.light .no-sites .compact-button.bg-blue-600:hover,
+html:not(.dark) .no-sites .compact-button.bg-blue-600:hover,
+body[data-theme="light"] .no-sites .compact-button.bg-blue-600:hover {
+  background-color: #1d4ed8 !important; /* blue-700 */
+}
+
+/* Fix the header icon background in light mode - for both site list versions */
+.light .site-list-container .bg-indigo-600,
+html:not(.dark) .site-list-container .bg-indigo-600,
+body[data-theme="light"] .site-list-container .bg-indigo-600 {
+  background-color: #4f46e5 !important; /* indigo-600 */
+  color: white !important;
+}
+
+.light .site-list-container .bg-blue-600,
+html:not(.dark) .site-list-container .bg-blue-600,
+body[data-theme="light"] .site-list-container .bg-blue-600 {
+  background-color: #2563eb !important; /* blue-600 */
+  color: white !important;
+}
+
+/* More specific selectors for SiteList.vue */
+.light div.flex.items-center > div.bg-indigo-600,
+html:not(.dark) div.flex.items-center > div.bg-indigo-600,
+body[data-theme="light"] div.flex.items-center > div.bg-indigo-600 {
+  background-color: #4f46e5 !important; /* indigo-600 */
+}
+
+/* More specific selectors for SiteList.vue.new */
+.light div.flex.items-center > div.bg-blue-600,
+html:not(.dark) div.flex.items-center > div.bg-blue-600,
+body[data-theme="light"] div.flex.items-center > div.bg-blue-600 {
+  background-color: #2563eb !important; /* blue-600 */
+}
+
+/* Fix icon color in the header in light mode */
+.light .site-list-container .text-white,
+html:not(.dark) .site-list-container .text-white,
+body[data-theme="light"] .site-list-container .text-white {
+  color: white !important;
 }

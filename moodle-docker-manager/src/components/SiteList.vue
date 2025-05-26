@@ -3,8 +3,8 @@
     <!-- Header - macOS style (more compact) -->
     <div class="flex items-center justify-between mb-6 px-4 pt-4">
       <div class="flex items-center">
-        <div class="bg-indigo-600 rounded-lg p-3 mr-4 shadow-md">
-          <PhSquare class="text-white w-6 h-6" weight="fill" />
+        <div class="bg-indigo-600 rounded-lg p-3 mr-4 shadow-md" style="background-color: #4f46e5 !important;">
+          <PhSquare class="text-white w-6 h-6" weight="fill" style="color: white !important;" />
         </div>
         <div>
           <h2 class="text-xl font-bold text-gray-800 dark:text-white">Configured Sites</h2>
@@ -1342,8 +1342,6 @@ td .new-badge {
   display: inline-flex;
   align-items: center;
 }
-
-@import '../assets/site-list-light-mode-fix.css';
   </style>
   <!-- Global light mode fixes for SiteList -->
   <style src="../assets/site-list-light-mode-fix.css"></style>
