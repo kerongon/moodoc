@@ -107,7 +107,7 @@ fn update_moodle_version_blocking(
         "update_progress",
         format!("Stopping site '{}'", name),
     );
-    if let Err(e) = super::site_management::stop_site(app_handle.clone(), name.clone()) {
+    if let Err(e) = super::site_management::stop_site_blocking(app_handle.clone(), name.clone()) {
         cleanup_running_update(&running_updates, &name);
         return Err(format!("Failed to stop site before update: {}", e));
     }

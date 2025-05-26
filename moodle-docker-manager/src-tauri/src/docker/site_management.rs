@@ -584,7 +584,7 @@ echo ""
     // Install Moodle
     println!("Attempting to install Moodle for site: {}", name);
     safe_emit(
-        app_handle,
+        &app_handle,
         "site_creation_progress",
         format!(
             "Installing Moodle for {}. This may take several minutes...",
@@ -751,8 +751,8 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
     }
 }
 
-#[command]
-pub fn stop_site(app_handle: AppHandle, name: String) -> Result<String, String> {
+// Helper blocking version of stop_site to avoid UI lock during container stop
+pub(crate) fn stop_site_blocking(app_handle: AppHandle, name: String) -> Result<String, String> {
     let state = app_handle.state::<SiteState>();
     let mut sites = state
         .0
@@ -797,6 +797,16 @@ pub fn stop_site(app_handle: AppHandle, name: String) -> Result<String, String> 
         let error = String::from_utf8_lossy(&output.stderr).to_string();
         Err(format!("Failed to stop site '{}': {}", name, error))
     }
+}
+
+#[command]
+pub async fn stop_site(app_handle: AppHandle, name: String) -> Result<String, String> {
+    let handle = app_handle.clone();
+    let name_clone = name.clone();
+    let result = tokio::task::spawn_blocking(move || stop_site_blocking(handle, name_clone))
+        .await
+        .map_err(|e| format!("Task execution error: {}", e))?;
+    result
 }
 
 #[command]
