@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with rounded corners -->
+  <rect width="1024" height="1024" rx="224" fill="#7066C6"/>
+
+  <g id="icon-elements">
+    <!-- M Letter: Reduced size by ~12% and centered better -->
+    <!-- Original size was 450px wide, new size around 396px wide (~12% reduction) -->
+    <!-- Transform adjusted to center the smaller logo -->
+    <path transform="translate(314, 250) scale(0.6875)" d="M0 64H134.4L288 344.3L441.6 64H576V448H480V204.3L326.4 448H249.6L96 204.3V448H0V64Z" fill="white"/>
+
+    <!-- Server Rack: Also reduced proportionally and centered better -->
+    <!-- Original was 450px wide, new is ~396px wide -->
+    <rect x="314" y="627" width="396" height="105" rx="20" fill="white"/>
+    <line x1="334" y1="663" x2="690" y2="663" stroke="#5A52A3" stroke-width="10" stroke-linecap="round"/>
+    <line x1="334" y1="697" x2="690" y2="697" stroke="#5A52A3" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</svg>
