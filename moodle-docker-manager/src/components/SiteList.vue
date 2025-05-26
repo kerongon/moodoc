@@ -31,19 +31,6 @@
       </div>
     </div>
 
-    <!-- Success notification shown after starting a site -->
-    <transition name="fade">
-      <div v-if="successMessage" class="mx-4 mb-4 p-3 rounded border border-green-400 bg-green-100 text-green-800 dark:border-green-600 dark:bg-green-200 dark:text-green-900 text-center">
-        {{ successMessage }}
-      </div>
-    </transition>
-    <!-- Stop notification shown after stopping a site -->
-    <transition name="fade">
-      <div v-if="stopMessage" class="mx-4 mb-4 p-3 rounded border border-red-400 bg-red-100 text-red-800 dark:border-red-600 dark:bg-red-200 dark:text-red-900 text-center">
-        {{ stopMessage }}
-      </div>
-    </transition>
-
     <div class="site-list flex-1 overflow-x-auto">
       <div v-if="loading" class="loading text-xs p-4 text-center">
         Loading sites...
@@ -318,6 +305,19 @@
         </div>
       </div>
     </div>
+
+    <!-- Success notification shown after starting a site -->
+    <transition name="fade">
+      <div v-if="successMessage" class="mx-4 mt-4 p-3 rounded border border-green-400 bg-green-100 text-green-800 dark:border-green-600 dark:bg-green-200 dark:text-green-900 text-center">
+        {{ successMessage }}
+      </div>
+    </transition>
+    <!-- Stop notification shown after stopping a site -->
+    <transition name="fade">
+      <div v-if="stopMessage" class="mx-4 mt-4 p-3 rounded border border-red-400 bg-red-100 text-red-800 dark:border-red-600 dark:bg-red-200 dark:text-red-900 text-center">
+        {{ stopMessage }}
+      </div>
+    </transition>
 
     <!-- Error Modal -->
     <div v-if="showErrorModal" class="fixed inset-0 z-50 overflow-y-auto hide-scrollbar">
