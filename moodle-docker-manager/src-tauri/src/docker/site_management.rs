@@ -445,6 +445,30 @@ echo ""
         ));
     }
 
+    // NEW: Create local.yml in the moodle-docker directory using the expected schema
+    let db_data_path = if db_type.to_lowercase().contains("postgres") {
+        "/var/lib/postgresql/data"
+    } else {
+        "/var/lib/mysql"
+    };
+    let local_yml_path = moodle_docker_dir.join("local.yml");
+    let local_yml_content = format!(r#"services:
+  db:
+    volumes:
+      - moodledb_data:{}
+  mailpit:
+    volumes:
+      - mailpit_data:/data
+
+volumes:
+  moodledb_data:
+    driver: local
+  mailpit_data:
+    driver: local
+"#, db_data_path);
+    std::fs::write(&local_yml_path, local_yml_content)
+        .map_err(|e| format!("Failed to create local.yml: {}", e))?;
+
     // Check for cancellation before starting Docker containers
     if is_creation_cancelled(app_handle, name) {
         return Err("Site creation was cancelled".to_string());
