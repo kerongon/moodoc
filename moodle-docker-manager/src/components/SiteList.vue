@@ -31,6 +31,19 @@
       </div>
     </div>
 
+    <!-- Success notification shown after starting a site -->
+    <transition name="fade">
+      <div v-if="successMessage" class="mx-4 mb-4 p-3 rounded border border-green-400 bg-green-100 text-green-800 dark:border-green-600 dark:bg-green-200 dark:text-green-900 text-center">
+        {{ successMessage }}
+      </div>
+    </transition>
+    <!-- Stop notification shown after stopping a site -->
+    <transition name="fade">
+      <div v-if="stopMessage" class="mx-4 mb-4 p-3 rounded border border-red-400 bg-red-100 text-red-800 dark:border-red-600 dark:bg-red-200 dark:text-red-900 text-center">
+        {{ stopMessage }}
+      </div>
+    </transition>
+
     <div class="site-list flex-1 overflow-x-auto">
       <div v-if="loading" class="loading text-xs p-4 text-center">
         Loading sites...
@@ -546,6 +559,11 @@ export default {
     // Recently created sites tracking
     const recentlyCreatedSites = ref({});
     
+    // Success notification message
+    const successMessage = ref('');
+    // Stop notification message
+    const stopMessage = ref('');
+
     // Check for recently created sites
     const loadRecentlyCreatedSites = () => {
       try {
@@ -641,6 +659,9 @@ export default {
           if (siteObj && siteObj.status === 'running') break;
           await new Promise(r => setTimeout(r, 500));
         }
+        // Show success notification
+        successMessage.value = `Site '${name}' started successfully`;
+        setTimeout(() => { successMessage.value = ''; }, 5000);
       } catch (err) {
         console.error(`Failed to start site ${name}:`, err);
         showError(`Failed to start site: ${name}`, String(err));
@@ -672,6 +693,9 @@ export default {
               if (siteObj && siteObj.status !== 'running') break;
               await new Promise(r => setTimeout(r, 500));
             }
+            // Show stop notification
+            stopMessage.value = `Site '${name}' stopped successfully`;
+            setTimeout(() => { stopMessage.value = ''; }, 5000);
             // Clear spinner after operation completes
             emit('action-end', name);
             activeActionSite.value = null;
@@ -1134,7 +1158,10 @@ export default {
       // Recently created sites
       recentlyCreatedSites,
       isRecentlyCreated,
-      getCreationTime
+      getCreationTime,
+      // Success message
+      successMessage,
+      stopMessage
     };
   }
 };
