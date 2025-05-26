@@ -1,0 +1,127 @@
+/* Light mode fixes for dashboard */
+
+/* Dashboard app title */
+.light .app-title,
+html:not(.dark) .app-title,
+body[data-theme="light"] .app-title {
+  color: #111827 !important; /* Dark text in light mode */
+}
+
+/* Dashboard buttons */
+.light .modern-new-site-button,
+html:not(.dark) .modern-new-site-button,
+body[data-theme="light"] .modern-new-site-button {
+  background-color: #6366F1 !important; /* Keep purple background */
+  color: white !important; /* Ensure white text is used */
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3) !important; /* Slightly stronger shadow for light mode */
+}
+
+.light .modern-new-site-button:hover,
+html:not(.dark) .modern-new-site-button:hover,
+body[data-theme="light"] .modern-new-site-button:hover {
+  background-color: #4F46E5 !important; /* Slightly darker purple on hover */
+  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.4) !important; /* Stronger shadow on hover */
+}
+
+/* Settings button */
+.light .modern-settings-button,
+html:not(.dark) .modern-settings-button,
+body[data-theme="light"] .modern-settings-button {
+  color: #4b5563 !important; /* Darker color for better visibility in light mode */
+}
+
+.light .modern-settings-button:hover,
+html:not(.dark) .modern-settings-button:hover,
+body[data-theme="light"] .modern-settings-button:hover {
+  color: #6366F1 !important; /* Purple on hover for better visibility */
+}
+
+.light .modern-settings-button .button-icon,
+html:not(.dark) .modern-settings-button .button-icon,
+body[data-theme="light"] .modern-settings-button .button-icon {
+  color: #4b5563 !important; /* Darker color for better visibility */
+}
+
+.light .modern-settings-button:hover .button-icon,
+html:not(.dark) .modern-settings-button:hover .button-icon,
+body[data-theme="light"] .modern-settings-button:hover .button-icon {
+  color: #6366F1 !important; /* Purple color on hover */
+}
+
+/* Logo container */
+.light .logo-container,
+html:not(.dark) .logo-container,
+body[data-theme="light"] .logo-container {
+  background-color: #6366F1 !important; /* Keep the purple background */
+}
+
+/* Ensure icons in buttons are visible */
+.light .button-icon,
+html:not(.dark) .button-icon,
+body[data-theme="light"] .button-icon {
+  color: currentColor !important; /* Inherit color from parent */
+}
+
+/* Override cursor for navigation and window controls in drag region */
+.light [data-tauri-drag-region] .header-nav-button,
+html:not(.dark) [data-tauri-drag-region] .header-nav-button,
+body[data-theme="light"] [data-tauri-drag-region] .header-nav-button,
+.light [data-tauri-drag-region] .window-control-button,
+html:not(.dark) [data-tauri-drag-region] .window-control-button,
+body[data-theme="light"] [data-tauri-drag-region] .window-control-button {
+  cursor: pointer !important;
+}
+
+/* Gradient hover effect for navigation buttons (back, forward, refresh) */
+.light .header-nav-button:hover,
+html:not(.dark) .header-nav-button:hover,
+body[data-theme="light"] .header-nav-button:hover {
+  background: linear-gradient(135deg, rgba(229,231,235,0.8), rgba(209,213,219,0.9)) !important;
+}
+
+/* Docker Status Component */
+.light .docker-status-container:hover, 
+html:not(.dark) .docker-status-container:hover,
+body[data-theme="light"] .docker-status-container:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important; /* Light gray background on hover for light mode */
+}
+
+/* Ensure Docker status text colors remain visible */
+.light .running-text,
+html:not(.dark) .running-text,
+body[data-theme="light"] .running-text {
+  color: #15803d !important; /* Darker green for better contrast */
+}
+
+.light .stopped-text,
+html:not(.dark) .stopped-text, 
+body[data-theme="light"] .stopped-text {
+  color: #b91c1c !important; /* Darker red for better contrast */
+}
+
+.light .not-installed-text,
+html:not(.dark) .not-installed-text,
+body[data-theme="light"] .not-installed-text {
+  color: #b45309 !important; /* Darker amber for better contrast */
+}
+
+.light .loading-text,
+html:not(.dark) .loading-text,
+body[data-theme="light"] .loading-text {
+  color: #4b5563 !important; /* Darker gray for better contrast */
+}
+
+/* App header styling for light mode */
+.light .app-header,
+html:not(.dark) .app-header,
+body[data-theme="light"] .app-header {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Text in the dashboard */
+.light .status-text,
+html:not(.dark) .status-text, 
+body[data-theme="light"] .status-text {
+  color: #374151 !important; /* Dark gray text by default */
+}

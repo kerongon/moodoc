@@ -372,6 +372,18 @@ html:not(.dark) .header-nav-button .button-icon,
 body[data-theme="light"] .header-nav-button .button-icon {
   color: #374151 !important;
 }
+/* Use grab cursor for navigation buttons in create site form */
+.light .navigation-controls .header-nav-button,
+html:not(.dark) .navigation-controls .header-nav-button,
+body[data-theme="light"] .navigation-controls .header-nav-button {
+  cursor: grab !important;
+}
+
+.light .navigation-controls .header-nav-button:active,
+html:not(.dark) .navigation-controls .header-nav-button:active,
+body[data-theme="light"] .navigation-controls .header-nav-button:active {
+  cursor: grabbing !important;
+}
 
 /* Subsection titles - Database Configuration and Web Server */
 .light .subsection-title,

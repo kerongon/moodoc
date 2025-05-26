@@ -1342,4 +1342,8 @@ td .new-badge {
   display: inline-flex;
   align-items: center;
 }
-</style>
+
+@import '../assets/site-list-light-mode-fix.css';
+  </style>
+  <!-- Global light mode fixes for SiteList -->
+  <style src="../assets/site-list-light-mode-fix.css"></style>

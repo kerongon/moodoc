@@ -72,6 +72,7 @@ export default {
 </script>
 
 <style scoped>
+@import '../assets/dashboard-light-mode-fix.css';
 /* Modern clean status indicator with enhanced animations */
 .docker-status-container {
   display: flex;

@@ -1,0 +1,85 @@
+/* Light mode fixes for SiteList component */
+
+/* Fix the "No sites" section icon in light mode */
+.light .bg-indigo-500 .text-white,
+html:not(.dark) .bg-indigo-500 .text-white,
+body[data-theme="light"] .bg-indigo-500 .text-white {
+  color: white !important; /* Ensure icon remains white on colored background */
+}
+
+/* Fix the "Create a Site" button text in light mode */
+.light .bg-indigo-600,
+html:not(.dark) .bg-indigo-600,
+body[data-theme="light"] .bg-indigo-600 {
+  background-color: #4f46e5 !important; /* Indigo-600 */
+  color: white !important; /* Ensure text is white */
+}
+
+.light .bg-indigo-600:hover,
+html:not(.dark) .bg-indigo-600:hover,
+body[data-theme="light"] .bg-indigo-600:hover {
+  background-color: #4338ca !important; /* Indigo-700 */
+}
+
+/* Fix the site list header icon in light mode */
+.light .bg-indigo-600 .text-white,
+html:not(.dark) .bg-indigo-600 .text-white, 
+body[data-theme="light"] .bg-indigo-600 .text-white {
+  color: white !important; /* Ensure icon remains white */
+}
+
+/* Fix the top icon box background in light mode */
+.light .bg-indigo-600,
+html:not(.dark) .bg-indigo-600,
+body[data-theme="light"] .bg-indigo-600 {
+  background-color: #4f46e5 !important; /* Indigo-600 */
+}
+
+/* Fix empty state icon container in light mode */
+.light .bg-indigo-500,
+html:not(.dark) .bg-indigo-500,
+body[data-theme="light"] .bg-indigo-500 {
+  background-color: #6366f1 !important; /* Indigo-500 */
+}
+
+/* Fix text colors in the empty state */
+.light .text-gray-800,
+html:not(.dark) .text-gray-800,
+body[data-theme="light"] .text-gray-800 {
+  color: #1f2937 !important; /* Gray-800 */
+}
+
+.light .text-gray-500,
+html:not(.dark) .text-gray-500,
+body[data-theme="light"] .text-gray-500 {
+  color: #6b7280 !important; /* Gray-500 */
+}
+
+/* Styles for the compact version (SiteList.vue.new) */
+.light .bg-blue-600,
+html:not(.dark) .bg-blue-600,
+body[data-theme="light"] .bg-blue-600 {
+  background-color: #2563eb !important; /* Blue-600 */
+  color: white !important;
+}
+
+.light .bg-blue-600:hover,
+html:not(.dark) .bg-blue-600:hover,
+body[data-theme="light"] .bg-blue-600:hover {
+  background-color: #1d4ed8 !important; /* Blue-700 */
+}
+
+.light .bg-blue-600 .text-white,
+html:not(.dark) .bg-blue-600 .text-white,
+body[data-theme="light"] .bg-blue-600 .text-white {
+  color: white !important;
+}
+
+/* No sites message in compact version */
+.light .no-sites,
+html:not(.dark) .no-sites,
+body[data-theme="light"] .no-sites {
+  color: #111827 !important; /* Gray-900 for better readability */
+  text-align: center !important;
+  padding: 2rem !important;
+}

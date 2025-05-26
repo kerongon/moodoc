@@ -177,6 +177,7 @@ export default {
 </script>
 
 <style scoped>
+@import '../assets/dashboard-light-mode-fix.css';
 
 .dashboard-full {
   display: flex;

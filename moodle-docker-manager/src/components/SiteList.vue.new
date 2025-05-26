@@ -376,4 +376,6 @@ export default {
   margin-top: 0.5rem;
   transition: background-color 0.15s ease;
 }
+
+@import '../assets/site-list-light-mode-fix.css';
 </style>
