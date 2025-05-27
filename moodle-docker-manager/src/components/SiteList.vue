@@ -13,6 +13,41 @@
       </div>
 
       <div class="flex items-center space-x-3">
+        <!-- Batch Operations -->
+        <div v-if="sites.length > 0" class="flex items-center space-x-3">
+          <button
+            @click="batchStopAll"
+            :disabled="batchProcessing || !hasRunningSites"
+            class="inline-flex items-center justify-center h-10 px-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-150 text-sm"
+            title="Stop all running sites"
+          >
+            <template v-if="batchProcessing && currentBatchOperation === 'stop'">
+              <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              Stopping All...
+            </template>
+            <template v-else>
+              <svg class="w-4 h-4 mr-2 -ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+              Stop All
+            </template>
+          </button>
+          <button
+            @click="batchRemoveAll"
+            :disabled="batchProcessing"
+            class="inline-flex items-center justify-center h-10 px-4 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-150 text-sm"
+            title="Remove all sites"
+          >
+            <template v-if="batchProcessing && currentBatchOperation === 'remove'">
+              <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 -ml-1"></div>
+              Removing All...
+            </template>
+            <template v-else>
+              <PhTrash class="w-4 h-4 mr-2 -ml-1" weight="bold" />
+              Remove All
+            </template>
+          </button>
+        </div>
         <!-- search box -->
         <div v-if="sites.length > 0" class="relative">
           <input
@@ -114,7 +149,7 @@
                class="moodle-table-row grid grid-cols-custom-table-layout items-center px-4 py-4 border-b border-gray-200 dark:border-gray-700"
                :class="[
                   { 'bg-white dark:bg-gray-800': index % 2 === 0, 'bg-gray-50 dark:bg-[#2c334b]': index % 2 !== 0 }, // Alternating row colors
-                  { 'opacity-50 pointer-events-none': activeActionSite===site.name },
+                  { 'opacity-75': activeActionSites.has(site.name) || batchProcessing },
                 ]">
             <div class="moodle-data-cell col-span-2 flex items-center">
               <div class="flex items-center">
@@ -135,7 +170,7 @@
                     <PhLinkSimple class="inline w-3 h-3 ml-1 text-blue-500 dark:text-blue-400 group-hover:text-blue-600 dark:group-hover:text-blue-300" />
                   </a>
                 </div>
-                <span v-if="activeActionSite === site.name" class="ml-2 text-xs text-blue-600 dark:text-blue-400 animate-pulse">
+                <span v-if="activeActionSites.has(site.name)" class="ml-2 text-xs text-blue-600 dark:text-blue-400 animate-pulse">
                   processing...
                 </span>
               </div>
@@ -206,9 +241,9 @@
                 <button v-if="site.status !== 'running'"
                     @click="startSite(site.name)"
                     class="action-icon-button bg-green-500 hover:bg-green-600 text-white"
-                    :disabled="activeActionSite === site.name"
+                    :disabled="activeActionSites.has(site.name)"
                     title="Start">
-                  <template v-if="activeActionSite === site.name">
+                  <template v-if="activeActionSites.has(site.name)">
                     <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   </template>
                   <template v-else>
@@ -220,9 +255,9 @@
                 <button v-else
                     @click="stopSite(site.name)"
                     class="action-icon-button bg-red-500 hover:bg-red-600 text-white"
-                    :disabled="activeActionSite === site.name"
+                    :disabled="activeActionSites.has(site.name)"
                     title="Stop">
-                  <template v-if="activeActionSite === site.name">
+                  <template v-if="activeActionSites.has(site.name)">
                     <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   </template>
                   <template v-else>
@@ -284,6 +319,38 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Multiple notifications for batch operations -->
+    <div v-if="batchNotifications.length > 0" class="fixed bottom-4 right-4 z-50 space-y-2 max-w-sm">
+      <transition-group name="notification" tag="div">
+        <div 
+          v-for="notification in batchNotifications" 
+          :key="notification.id"
+          :class="[
+            'p-4 rounded-lg shadow-lg border',
+            notification.type === 'success' ? 'bg-green-100 border-green-400 text-green-800 dark:bg-green-800 dark:border-green-600 dark:text-green-100' :
+            notification.type === 'error' ? 'bg-red-100 border-red-400 text-red-800 dark:bg-red-800 dark:border-red-600 dark:text-red-100' :
+            'bg-blue-100 border-blue-400 text-blue-800 dark:bg-blue-800 dark:border-blue-600 dark:text-blue-100'
+          ]"
+          class="relative"
+        >
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <p class="font-medium text-sm">{{ notification.title }}</p>
+              <p class="text-xs mt-1">{{ notification.message }}</p>
+            </div>
+            <button 
+              @click="removeNotification(notification.id)" 
+              class="ml-2 text-gray-400 hover:text-gray-600"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </transition-group>
     </div>
 
     <!-- Success notification shown after starting a site -->
@@ -511,7 +578,7 @@ export default {
   setup(props, { expose, emit }) {
     const sites = ref([]);
     const loading = ref(true);
-    const activeActionSite = ref(null);
+    const activeActionSites = ref(new Set()); // Changed from single site to Set of sites
     const error = ref(null);
     const router = useRouter();
     const settingsStore = useSettingsStore();
@@ -565,8 +632,7 @@ export default {
     const isRecentlyCreated = (siteName) => {
       return recentlyCreatedSites.value[siteName] !== undefined;
     };
-    
-    // Get when a site was created (for tooltip)
+     // Get when a site was created (for tooltip)
     const getCreationTime = (siteName) => {
       const timestamp = recentlyCreatedSites.value[siteName];
       if (!timestamp) return '';
@@ -621,10 +687,11 @@ export default {
         console.error('Failed to refresh site statuses:', err);
       }
     };
+    
     // Start a site
     const startSite = async (name) => {
-      // Set active action and emit event
-      activeActionSite.value = name;
+      // Add to active actions and emit event
+      activeActionSites.value.add(name);
       emit('action-start', name);
       
       // Minimum time to show spinner (for visual feedback)
@@ -653,13 +720,13 @@ export default {
           await new Promise(r => setTimeout(r, remainingTime));
         }
         emit('action-end', name);
-        activeActionSite.value = null;
+        activeActionSites.value.delete(name);
       }
     };
 
     // Stop a site
     const stopSite = async (name) => {
-      activeActionSite.value = name;
+      activeActionSites.value.add(name);
       emit('action-start', name);
       
       try {
@@ -679,13 +746,13 @@ export default {
             setTimeout(() => { stopMessage.value = ''; }, 5000);
             // Clear spinner after operation completes
             emit('action-end', name);
-            activeActionSite.value = null;
+            activeActionSites.value.delete(name);
           } catch (err) {
             console.error(`Failed to stop site ${name}:`, err);
             showError(`Failed to stop site: ${name}`, String(err));
             // Clear spinner on error
             emit('action-end', name);
-            activeActionSite.value = null;
+            activeActionSites.value.delete(name);
           }
         }, 0);
         
@@ -694,7 +761,7 @@ export default {
         console.error(`Failed to initiate stop for site ${name}:`, err);
         showError(`Failed to stop site: ${name}`, String(err));
         emit('action-end', name);
-        activeActionSite.value = null;
+        activeActionSites.value.delete(name);
       }
     };
 
@@ -720,7 +787,7 @@ export default {
         removalStatus.value = 'Preparing to remove site...';
         removingSiteName.value = siteToRemove.value;
         showRemoveModal.value = false;
-        activeActionSite.value = siteToRemove.value;
+        activeActionSites.value.add(siteToRemove.value);
 
         // Call the backend remove_site function with progress tracking
         await invoke('remove_site', {
@@ -741,7 +808,7 @@ export default {
         removalProgress.value = 0;
         removalStatus.value = '';
         removingSiteName.value = '';
-        activeActionSite.value = null;
+        activeActionSites.value.delete(siteToRemove.value);
         siteToRemove.value = '';
       }
     };
@@ -1083,7 +1150,7 @@ export default {
           removalProgress.value = 0;
           removalStatus.value = '';
           removingSiteName.value = '';
-          activeActionSite.value = null;
+          activeActionSites.value.clear();
           siteToRemove.value = '';
         }
       });
@@ -1095,13 +1162,200 @@ export default {
       if (completeUnlistener) completeUnlistener();
     });
     
+    // Batch operations computed properties
+    const hasRunningSites = computed(() => {
+      return sites.value.some(site => site.status === 'running');
+    });
+    
+    // Batch operations state
+    const batchProcessing = ref(false);
+    const currentBatchOperation = ref('');
+    const batchNotifications = ref([]);
+    
+    // Counter for notification IDs
+    let notificationIdCounter = 0;
+    
+    // Batch operations methods
+    const addNotification = (title, message, type = 'info') => {
+      const id = ++notificationIdCounter;
+      batchNotifications.value.push({
+        id,
+        title,
+        message,
+        type
+      });
+      
+      // Auto-remove notification after 5 seconds
+      setTimeout(() => {
+        removeNotification(id);
+      }, 5000);
+      
+      return id;
+    };
+    
+    const removeNotification = (id) => {
+      const index = batchNotifications.value.findIndex(n => n.id === id);
+      if (index > -1) {
+        batchNotifications.value.splice(index, 1);
+      }
+    };
+    
+    const batchStopAll = async () => {
+      const runningSites = sites.value.filter(site => site.status === 'running');
+      
+      if (runningSites.length === 0) {
+        addNotification('No Running Sites', 'No running sites to stop.', 'info');
+        return;
+      }
+      
+      batchProcessing.value = true;
+      currentBatchOperation.value = 'stop';
+      
+      addNotification(
+        'Batch Stop Started', 
+        `Stopping ${runningSites.length} running site${runningSites.length > 1 ? 's' : ''}...`, 
+        'info'
+      );
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const site of runningSites) {
+        try {
+          await invoke('stop_site', { name: site.name });
+          
+          // Poll status until stopped or timeout
+          for (let i = 0; i < 20; i++) {
+            await refreshStatuses();
+            const siteObj = sites.value.find(s => s.name === site.name);
+            if (siteObj && siteObj.status !== 'running') break;
+            await new Promise(r => setTimeout(r, 500));
+          }
+          
+          successCount++;
+          addNotification(
+            'Site Stopped', 
+            `Site '${site.name}' stopped successfully`, 
+            'success'
+          );
+        } catch (error) {
+          errorCount++;
+          addNotification(
+            'Stop Failed', 
+            `Failed to stop site '${site.name}': ${error}`, 
+            'error'
+          );
+        }
+      }
+      
+      // Summary notification
+      if (successCount > 0 && errorCount === 0) {
+        addNotification(
+          'Batch Stop Complete', 
+          `Successfully stopped ${successCount} site${successCount > 1 ? 's' : ''}`, 
+          'success'
+        );
+      } else if (successCount > 0 && errorCount > 0) {
+        addNotification(
+          'Batch Stop Partial', 
+          `Stopped ${successCount} sites, ${errorCount} failed`, 
+          'info'
+        );
+      } else if (errorCount > 0) {
+        addNotification(
+          'Batch Stop Failed', 
+          `Failed to stop ${errorCount} site${errorCount > 1 ? 's' : ''}`, 
+          'error'
+        );
+      }
+      
+      batchProcessing.value = false;
+      currentBatchOperation.value = '';
+    };
+    
+    const batchRemoveAll = async () => {
+      if (sites.value.length === 0) {
+        addNotification('No Sites', 'No sites to remove.', 'info');
+        return;
+      }
+      
+      const confirmed = window.confirm(
+        `Are you sure you want to remove ALL ${sites.value.length} site${sites.value.length > 1 ? 's' : ''}?\n\n` +
+        `Sites to be removed:\n${sites.value.map(s => s.name).join(', ')}\n\n` +
+        'This action cannot be undone. Docker resources will be cleaned up.'
+      );
+      
+      if (!confirmed) return;
+      
+      batchProcessing.value = true;
+      currentBatchOperation.value = 'remove';
+      
+      addNotification(
+        'Batch Remove Started', 
+        `Removing ${sites.value.length} site${sites.value.length > 1 ? 's' : ''}...`, 
+        'info'
+      );
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const site of sites.value) {
+        try {
+          await invoke('remove_site', {
+            name: site.name,
+            removeContainers: true
+          });
+          
+          successCount++;
+          addNotification(
+            'Site Removed', 
+            `Site '${site.name}' removed successfully`, 
+            'success'
+          );
+        } catch (error) {
+          errorCount++;
+          addNotification(
+            'Remove Failed', 
+            `Failed to remove site '${site.name}': ${error}`, 
+            'error'
+          );
+        }
+      }
+      
+      // Summary notification
+      if (successCount > 0 && errorCount === 0) {
+        addNotification(
+          'Batch Remove Complete', 
+          `Successfully removed ${successCount} site${successCount > 1 ? 's' : ''}`, 
+          'success'
+        );
+      } else if (successCount > 0 && errorCount > 0) {
+        addNotification(
+          'Batch Remove Partial', 
+          `Removed ${successCount} sites, ${errorCount} failed`, 
+          'info'
+        );
+      } else if (errorCount > 0) {
+        addNotification(
+          'Batch Remove Failed', 
+          `Failed to remove ${errorCount} site${errorCount > 1 ? 's' : ''}`, 
+          'error'
+        );
+      }
+      
+      // Reload sites to reflect changes
+      await loadSites();
+      batchProcessing.value = false;
+      currentBatchOperation.value = '';
+    };
+    
     // Expose the loadSites method to parent components
     expose({ loadSites });
 
     return {
       sites,
       loading,
-      activeActionSite,
+      activeActionSites,
       error,
       startSite,
       stopSite,
@@ -1153,7 +1407,16 @@ export default {
       getCreationTime,
       // Success message
       successMessage,
-      stopMessage
+      stopMessage,
+      // Batch operations
+      batchProcessing,
+      currentBatchOperation,
+      hasRunningSites,
+      batchStopAll,
+      batchRemoveAll,
+      batchNotifications,
+      addNotification,
+      removeNotification
     };
   }
 };
@@ -1193,6 +1456,21 @@ export default {
 
 .spacer {
   min-width: 20px; /* Ensure minimum spacing */
+}
+
+/* Notification animations */
+.notification-enter-active, .notification-leave-active {
+  transition: all 0.3s ease;
+}
+
+.notification-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.notification-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
 }
 </style>
 <!-- Global light mode fixes for SiteList -->
