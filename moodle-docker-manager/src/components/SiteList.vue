@@ -106,6 +106,7 @@
                 <PhCaretDown v-else class="inline-block w-3 h-3" />
               </span>
             </div>
+            <div class="spacer"></div>
             <div class="moodle-header-cell flex items-center">Resources</div>
             <div class="moodle-header-cell flex items-center col-span-2">Actions</div>
           </div>
@@ -173,6 +174,7 @@
                 -
               </div> -->
             </div>
+            <div class="spacer"></div>
             <div class="moodle-data-cell text-sm text-gray-700 dark:text-gray-300 flex items-center space-x-1.5">
               <button
                   @click.prevent="openDirectory(site.path)"
@@ -1161,12 +1163,16 @@ export default {
 
 /* Custom grid layout for the table */
 .grid-cols-custom-table-layout {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 0.75fr) minmax(0, 0.75fr) minmax(0, 1fr) minmax(0, 1fr) repeat(2, minmax(0, 0.75fr)); 
-  /* Site Name (2fr), Version (0.75fr), DB (0.75fr), Status (1fr), Resources (1fr), Actions (1.5fr) */
+  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 0.75fr) minmax(0, 0.75fr) minmax(0, 1fr) minmax(20px, 0.1fr) minmax(0, 1fr) repeat(2, minmax(0, 0.75fr)); 
+  /* Site Name (2fr), Version (0.75fr), DB (0.75fr), Status (1fr), Spacer (0.1fr), Resources (1fr), Actions (1.5fr) */
 }
 
 .bg-gray-750 {
   background-color: #2c334b; /* Use the hover color for alternating rows */
+}
+
+.spacer {
+  min-width: 20px; /* Ensure minimum spacing */
 }
 </style>
 <!-- Global light mode fixes for SiteList -->
