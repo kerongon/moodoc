@@ -178,7 +178,7 @@
             <div class="moodle-data-cell text-sm text-gray-700 dark:text-gray-300 flex items-center space-x-1.5">
               <button
                   @click.prevent="openDirectory(site.path)"
-                  :title="site.path"
+                  :title="`${site.path}/moodle`"
                   type="button"
                   class="action-icon-button bg-teal-500 hover:bg-teal-600 text-white"
                 >
@@ -191,6 +191,14 @@
                   class="action-icon-button bg-purple-500 hover:bg-purple-600 text-white"
                 >
                   <PhCode class="w-4 h-4" />
+                </button>
+                <button
+                  @click.prevent="openTerminal(site.path)"
+                  :title="`Open terminal at ${site.path}/moodle`"
+                  type="button"
+                  class="action-icon-button bg-gray-700 hover:bg-gray-800 text-white"
+                >
+                  <PhTerminal class="w-4 h-4" />
                 </button>
             </div>
             <div class="moodle-data-cell col-span-2">
@@ -473,6 +481,7 @@ import DiagnosticModal from './DiagnosticModal.vue';
 import { Command } from '@tauri-apps/plugin-shell';
 import { cleanupRecentSites } from '../utils/notifications';
 import { useSettingsStore } from '../stores/settings';
+import { TauriService } from '../services/tauriService';
 
 export default {
   name: 'SiteList',
@@ -932,6 +941,16 @@ export default {
       }
     };
 
+    // Open terminal at specified path
+    const openTerminal = async (path) => {
+      try {
+        await TauriService.openTerminalAtPath(path);
+      } catch (e) {
+        console.error('Failed to open terminal:', e);
+        showError('Open Terminal failed', String(e));
+      }
+    };
+
     // Computed properties and methods for search, sort, and pagination
     const filteredSites = computed(() =>
       sites.value.filter(s => {
@@ -1097,6 +1116,7 @@ export default {
       formatVersions,
       openDirectory,
       openInEditor,
+      openTerminal,
       updateModalVisible,
       selectedSiteName,
       showErrorModal,

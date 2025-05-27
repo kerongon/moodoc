@@ -7,6 +7,7 @@ mod docker;
 mod site_metrics;
 
 use std::collections::HashMap;
+use std::process::Command;
 use std::sync::Mutex;
 use tauri::{generate_handler, Manager, WebviewWindowBuilder, WebviewUrl};
 // Since all docker functions are used in generate_handler! with docker:: prefix,
@@ -44,6 +45,35 @@ async fn open_logs_window(
         .fullscreen(false)
         .build()
         .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+fn open_terminal_at_path(path: String) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .args(["-a", "Terminal", &path])
+            .spawn()
+            .map_err(|e| format!("Failed to open terminal: {}", e))?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("cmd")
+            .args(["/c", "start", "cmd", "/k", &format!("cd /d \"{}\"", path)])
+            .spawn()
+            .map_err(|e| format!("Failed to open terminal: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        Command::new("gnome-terminal")
+            .args(["--working-directory", &path])
+            .spawn()
+            .map_err(|e| format!("Failed to open terminal: {}", e))?;
+    }
 
     Ok(())
 }
@@ -127,6 +157,7 @@ fn main() {
             site_metrics::get_site_size,
             site_metrics::get_storage_info,
             open_logs_window,
+            open_terminal_at_path,
             docker::test_docker_compose,
         ])
         .run(tauri::generate_context!())
