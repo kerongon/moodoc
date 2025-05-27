@@ -8,10 +8,18 @@ use tauri::{command, AppHandle, Manager};
 use super::{SiteState, execute_with_docker_compose_wrapper};
 
 // Helper function to normalize database type for docker-compose file naming
-fn normalize_db_type(db_type: &str) -> &str {
+fn normalize_db_type(db_type: &str) -> String {
     match db_type.to_lowercase().as_str() {
-        "postgresql" | "postgres" => "pgsql",
-        _ => db_type,
+        // PostgreSQL variants
+        "postgresql" | "postgres" | "pgsql" => "pgsql".to_string(),
+        // MySQL variants  
+        "mysql" | "mariadb" => "mysql".to_string(),
+        // SQL Server variants
+        "sqlserver" | "mssql" | "sqlsrv" | "sql_server" => "mssql".to_string(),
+        // Oracle variants (for future support)
+        "oracle" | "oci" | "oci8" => "oracle".to_string(),
+        // Default - return as lowercase
+        _ => db_type.to_lowercase(),
     }
 }
 

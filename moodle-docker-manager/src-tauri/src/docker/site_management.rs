@@ -49,10 +49,18 @@ fn execute_moodle_docker_command(command: &str, site_dir: &std::path::Path) -> R
 }
 
 // Helper function to normalize database type for docker-compose file naming
-fn normalize_db_type(db_type: &str) -> &str {
+fn normalize_db_type(db_type: &str) -> String {
     match db_type.to_lowercase().as_str() {
-        "postgresql" | "postgres" => "pgsql",
-        _ => db_type,
+        // PostgreSQL variants
+        "postgresql" | "postgres" | "pgsql" => "pgsql".to_string(),
+        // MySQL variants  
+        "mysql" | "mariadb" => "mysql".to_string(),
+        // SQL Server variants
+        "sqlserver" | "mssql" | "sqlsrv" | "sql_server" => "mssql".to_string(),
+        // Oracle variants (for future support)
+        "oracle" | "oci" | "oci8" => "oracle".to_string(),
+        // Default - return as lowercase
+        _ => db_type.to_lowercase(),
     }
 }
 
@@ -117,11 +125,8 @@ fn create_site_blocking(
         return Err("Installation directory cannot be empty".to_string());
     }
 
-    // Normalize db_type for docker compose file naming (use 'pgsql' for PostgreSQL)
-    let db_env = match db_type.to_lowercase().as_str() {
-        "postgresql" | "postgres" => "pgsql",
-        _ => &db_type.to_lowercase(),
-    };
+    // Normalize db_type for docker compose file naming using comprehensive normalization
+    let db_env = normalize_db_type(&db_type);
 
     // Check if the site already exists
     let state = app_handle.state::<SiteState>();
@@ -497,7 +502,8 @@ fi
     }
 
     // NEW: Create local.yml in the moodle-docker directory using the expected schema
-    let db_data_path = if db_type.to_lowercase().contains("postgres") {
+    let normalized_db_type = normalize_db_type(db_type);
+    let db_data_path = if normalized_db_type == "pgsql" {
         "/var/lib/postgresql/data"
     } else {
         "/var/lib/mysql"
