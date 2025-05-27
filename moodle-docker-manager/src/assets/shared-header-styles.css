@@ -30,3 +30,17 @@
 .modern-settings-button:active {
   cursor: grabbing !important;
 }
+
+/* Override cursor for window control buttons - they should always be pointer */
+.window-control-button,
+.close-button,
+.minimize-button,
+.maximize-button,
+[data-tauri-drag-region] .window-control-button,
+.dark [data-tauri-drag-region] .window-control-button,
+.light [data-tauri-drag-region] .window-control-button,
+html:not(.dark) [data-tauri-drag-region] .window-control-button,
+body[data-theme="light"] [data-tauri-drag-region] .window-control-button,
+body[data-theme="dark"] [data-tauri-drag-region] .window-control-button {
+  cursor: pointer !important;
+}

@@ -15,6 +15,16 @@
   cursor: text;
 }
 
+/* Override cursor for window control buttons to use pointer */
+[data-tauri-drag-region] .window-control-button,
+.dark [data-tauri-drag-region] .window-control-button,
+.light [data-tauri-drag-region] .window-control-button,
+html:not(.dark) [data-tauri-drag-region] .window-control-button,
+body[data-theme="light"] [data-tauri-drag-region] .window-control-button,
+body[data-theme="dark"] [data-tauri-drag-region] .window-control-button {
+  cursor: pointer !important;
+}
+
 /* Ensure logs container is never draggable */
 .logs-container {
   -webkit-app-region: no-drag;
