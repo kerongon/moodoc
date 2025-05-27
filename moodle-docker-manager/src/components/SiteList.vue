@@ -193,23 +193,37 @@
             </div>
             <div class="moodle-data-cell col-span-2">
               <div class="flex items-center space-x-1.5">
-                <button v-if="site.status !== 'running'" 
-                    @click="startSite(site.name)" 
+                <button v-if="site.status !== 'running'"
+                    @click="startSite(site.name)"
                     class="action-icon-button bg-green-500 hover:bg-green-600 text-white"
-                    :class="{ 'spinner-container': activeActionSite === site.name }"
                     :disabled="activeActionSite === site.name"
                     title="Start">
-                  <template v-if="activeActionSite === site.name"><div class="custom-spinner-small"></div></template>
-                  <template v-else><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"></path></svg></template>
+                  <svg
+                    class="w-4 h-4"
+                    :class="{ 'animate-spin': activeActionSite === site.name }"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M5 3v18l15-9L5 3z" />
+                  </svg>
                 </button>
-                <button v-else 
-                    @click="stopSite(site.name)" 
+                <button v-else
+                    @click="stopSite(site.name)"
                     class="action-icon-button bg-red-500 hover:bg-red-600 text-white"
-                    :class="{ 'spinner-container': activeActionSite === site.name }"
                     :disabled="activeActionSite === site.name"
                     title="Stop">
-                  <template v-if="activeActionSite === site.name"><div class="custom-spinner-small"></div></template>
-                  <template v-else><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg></template>
+                  <svg
+                    class="w-4 h-4"
+                    :class="{ 'animate-spin': activeActionSite === site.name }"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <rect x="6" y="6" width="12" height="12" rx="2" />
+                  </svg>
                 </button>
                 <button @click="viewLogs(site.name)" class="action-icon-button bg-blue-500 hover:bg-blue-600 text-white" title="Logs">
                   <PhFileText class="w-4 h-4" weight="fill" />
@@ -217,15 +231,16 @@
                 <button @click="viewBackups(site.name)" class="action-icon-button bg-gray-500 hover:bg-gray-600 text-white" title="Backups">
                   <PhArchiveBox class="w-4 h-4" />
                 </button>
-                <button @click="removeSite(site.name)" 
+                <button
+                    @click="removeSite(site.name)"
                     class="action-icon-button bg-red-500 text-white hover:bg-red-600"
-                    :class="{
-                        'spinner-container': isRemovingSite && removingSiteName === site.name
-                    }"
                     :disabled="isRemovingSite && removingSiteName === site.name"
-                    title="Remove">
-                  <template v-if="isRemovingSite && removingSiteName === site.name"><div class="custom-spinner-small"></div></template>
-                  <template v-else><PhTrash class="w-4 h-4" /></template>
+                    title="Remove"
+                >
+                  <PhTrash
+                    class="w-4 h-4"
+                    :class="{ 'animate-spin': isRemovingSite && removingSiteName === site.name }"
+                  />
                 </button>
               </div>
             </div>
