@@ -7,6 +7,14 @@ use tauri::{command, AppHandle, Manager};
 
 use super::{SiteState, execute_with_docker_compose_wrapper};
 
+// Helper function to normalize database type for docker-compose file naming
+fn normalize_db_type(db_type: &str) -> &str {
+    match db_type.to_lowercase().as_str() {
+        "postgresql" | "postgres" => "pgsql",
+        _ => db_type,
+    }
+}
+
 #[command]
 pub fn get_docker_logs(
     app_handle: AppHandle,
@@ -54,6 +62,9 @@ pub fn get_docker_logs(
 
     println!("Fetching logs for service '{}' in site '{}'", service, name);
 
+    // Normalize database type for docker-compose consistency
+    let normalized_db_type = normalize_db_type(&site.db_type);
+
     // Create environment script for this operation
     let docker_env_script = format!(
         r#"#!/bin/bash
@@ -66,7 +77,7 @@ export MOODLE_DOCKER_DB_PORT={}
 "#,
         name,
         moodle_www_root_str,
-        site.db_type.to_lowercase(),
+        normalized_db_type,
         site.php_version,
         web_port_str,
         db_port_str

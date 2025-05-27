@@ -48,6 +48,14 @@ fn execute_moodle_docker_command(command: &str, site_dir: &std::path::Path) -> R
     })
 }
 
+// Helper function to normalize database type for docker-compose file naming
+fn normalize_db_type(db_type: &str) -> &str {
+    match db_type.to_lowercase().as_str() {
+        "postgresql" | "postgres" => "pgsql",
+        _ => db_type,
+    }
+}
+
 #[command]
 pub async fn create_site(
     app_handle: AppHandle,
@@ -778,6 +786,9 @@ pub(crate) fn start_site_blocking(app_handle: AppHandle, name: String) -> Result
     let moodle_www_root = site.path.join("moodle");
     let abs_moodle_path = moodle_www_root.canonicalize().unwrap_or_else(|_| moodle_www_root.clone());
     
+    // Normalize database type for docker-compose consistency
+    let normalized_db_type = normalize_db_type(&site.db_type);
+    
     // Emit starting progress (25%)
     super::safe_emit(
         &app_handle,
@@ -805,7 +816,7 @@ echo "Starting containers for site: {}"
 ./bin/moodle-docker-compose up -d"#,
         name,
         abs_moodle_path.to_str().unwrap_or(""),
-        site.db_type.to_lowercase(),
+        normalized_db_type,
         site.web_port.unwrap_or(8000),
         site.php_version,
         site.db_port.unwrap_or(3306),
@@ -839,7 +850,7 @@ echo "Starting containers for site: {}"
 && ./bin/moodle-docker-wait-for-db"#,
         name,
         abs_moodle_path.to_str().unwrap_or(""),
-        site.db_type.to_lowercase()
+        normalized_db_type
     );
     
     let db_output = execute_moodle_docker_command(&wait_db_cmd, &site.path)
@@ -886,13 +897,16 @@ pub(crate) fn stop_site_blocking(app_handle: AppHandle, name: String) -> Result<
         .canonicalize()
         .unwrap_or_else(|_| moodle_www_root.clone());
 
+    // Normalize database type for docker-compose consistency
+    let normalized_db_type = normalize_db_type(&site.db_type);
+
     // Use our docker-compose wrapper to stop containers directly
     let stop_cmd = format!(
         r#"cd {} && export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT={} && export MOODLE_DOCKER_DB={} && export MOODLE_DOCKER_WEB_PORT={} && export MOODLE_DOCKER_PHP_VERSION={} && export MOODLE_DOCKER_DB_PORT={} && ./bin/moodle-docker-compose down"#,
         site.path.to_str().unwrap_or(""),
         name,
         abs_moodle_path.to_str().unwrap_or(""),
-        site.db_type.to_lowercase(),
+        normalized_db_type,
         site.web_port.unwrap_or(8000),
         site.php_version,
         site.db_port.unwrap_or(3306)
@@ -1016,11 +1030,15 @@ fn remove_site_blocking(
             "site_removal_progress",
             serde_json::json!({ "site": name, "percent": 35, "step": "removing_containers" }),
         );
+        
+        // Normalize database type for docker-compose consistency
+        let normalized_db_type = normalize_db_type(&site.db_type);
+        
         let down_cmd = format!(
             "export COMPOSE_PROJECT_NAME={} && export MOODLE_DOCKER_WWWROOT={} && export MOODLE_DOCKER_DB={} && echo \"Tearing down containers & volumes...\" && ./bin/moodle-docker-compose down -v --remove-orphans",
             name,
             abs_moodle_path.display(),
-            site.db_type.to_lowercase(),
+            normalized_db_type,
         );
         // Debug: print working directory and full command
         println!("Running down command in {}: {}", moodle_docker_dir.display(), down_cmd);

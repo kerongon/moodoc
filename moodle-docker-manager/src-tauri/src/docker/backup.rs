@@ -12,6 +12,14 @@ use tauri::{command, AppHandle, Manager};
 
 use super::{safe_emit, SiteState, execute_with_docker_compose_wrapper};
 
+// Helper function to normalize database type for docker-compose file naming
+fn normalize_db_type(db_type: &str) -> &str {
+    match db_type.to_lowercase().as_str() {
+        "postgresql" | "postgres" => "pgsql",
+        _ => db_type,
+    }
+}
+
 // Helper function to execute moodle-docker commands with docker-compose wrapper for backup operations
 // Currently unused but kept for potential future backup functionality
 #[allow(dead_code)]
@@ -168,7 +176,7 @@ export MOODLE_DOCKER_DB_PORT={}
         .map_err(|e| format!("Failed to create backup directory: {}", e))?;
 
     // Create the backup script with support for both MySQL/MariaDB and PostgreSQL
-    let db_type = site.db_type.to_lowercase();
+    let db_type = normalize_db_type(&site.db_type);
     let script_path = site.path.to_str().unwrap_or("");
     let backup_path = backup_dir.to_str().unwrap_or("");
     let run_status = if is_running { "running" } else { "stopped" };
@@ -457,7 +465,7 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
         site.path.to_str().unwrap_or(""),
         name,
         abs_moodle_path.to_str().unwrap_or(""),
-        site.db_type.to_lowercase(),
+        normalize_db_type(&site.db_type),
         site.web_port.unwrap_or(8000),
         site.php_version,
         site.db_port.unwrap_or(3306),
@@ -606,7 +614,7 @@ echo "Site restored successfully"
         site_path = site.path.to_str().unwrap_or(""),
         name = name,
         abs_moodle_path = abs_moodle_path.to_str().unwrap_or(""),
-        db_type = site.db_type.to_lowercase(),
+        db_type = normalize_db_type(&site.db_type),
         php_version = site.php_version,
         web_port = site.web_port.unwrap_or(8000),
         db_port = site.db_port.unwrap_or(3306),
@@ -759,7 +767,7 @@ echo "MOODLE_DOCKER_DB_PORT=$MOODLE_DOCKER_DB_PORT"
             site.path.to_str().unwrap_or(""),
             name_clone,
             abs_moodle_path.to_str().unwrap_or(""),
-            site.db_type.to_lowercase(),
+            normalize_db_type(&site.db_type),
             site.web_port.unwrap_or(8000),
             site.php_version,
             site.db_port.unwrap_or(3306),
@@ -908,7 +916,7 @@ echo "Site restored successfully"
             site_path = site.path.to_str().unwrap_or(""),
             name = name_clone,
             abs_moodle_path = abs_moodle_path.to_str().unwrap_or(""),
-            db_type = site.db_type.to_lowercase(),
+            db_type = normalize_db_type(&site.db_type),
             php_version = site.php_version,
             web_port = site.web_port.unwrap_or(8000),
             db_port = site.db_port.unwrap_or(3306),
