@@ -218,7 +218,7 @@
                   <PhArchiveBox class="w-4 h-4" />
                 </button>
                 <button @click="removeSite(site.name)" 
-                    class="action-icon-button bg-red-500 text-white hover:bg-red-600 focus:ring-red-500 dark:bg-red-600 dark:text-gray-100 dark:hover:bg-red-700 dark:focus:ring-red-500"
+                    class="action-icon-button bg-red-500 text-white hover:bg-red-600"
                     :class="{
                         'spinner-container': isRemovingSite && removingSiteName === site.name
                     }"
@@ -240,7 +240,6 @@
               @click="currentPage = Math.max(currentPage-1,1)"
               :disabled="currentPage===1"
               class="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >Previous</button>
             >Previous</button>
             <button
               v-for="page in totalPages"
