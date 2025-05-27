@@ -57,9 +57,15 @@ export default {
 
     // Time-based progress tracking
     const startTime = ref(Date.now());
-    const estimatedTotalTime = ref(180000); // 3 minutes estimate in milliseconds
+    // Reduced from 3 minutes (180000ms) to 2 minutes due to shallow clone optimization
+    // The shallow clone flags (--depth=1, --single-branch, --no-tags) make the repository cloning much faster
+    const estimatedTotalTime = ref(120000); // 2 minutes estimate with shallow clone
     const currentTime = ref(Date.now());
     const timeInterval = ref(null);
+
+    // Track Moodle installation phase specifically since it takes the bulk of the time
+    const installPhaseStartTime = ref(null);
+    const currentPhase = ref('');
 
     // Animation element references
     const animationPhase = ref('preparing');
@@ -75,13 +81,12 @@ export default {
     // Computed estimated time remaining
     const estimatedTimeRemaining = computed(() => {
       if (progress.value >= 100) return '0:00';
-      if (progress.value <= 0) return '3:00'; // Default to 3 minutes if no progress
+      if (progress.value <= 0) return '2:00'; // Default to 2 minutes with shallow clone
       
-      const elapsed = currentTime.value - startTime.value;
-      // Avoid division by zero or very small numbers
-      const progressPercent = Math.max(0.01, progress.value / 100);
-      const estimatedTotal = elapsed / progressPercent;
-      const remaining = Math.max(0, Math.floor((estimatedTotal - elapsed) / 1000));
+      // Calculate remaining time based on the configured total time and current progress
+      // This uses a direct linear calculation from the estimated total time
+      const remainingTime = estimatedTotalTime.value * (1 - (progress.value / 100));
+      const remaining = Math.max(0, Math.floor(remainingTime / 1000));
       
       const minutes = Math.floor(remaining / 60);
       const seconds = remaining % 60;
@@ -138,21 +143,29 @@ export default {
         if (msg.includes('Preparing')) {
           progress.value = 10;
           animationPhase.value = 'preparing';
+          currentPhase.value = 'preparing';
         } else if (msg.includes('Cloning Moodle')) {
           progress.value = 20;
           animationPhase.value = 'preparing';
+          currentPhase.value = 'cloning';
         } else if (msg.includes('Starting Docker')) {
           progress.value = 35;
           animationPhase.value = 'container';
+          currentPhase.value = 'starting_docker';
         } else if (msg.includes('Waiting for database')) {
           progress.value = 50;
           animationPhase.value = 'database';
+          currentPhase.value = 'waiting_database';
         } else if (msg.includes('Installing Moodle')) {
           progress.value = 70;
           animationPhase.value = 'installing';
+          currentPhase.value = 'installing_moodle';
+          // Record the time when Moodle installation phase begins for better progress tracking
+          installPhaseStartTime.value = Date.now();
         } else if (msg.includes('Finalizing')) {
           progress.value = 90;
           animationPhase.value = 'complete';
+          currentPhase.value = 'finalizing';
         }
         
         // Scroll to the bottom of the logs
@@ -168,6 +181,10 @@ export default {
         status.value = 'Creation cancelled';
         isCreating.value = false;
         progress.value = 0;
+        
+        // Reset phase tracking
+        currentPhase.value = '';
+        installPhaseStartTime.value = null;
         
         // Clean up the time interval
         if (timeInterval.value) {
@@ -195,11 +212,28 @@ export default {
         
         currentTime.value = Date.now();
         
-        // Calculate progress based on time if no explicit progress updates
-        if (isCreating.value && progress.value < 90) {
+        // Special handling for the Moodle installation phase which takes the bulk of time
+        if (currentPhase.value === 'installing_moodle' && installPhaseStartTime.value) {
+          // For the installation phase (70% to 89%), calculate progress within this range
+          // Assume this phase takes about 60% of the total estimated time (most time-consuming part)
+          const installationElapsed = currentTime.value - installPhaseStartTime.value;
+          const installationTotalTime = estimatedTotalTime.value * 0.6; // 60% of total time
+          
+          // Calculate progress within the installing phase (70% to 89%)
+          const installationProgress = Math.min(1, installationElapsed / installationTotalTime);
+          const adjustedProgress = 70 + Math.floor(installationProgress * 19); // Scale from 70% to 89%
+          
+          // Update progress if the calculated value is higher
+          if (adjustedProgress > progress.value) {
+            progress.value = adjustedProgress;
+          }
+        } 
+        // General time-based progress for other phases
+        else if (isCreating.value && progress.value < 90) {
           const elapsed = currentTime.value - startTime.value;
-          // Ensure we don't divide by zero with a minimum value
+          // Use the configured estimated total time for consistent calculations
           const totalTime = Math.max(1, estimatedTotalTime.value);
+          // Calculate linear progress based on elapsed time
           const timeBasedProgress = Math.min(90, Math.max(1, Math.floor((elapsed / totalTime) * 100)));
           
           // Only use time-based progress if it's ahead of our event-based progress
@@ -237,6 +271,10 @@ export default {
         isCreating.value = false;
         creationSuccess.value = true;
         
+        // Reset phase tracking
+        currentPhase.value = 'complete';
+        installPhaseStartTime.value = null;
+        
         // Send notification when site is created successfully
         await sendSiteCreatedNotification();
       } catch (err) {
@@ -246,6 +284,10 @@ export default {
         progress.value = 100;
         isCreating.value = false;
         animationPhase.value = 'complete';
+        
+        // Reset phase tracking
+        currentPhase.value = '';
+        installPhaseStartTime.value = null;
       }
     };
 
@@ -354,7 +396,9 @@ export default {
       handleCancel,
       goToDashboard,
       copyLogs,
-      copySuccess
+      copySuccess,
+      currentPhase,
+      installPhaseStartTime
     };
   }
 };
