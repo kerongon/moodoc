@@ -37,7 +37,7 @@
       </div>
     </div>
 
-    <div class="site-list flex-1 overflow-x-auto">
+    <div class="site-list flex-1 overflow-x-auto px-4">
       <div v-if="loading" class="loading text-xs p-4 text-center">
         Loading sites...
       </div>
@@ -64,231 +64,183 @@
         </div>
       </div>
       <div v-else class="table-container w-full">
-        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <table
-            class="w-full divide-y divide-gray-200 dark:divide-gray-700"
-            role="table"
-            aria-label="Configured Sites"
-          >
-            <thead class="bg-gray-50 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600">
-              <tr>
-                <!-- Adjusted header cells for spacing, alignment, and consistent styling -->
-                <th
+        <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+          <div class="moodle-table-header grid grid-cols-custom-table-layout items-center px-4 py-3 text-xs font-medium uppercase tracking-wider text-gray-400 border-b border-gray-700">
+            <div class="moodle-header-cell col-span-2 flex items-center"
                   @click="sort('name')"
                   :aria-sort="sortKey==='name'? sortOrder:'none'"
-                  tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/5"
-                >
-                  Site Name
-                  <span v-if="sortKey === 'name'" class="ml-1">
-                    <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
-                    <PhCaretDown v-else class="inline-block w-3 h-3" />
-                  </span>
-                </th>
-                <th
+                  tabindex="0">
+              Site Name
+              <span v-if="sortKey === 'name'" class="ml-1">
+                <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
+                <PhCaretDown v-else class="inline-block w-3 h-3" />
+              </span>
+            </div>
+            <div class="moodle-header-cell flex items-center"
                   @click="sort('version_combined')"
                   :aria-sort="sortKey==='version_combined'? sortOrder:'none'"
-                  tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/6"
-                >
-                  Versions
-                  <span v-if="sortKey === 'version_combined'" class="ml-1">
-                    <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
-                    <PhCaretDown v-else class="inline-block w-3 h-3" />
-                  </span>
-                </th>
-                <th
+                  tabindex="0">
+              Version
+              <span v-if="sortKey === 'version_combined'" class="ml-1">
+                <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
+                <PhCaretDown v-else class="inline-block w-3 h-3" />
+              </span>
+            </div>
+            <div class="moodle-header-cell flex items-center"
                   @click="sort('db_type')"
                   :aria-sort="sortKey==='db_type'? sortOrder:'none'"
-                  tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/8"
-                >
-                  Database
-                  <span v-if="sortKey === 'db_type'" class="ml-1">
-                    <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
-                    <PhCaretDown v-else class="inline-block w-3 h-3" />
-                  </span>
-                </th>
-                <th
-                  @click="sort('path')"
-                  :aria-sort="sortKey==='path'? sortOrder:'none'"
-                  tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/5"
-                >
-                  Directory
-                  <span v-if="sortKey === 'path'" class="ml-1">
-                    <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
-                    <PhCaretDown v-else class="inline-block w-3 h-3" />
-                  </span>
-                </th>
-                <th
+                  tabindex="0">
+              Database
+              <span v-if="sortKey === 'db_type'" class="ml-1">
+                <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
+                <PhCaretDown v-else class="inline-block w-3 h-3" />
+              </span>
+            </div>
+            <div class="moodle-header-cell flex items-center"
                   @click="sort('status')"
                   :aria-sort="sortKey==='status'? sortOrder:'none'"
-                  tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/5"
-                >
-                  Status
-                  <span v-if="sortKey === 'status'" class="ml-1">
-                    <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
-                    <PhCaretDown v-else class="inline-block w-3 h-3" />
-                  </span>
-                </th>
-                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(site, index) in paginatedSites"
-                :key="site.name"
-                :class="[
-                  index % 2 === 0
-                    ? 'bg-white dark:bg-gray-800'
-                    : 'bg-gray-50 dark:bg-gray-700',
+                  tabindex="0">
+              Status
+              <span v-if="sortKey === 'status'" class="ml-1">
+                <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
+                <PhCaretDown v-else class="inline-block w-3 h-3" />
+              </span>
+            </div>
+            <div class="moodle-header-cell flex items-center">Resources</div>
+            <div class="moodle-header-cell flex items-center col-span-2">Actions</div>
+          </div>
+          <div v-for="(site, index) in paginatedSites" :key="site.name" 
+               class="moodle-table-row grid grid-cols-custom-table-layout items-center px-4 py-4 border-b border-gray-700"
+               :class="[
+                  { 'bg-gray-800': index % 2 === 0, 'bg-gray-750': index % 2 !== 0 }, // Alternating row colors
                   { 'opacity-50 pointer-events-none': activeActionSite===site.name },
-                  // { 'recently-created-site': isRecentlyCreated(site.name) }
-                ]"
-              >
-                <td class="px-6 py-4 whitespace-nowrap align-middle">
-                  <div class="flex items-center">
-                    <span class="site-name-container text-sm font-semibold text-gray-900 dark:text-white">
-                      {{ site.name }}
-                    </span>
-                    <!-- Link to open site in browser -->
-                    <a v-if="site.web_port"
-                      :href="`http://localhost:${site.web_port}`"
-                      :title="`http://localhost:${site.web_port}`"
-                      target="_blank"
-                      rel="noopener"
-                      class="ml-1">
-                      <PhLinkSimple class="inline w-4 h-4 text-blue-500 hover:text-blue-700" />
-                    </a>
-                    <!-- Inline status indicator that shows when an action is in progress -->
-                    <span v-if="activeActionSite === site.name" class="ml-2 text-xs text-blue-600 dark:text-blue-400 animate-pulse">
-                      processing...
-                    </span>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 align-middle">{{ formatVersions(site) }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 align-middle">{{ site.db_type }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 align-middle" :title="site.path">
-                  <span class="directory-path inline-block align-middle" :title="site.path">
-                    {{ formatPath(site.path) }}
+                ]">
+            <div class="moodle-data-cell col-span-2 flex items-center">
+              <div class="flex items-center">
+                <div class="w-8 h-8 rounded-md bg-orange-500 flex items-center justify-center text-white font-semibold text-sm mr-3">
+                  {{ site.name.charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <span class="site-name-container text-sm font-semibold text-white">
+                    {{ site.name }}
                   </span>
-                  <!-- Button to open local directory in file explorer -->
-                  <button
-                    @click.prevent="openDirectory(site.path)"
-                    :title="site.path"
-                    type="button"
-                    class="ml-1 inline-block align-middle"
-                  >
-                    <PhFolder class="w-4 h-4 text-green-500 hover:text-green-700" />
-                  </button>
-                  <!-- Button to open in code editor -->
-                  <button
-                    @click.prevent="openInEditor(site.path)"
-                    :title="`Open in editor`"
-                    type="button"
-                    class="ml-1 inline-block align-middle"
-                  >
-                    <PhCode class="w-4 h-4 text-purple-500 hover:text-purple-700" />
-                  </button>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap align-middle">
-                  <div class="flex items-center flex-wrap gap-2">
-                    <div class="flex items-center">
-                      <span class="compact-status-badge" :class="getStatusClasses(site.status)">
-                        <span class="inline-block w-1.5 h-1.5 rounded-full mr-1" :class="getStatusIndicatorClasses(site.status)"></span>
-                        {{ site.status }}
-                      </span>
-                      <!-- New site indicator - positioned directly next to status -->
-                      <span v-if="isRecentlyCreated(site.name)" 
-                            class="ml-1 text-xs new-badge bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200 py-0.5 px-1.5 rounded-full"
-                            :title="`Created at ${getCreationTime(site.name)}`">
-                        NEW
-                      </span>
-                    </div>
-                    <!-- Error details button for error status -->
-                    <button v-if="site.status === 'error'" @click="checkDetailedStatus(site.name)" 
-                            class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300" 
-                            title="Check detailed error information">
-                      <PhWarningCircle class="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap align-middle">
-                  <div class="flex items-center space-x-2">
-                    <!-- Start button with prominent spinner -->
-                    <button v-if="site.status !== 'running'" 
-                        @click="startSite(site.name)" 
-                        class="icon-action-btn bg-green-500 hover:bg-green-600" 
-                        :class="{
-                            'spinner-container': activeActionSite === site.name
-                        }"
-                        :disabled="activeActionSite === site.name"
-                        title="Start">
-                      <template v-if="activeActionSite === site.name">
-                        <div class="custom-spinner"></div>
-                      </template>
-                      <template v-else>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg>
-                      </template>
-                    </button>
-                    
-                    <!-- Stop button with spinner -->
-                    <button v-else 
-                        @click="stopSite(site.name)" 
-                        class="icon-action-btn bg-red-500 hover:bg-red-600" 
-                        :class="{
-                            'spinner-container': activeActionSite === site.name
-                        }"
-                        :disabled="activeActionSite === site.name"
-                        title="Stop">
-                      <template v-if="activeActionSite === site.name">
-                        <div class="custom-spinner"></div>
-                      </template>
-                      <template v-else>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-                      </template>
-                    </button>
-                    <button @click="viewLogs(site.name)" class="icon-action-btn bg-blue-500 hover:bg-blue-600" title="Logs">
-                      <PhFileText class="w-5 h-5" weight="fill" />
-                    </button>
-                    <button @click="viewBackups(site.name)" class="icon-action-btn bg-gray-500 hover:bg-gray-600" title="Backups">
-                      <PhArchiveBox class="w-5 h-5" />
-                    </button>
-                    <!-- <button @click="showUpdateModal(site.name)" class="icon-action-btn bg-orange-600 text-white p-1.5 rounded-lg hover:bg-orange-700 transition-colors shadow-sm" title="Update">
-                      <PhRecycle class="w-5 h-5" weight="fill" />
-                    </button> -->
-                    <button @click="removeSite(site.name)" 
-                        class="icon-action-btn" 
-                        :class="{
-                            'bg-gray-800 hover:bg-red-700': !isRemovingSite || removingSiteName !== site.name, 
-                            'bg-red-600 spinner-container': isRemovingSite && removingSiteName === site.name
-                        }"
-                        :disabled="isRemovingSite && removingSiteName === site.name"
-                        title="Remove">
-                      <template v-if="isRemovingSite && removingSiteName === site.name">
-                        <div class="custom-spinner"></div>
-                      </template>
-                      <template v-else>
-                        <PhTrash class="w-5 h-5 text-red-400" />
-                      </template>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  <a v-if="site.web_port"
+                    :href="`http://localhost:${site.web_port}`"
+                    :title="`http://localhost:${site.web_port}`"
+                    target="_blank"
+                    rel="noopener"
+                    class="block text-xs text-gray-400 hover:text-blue-400 flex items-center">
+                    localhost:{{site.web_port}}
+                    <PhLinkSimple class="inline w-3 h-3 ml-1 text-blue-400 group-hover:text-blue-300" />
+                  </a>
+                </div>
+                <span v-if="activeActionSite === site.name" class="ml-2 text-xs text-blue-400 animate-pulse">
+                  processing...
+                </span>
+              </div>
+            </div>
+            <div class="moodle-data-cell text-sm text-gray-300">
+              <span class="px-2 py-1 rounded-full bg-blue-600 text-xs">
+                {{ formatVersions(site) }}
+              </span>
+            </div>
+            <div class="moodle-data-cell text-sm text-gray-300">
+              <span class="px-2 py-1 rounded-full bg-green-600 text-xs">
+                {{ site.db_type }}
+              </span>
+            </div>
+            <div class="moodle-data-cell">
+              <div class="flex items-center">
+                <span class="compact-status-badge text-sm" :class="getStatusClasses(site.status)">
+                  <span class="inline-block w-2 h-2 rounded-full mr-1.5" :class="getStatusIndicatorClasses(site.status)"></span>
+                  {{ site.status }}
+                </span>
+                <span v-if="isRecentlyCreated(site.name)" 
+                      class="ml-1.5 text-xs new-badge bg-green-700 text-green-200 py-0.5 px-1.5 rounded-full"
+                      :title="`Created at ${getCreationTime(site.name)}`">
+                  NEW
+                </span>
+                <button v-if="site.status === 'error'" @click="checkDetailedStatus(site.name)" 
+                        class="ml-1.5 text-red-400 hover:text-red-300" 
+                        title="Check detailed error information">
+                  <PhWarningCircle class="w-4 h-4" />
+                </button>
+              </div>
+              <div v-if="site.status === 'running' && site.uptime" class="text-xs text-gray-500 mt-0.5">
+                {{ site.uptime }}
+              </div>
+               <div v-else-if="site.status === 'stopped'" class="text-xs text-gray-500 mt-0.5">
+                -
+              </div>
+            </div>
+            <div class="moodle-data-cell text-sm text-gray-300 flex items-center space-x-1.5">
+              <button
+                  @click.prevent="openDirectory(site.path)"
+                  :title="site.path"
+                  type="button"
+                  class="action-icon-button bg-teal-500 hover:bg-teal-600"
+                >
+                  <PhFolder class="w-4 h-4" />
+                </button>
+                <button
+                  @click.prevent="openInEditor(site.path)"
+                  :title="`Open in editor`"
+                  type="button"
+                  class="action-icon-button bg-purple-500 hover:bg-purple-600"
+                >
+                  <PhCode class="w-4 h-4" />
+                </button>
+            </div>
+            <div class="moodle-data-cell col-span-2">
+              <div class="flex items-center space-x-1.5">
+                <button v-if="site.status !== 'running'" 
+                    @click="startSite(site.name)" 
+                    class="action-icon-button bg-green-500 hover:bg-green-600"
+                    :class="{ 'spinner-container': activeActionSite === site.name }"
+                    :disabled="activeActionSite === site.name"
+                    title="Start">
+                  <template v-if="activeActionSite === site.name"><div class="custom-spinner-small"></div></template>
+                  <template v-else><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg></template>
+                </button>
+                <button v-else 
+                    @click="stopSite(site.name)" 
+                    class="action-icon-button bg-red-500 hover:bg-red-600"
+                    :class="{ 'spinner-container': activeActionSite === site.name }"
+                    :disabled="activeActionSite === site.name"
+                    title="Stop">
+                  <template v-if="activeActionSite === site.name"><div class="custom-spinner-small"></div></template>
+                  <template v-else><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></template>
+                </button>
+                <button @click="viewLogs(site.name)" class="action-icon-button bg-blue-500 hover:bg-blue-600" title="Logs">
+                  <PhFileText class="w-4 h-4" weight="fill" />
+                </button>
+                <button @click="viewBackups(site.name)" class="action-icon-button bg-gray-500 hover:bg-gray-600" title="Backups">
+                  <PhArchiveBox class="w-4 h-4" />
+                </button>
+                <button @click="removeSite(site.name)" 
+                    class="action-icon-button"
+                    :class="{
+                        'bg-gray-600 hover:bg-red-700': !isRemovingSite || removingSiteName !== site.name, 
+                        'bg-red-600 spinner-container': isRemovingSite && removingSiteName === site.name
+                    }"
+                    :disabled="isRemovingSite && removingSiteName === site.name"
+                    title="Remove">
+                  <template v-if="isRemovingSite && removingSiteName === site.name"><div class="custom-spinner-small"></div></template>
+                  <template v-else><PhTrash class="w-4 h-4 text-red-400" /></template>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="table-footer bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
-          <div class="text-sm text-gray-500 dark:text-gray-400">
+        <div class="table-footer bg-gray-800 border-t border-gray-700 px-4 py-3 flex justify-between items-center rounded-b-lg">
+          <div class="text-sm text-gray-400">
             Showing {{ paginatedSites.length }} of {{ sites.length }} sites
           </div>
           <div class="pagination-container flex items-center space-x-1">
             <button
               @click="currentPage = Math.max(currentPage-1,1)"
               :disabled="currentPage===1"
-              class="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-3 py-1 text-sm text-gray-300 border border-gray-600 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >Previous</button>
             <button
               v-for="page in totalPages"
@@ -298,14 +250,14 @@
                 'px-3 py-1 text-sm border rounded-md',
                 currentPage===page 
                   ? 'bg-blue-600 text-white border-blue-600' 
-                  : 'text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  : 'text-gray-300 border-gray-600 hover:bg-gray-700'
               ]"
               aria-current="page"
             >{{ page }}</button>
             <button
               @click="currentPage = Math.min(currentPage+1,totalPages)"
               :disabled="currentPage===totalPages"
-              class="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-3 py-1 text-sm text-gray-300 border border-gray-600 rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >Next</button>
           </div>
         </div>
@@ -1174,180 +1126,70 @@ export default {
 </script>
 
 <style scoped>
-/* Custom spinner for buttons - smaller, contained size */
-.custom-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spinner-rotation 0.8s linear infinite;
-  flex-shrink: 0;
-}
-
-@keyframes spinner-rotation {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.spinner-container {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-}
-
-.icon-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  color: white !important;
-  margin-right: 4px;
-  transition: background-color 0.15s ease;
+.moodle-header-cell {
   cursor: pointer;
-  flex-shrink: 0;
-  min-width: 28px;
-  min-height: 28px;
 }
 
-/* Ensure action buttons are visible in light mode */
-.icon-action-btn svg, 
-.icon-action-btn path {
-  color: white !important;
-  fill: currentColor;
+.moodle-table-row {
+  transition: background-color 0.2s ease-in-out;
 }
 
-/* Explicit styling for the orange update button to ensure visibility in both modes */
-.icon-action-btn.bg-orange-600 {
-  background-color: #ea580c !important;
-}
-.icon-action-btn.bg-orange-600 svg {
-  color: white !important;
-  fill: currentColor;
-}
-
-/* Explicit styling for the blue site list icon to ensure visibility in both modes */
-.site-list-icon {
-  background-color: #2563eb !important; /* bg-blue-600 */
-}
-.site-list-icon svg {
-  color: white !important;
-  fill: currentColor;
-}
-.site-list-icon svg {
-  color: white !important;
-  fill: currentColor;
-}
-
-.compact-table {
-  width: 100%;
-  font-size: 0.75rem; /* text-xs */
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.compact-table th {
-  padding: 0.5rem 0.75rem;
-  text-align: left;
-  font-weight: 500;
-  color: #4b5563; /* text-gray-600 */
-  background-color: #f9fafb; /* bg-gray-50 */
-}
-
-.dark .compact-table th {
-  background-color: #374151; /* dark:bg-gray-700 */
-  color: #e5e7eb; /* dark:text-gray-300 */
-}
-
-.compact-table td {
-  padding: 0.5rem 0.75rem;
-  border-top: 1px solid #e5e7eb; /* border-t border-gray-200 */
-}
-
-.dark .compact-table td {
-  border-top: 1px solid #374151; /* dark:border-gray-700 */
-}
-
-.compact-table tr:hover {
-  background-color: #f3f4f6; /* hover:bg-gray-100 */
-}
-
-.dark .compact-table tr:hover {
-  background-color: #1f2937; /* dark:hover:bg-gray-800 */
+.moodle-table-row:hover {
+  background-color: #2c334b; /* Slightly lighter on hover for dark theme */
 }
 
 .compact-status-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px; /* pill shape */
+  font-size: 0.7rem;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
-  padding: 0.125rem 0.375rem;
-  height: 1.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem; /* text-xs */
+  line-height: 1;
 }
 
-.new-badge {
-  display: inline-flex;
-  align-items: center;
-  height: 1.5rem; /* Match the height of the status badge */
-  vertical-align: middle;
-}  /* If you need to adjust the vertical position further */
-td .compact-status-badge,
-td .new-badge {
-  vertical-align: middle;
-  display: inline-flex;
-}
-
-.directory-path {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.actions {
-  white-space: nowrap;
-}
-
-.compact-button {
-  display: inline-flex;
+.action-icon-button {
+ display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  margin-top: 0.5rem;
-  transition: background-color 0.15s ease;
+  padding: 0.5rem; /* 8px padding */
+  border-radius: 0.375rem; /* 6px rounded corners */
+  color: white;
+  transition: background-color 0.15s ease-in-out;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-/* Highlight recently created sites */
-.recently-created-site {
-  position: relative;
-  animation: highlight-pulse 2s infinite;
+.action-icon-button svg,
+.action-icon-button .custom-spinner-small {
+  width: 1rem; /* 16px */
+  height: 1rem; /* 16px */
 }
 
-.recently-created-site::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-left: 3px solid #10b981;
-  pointer-events: none;
+.custom-spinner-small {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-@keyframes highlight-pulse {
-  0%, 100% { background-color: inherit; }
-  50% { background-color: rgba(16, 185, 129, 0.05); }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.site-name-container {
-  display: inline-flex;
-  align-items: center;
+/* Ensure the overall container has a dark background if it's not already set by a parent */
+.dark .site-list-container {
+  background-color: #1a202c; /* A common dark background color */
 }
-  </style>
-  <!-- Global light mode fixes for SiteList -->
-  <style src="../assets/site-list-light-mode-fix.css"></style>
+
+/* Custom grid layout for the table */
+.grid-cols-custom-table-layout {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) repeat(3, minmax(0, 0.75fr)) minmax(0, 1fr) repeat(2, minmax(0, 0.75fr)); 
+  /* Site Name (2fr), Version (0.75fr), DB (0.75fr), Status (0.75fr), Resources (1fr), Actions (1.5fr) */
+}
+
+.bg-gray-750 {
+  background-color: #374151; /* A slightly different shade for alternating rows if needed */
+}
+</style>
+<!-- Global light mode fixes for SiteList -->
+<style src="../assets/site-list-light-mode-fix.css"></style>
