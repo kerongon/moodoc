@@ -264,6 +264,7 @@ fn create_site_internal(
             .current_dir(&moodle_docker_dir)
             .args([
                 "clone",
+                "--depth=1",
                 "-b",
                 &moodle_branch,
                 "https://github.com/moodle/moodle.git",
