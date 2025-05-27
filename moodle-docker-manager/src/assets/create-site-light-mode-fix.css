@@ -69,7 +69,7 @@ html:not(.dark) {
   .modern-checkbox-grid {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 12px !important;
+    gap: 4px !important;
     background-color: rgba(249, 250, 251, 0.7) !important; /* Light gray background with transparency */
   }
   
