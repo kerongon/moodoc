@@ -52,7 +52,7 @@
           <!-- Logo and app title -->
           <div class="app-branding">
             <div class="logo-container">
-              <svg class="logo-icon" width="24" height="24" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg class="logo-icon text-white" width="24" height="24" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="1024" height="1024" rx="224" fill="#7066C6"/>
                 <g id="icon-elements">
                   <!-- M Letter: Scaled and positioned to be 450px wide, 300px tall. Top at y=277 -->
