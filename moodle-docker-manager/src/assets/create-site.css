@@ -497,6 +497,11 @@
   cursor: pointer;
 }
 
+/* Dark mode specific checkbox label color */
+.dark .modern-checkbox-label {
+  color: #E5E7EB; /* Keep this color for dark mode as it works well there */
+}
+
 /* Message Styles */
 .info-message {
   color: #9CA3AF;

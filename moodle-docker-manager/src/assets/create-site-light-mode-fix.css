@@ -1,12 +1,7 @@
 /* Light mode fixes for create site form */
 
-/* Override dark-mode specific styles for light theme */
-@media (prefers-color-scheme: light) {
-  /* Already using Tailwind classes for background now */
-}
-
-/* Light theme class-based overrides */
-.light {
+/* Light theme overrides */
+html:not(.dark) {
   /* Form container background */
   .dashboard-full.bg-gradient-to-br {
     background: linear-gradient(to bottom right, #f8fafc, #e2e8f0) !important;
@@ -30,6 +25,61 @@
   /* Labels */
   .modern-form-label, .section-title {
     color: #374151 !important;
+  }
+  
+  /* Checkbox labels - fixing light color issue */
+  .modern-checkbox-label {
+    color: #000000 !important; /* Black text for maximum contrast in light mode */
+    font-weight: 500 !important; /* Make text slightly bolder */
+  }
+  
+  /* Improve checkbox visibility in light mode - match dark mode spacing exactly */
+  .modern-checkbox {
+    appearance: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 4px !important;
+    background-color: #ffffff !important;
+    border: 1px solid rgba(107, 114, 128, 0.6) !important;
+    position: relative !important;
+    cursor: pointer !important;
+    margin-right: 8px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .modern-checkbox:checked {
+    background-color: #6366F1 !important; /* Indigo background when checked */
+    border-color: #6366F1 !important;
+  }
+
+  /* Make the checkmark more visible - matching dark mode */
+  .modern-checkbox:checked::after {
+    content: '' !important;
+    position: absolute !important;
+    left: 6px !important;
+    top: 2px !important;
+    width: 5px !important;
+    height: 10px !important;
+    border: solid white !important;
+    border-width: 0 2px 2px 0 !important;
+    transform: rotate(45deg) !important;
+  }
+  
+  /* Improve the visibility of the checkbox grid in light mode - match dark mode spacing exactly */
+  .modern-checkbox-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    background-color: rgba(249, 250, 251, 0.7) !important; /* Light gray background with transparency */
+  }
+  
+  .modern-checkbox-item {
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  .modern-checkbox-item:hover {
+    background-color: rgba(243, 244, 246, 0.8) !important; /* Light hover effect */
   }
 
   /* Form inputs */
@@ -232,6 +282,10 @@
 .light .modern-form-label, 
 .light .section-title {
   color: #374151 !important;
+}
+
+.light .modern-checkbox-label {
+  color: #374151 !important; /* Darker color for better readability */
 }
 
 .light .modern-input {
@@ -439,4 +493,46 @@ body[data-theme="light"] .status-warning {
 html:not(.dark) .status-error,
 body[data-theme="light"] .status-error {
   color: #dc2626 !important; /* red-600 - good visibility on light backgrounds */
+}
+  .modern-checkbox {
+    background-color: #ffffff !important;
+    border: 2px solid #6366F1 !important; /* Indigo border */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .modern-checkbox:checked {
+    background-color: #4F46E5 !important; /* Indigo background when checked */
+  }
+
+  /* Make the checkmark more visible */
+  .modern-checkbox:checked::after {
+    border-color: #ffffff !important; /* White checkmark */
+  }
+
+/* Dark mode specific fixes to ensure checkbox labels are visible */
+.dark {
+  .modern-checkbox-label {
+    color: #FFFFFF !important; /* Bright white text for dark mode */
+    font-weight: 500 !important; /* Make text slightly bolder */
+  }
+  
+  .modern-checkbox {
+    background-color: #374151 !important; /* Dark gray background */
+    border: 2px solid #6366F1 !important; /* Indigo border */
+  }
+  
+  .modern-checkbox:checked {
+    background-color: #4F46E5 !important; /* Indigo background when checked */
+  }
+  
+  /* Fix for the checkbox item hovering white in dark mode */
+  .modern-checkbox-item:hover {
+    background-color: #2D3748 !important; /* Dark gray background for hover in dark mode */
+  }
+}
+
+/* Dark mode styles are provided above - no need for global styles here */
+
+.modern-checkbox-item:hover {
+  background-color: #f3f4f6 !important;
 }
