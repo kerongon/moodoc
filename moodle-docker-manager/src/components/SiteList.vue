@@ -149,7 +149,7 @@
                 {{ site.db_type }}
               </span>
             </div>
-            <div class="moodle-data-cell">
+            <div class="moodle-data-cell flex items-center">
               <div class="flex items-center">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border" :class="getStatusClasses(site.status)">
                   <span class="inline-block w-2 h-2 rounded-full mr-1.5" :class="getStatusIndicatorClasses(site.status)"></span>
@@ -169,9 +169,9 @@
               <div v-if="site.status === 'running' && site.uptime" class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
                 {{ site.uptime }}
               </div>
-               <div v-else-if="site.status === 'stopped'" class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+               <!-- <div v-else-if="site.status === 'stopped'" class="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
                 -
-              </div>
+              </div> -->
             </div>
             <div class="moodle-data-cell text-sm text-gray-700 dark:text-gray-300 flex items-center space-x-1.5">
               <button
