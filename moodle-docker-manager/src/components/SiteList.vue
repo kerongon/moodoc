@@ -198,32 +198,28 @@
                     class="action-icon-button bg-green-500 hover:bg-green-600 text-white"
                     :disabled="activeActionSite === site.name"
                     title="Start">
-                  <svg
-                    class="w-4 h-4"
-                    :class="{ 'animate-spin': activeActionSite === site.name }"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M5 3v18l15-9L5 3z" />
-                  </svg>
+                  <template v-if="activeActionSite === site.name">
+                    <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </template>
+                  <template v-else>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M5 3v18l15-9L5 3z" />
+                    </svg>
+                  </template>
                 </button>
                 <button v-else
                     @click="stopSite(site.name)"
                     class="action-icon-button bg-red-500 hover:bg-red-600 text-white"
                     :disabled="activeActionSite === site.name"
                     title="Stop">
-                  <svg
-                    class="w-4 h-4"
-                    :class="{ 'animate-spin': activeActionSite === site.name }"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <rect x="6" y="6" width="12" height="12" rx="2" />
-                  </svg>
+                  <template v-if="activeActionSite === site.name">
+                    <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </template>
+                  <template v-else>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <rect x="6" y="6" width="12" height="12" rx="2" />
+                    </svg>
+                  </template>
                 </button>
                 <button @click="viewLogs(site.name)" class="action-icon-button bg-blue-500 hover:bg-blue-600 text-white" title="Logs">
                   <PhFileText class="w-4 h-4" weight="fill" />
@@ -237,10 +233,12 @@
                     :disabled="isRemovingSite && removingSiteName === site.name"
                     title="Remove"
                 >
-                  <PhTrash
-                    class="w-4 h-4"
-                    :class="{ 'animate-spin': isRemovingSite && removingSiteName === site.name }"
-                  />
+                  <template v-if="isRemovingSite && removingSiteName === site.name">
+                    <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </template>
+                  <template v-else>
+                    <PhTrash class="w-4 h-4" />
+                  </template>
                 </button>
               </div>
             </div>
