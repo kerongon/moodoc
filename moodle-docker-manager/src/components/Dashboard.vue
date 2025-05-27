@@ -52,15 +52,15 @@
           <!-- Logo and app title -->
           <div class="app-branding">
             <div class="logo-container">
-              <svg class="logo-icon text-white" width="24" height="24" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg class="logo-icon" width="24" height="24" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="1024" height="1024" rx="224" fill="#7066C6"/>
                 <g id="icon-elements">
                   <!-- M Letter: Scaled and positioned to be 450px wide, 300px tall. Top at y=277 -->
                   <path transform="translate(287, 227) scale(0.78125)" d="M0 64H134.4L288 344.3L441.6 64H576V448H480V204.3L326.4 448H249.6L96 204.3V448H0V64Z" fill="white"/>
                   <!-- Server Rack: 450px wide, 120px tall. Top at y=627 -->
                   <rect x="287" y="627" width="450" height="120" rx="20" fill="white"/>
-                  <line x1="307" y1="663" x2="717" y2="663" stroke="#7066C6" stroke-width="10" stroke-linecap="round"/>
-                  <line x1="307" y1="703" x2="717" y2="703" stroke="#7066C6" stroke-width="10" stroke-linecap="round"/>
+                  <line x1="307" y1="663" x2="717" y2="663" stroke="#5A52A3" stroke-width="10" stroke-linecap="round"/>
+                  <line x1="307" y1="703" x2="717" y2="703" stroke="#5A52A3" stroke-width="10" stroke-linecap="round"/>
                 </g>
               </svg>
             </div>
@@ -314,16 +314,16 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   pointer-events: auto;
-  background-color: #7066C6; /* Changed from #6366F1 to match SVG background */
+  background-color: transparent; /* Remove background color as the SVG already has the background */
   border-radius: 6px;
 }
 
 .logo-icon {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
 }
 
 .title-container {

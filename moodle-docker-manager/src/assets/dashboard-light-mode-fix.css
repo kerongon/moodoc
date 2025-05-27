@@ -52,7 +52,7 @@ body[data-theme="light"] .modern-settings-button:hover .button-icon {
 .light .logo-container,
 html:not(.dark) .logo-container,
 body[data-theme="light"] .logo-container {
-  background-color: #6366F1 !important; /* Keep the purple background */
+  background-color: transparent !important; /* Remove background as SVG has its own */
 }
 
 /* Ensure icons in buttons are visible */

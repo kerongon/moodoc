@@ -217,7 +217,7 @@
             <div class="moodle-data-cell text-sm text-gray-700 dark:text-gray-300 flex items-center space-x-1.5">
               <button
                   @click.prevent="openDirectory(site.path)"
-                  :title="`${site.path}/moodle`"
+                  :title="`Show in Finder`"
                   type="button"
                   class="action-icon-button bg-teal-500 hover:bg-teal-600 text-white"
                 >
@@ -225,7 +225,7 @@
                 </button>
                 <button
                   @click.prevent="openInEditor(site.path)"
-                  :title="`Open in editor`"
+                  :title="`Open in Editor`"
                   type="button"
                   class="action-icon-button bg-purple-500 hover:bg-purple-600 text-white"
                 >
@@ -233,7 +233,7 @@
                 </button>
                 <button
                   @click.prevent="openTerminal(site.path)"
-                  :title="`Open terminal at ${site.path}/moodle`"
+                  :title="`Open terminal`"
                   type="button"
                   class="action-icon-button bg-gray-700 hover:bg-gray-800 text-white"
                 >
@@ -1141,7 +1141,6 @@ export default {
         }
         
         // Use Tauri's backend function to open the editor
-        // This assumes you'll create a Rust function called open_in_editor on the backend
         await invoke('open_in_editor', { 
           editorName: appName,
           path: path 
