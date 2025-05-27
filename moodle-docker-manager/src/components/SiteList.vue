@@ -149,19 +149,19 @@
                 {{ site.db_type }}
               </span>
             </div>
-            <div class="moodle-data-cell flex items-center">
-              <div class="flex items-center">
+            <div class="moodle-data-cell flex items-center min-w-[140px]">
+              <div class="flex items-center flex-wrap gap-1.5">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border" :class="getStatusClasses(site.status)">
                   <span class="inline-block w-2 h-2 rounded-full mr-1.5" :class="getStatusIndicatorClasses(site.status)"></span>
                   {{ site.status }}
                 </span>
                 <span v-if="isRecentlyCreated(site.name)" 
-                      class="ml-1.5 text-xs new-badge bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-200 py-0.5 px-1.5 rounded-full"
+                      class="text-xs new-badge bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-200 py-0.5 px-1.5 rounded-full"
                       :title="`Created at ${getCreationTime(site.name)}`">
                   NEW
                 </span>
                 <button v-if="site.status === 'error'" @click="checkDetailedStatus(site.name)" 
-                        class="ml-1.5 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300" 
+                        class="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300" 
                         title="Check detailed error information">
                   <PhWarningCircle class="w-4 h-4" />
                 </button>
@@ -1161,8 +1161,8 @@ export default {
 
 /* Custom grid layout for the table */
 .grid-cols-custom-table-layout {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) repeat(3, minmax(0, 0.75fr)) minmax(0, 1fr) repeat(2, minmax(0, 0.75fr)); 
-  /* Site Name (2fr), Version (0.75fr), DB (0.75fr), Status (0.75fr), Resources (1fr), Actions (1.5fr) */
+  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 0.75fr) minmax(0, 0.75fr) minmax(0, 1fr) minmax(0, 1fr) repeat(2, minmax(0, 0.75fr)); 
+  /* Site Name (2fr), Version (0.75fr), DB (0.75fr), Status (1fr), Resources (1fr), Actions (1.5fr) */
 }
 
 .bg-gray-750 {
