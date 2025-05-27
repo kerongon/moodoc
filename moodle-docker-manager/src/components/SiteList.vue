@@ -13,8 +13,6 @@
       </div>
 
       <div class="flex items-center space-x-3">
-      <!-- Add new site button -->  
-        
         <!-- search box -->
         <div v-if="sites.length > 0" class="relative">
           <input
@@ -28,6 +26,14 @@
             <PhMagnifyingGlass class="w-4 h-4 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
+        <!-- Add new site button -->  
+        <router-link 
+          to="/create" 
+          class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-150 text-sm"
+        >
+          <PhPlus class="w-5 h-5 mr-2 -ml-1" weight="bold" />
+          New Site
+        </router-link>
       </div>
     </div>
 
@@ -64,14 +70,14 @@
             role="table"
             aria-label="Configured Sites"
           >
-            <thead class="bg-gray-50 dark:bg-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-700 border-b border-gray-300 dark:border-gray-600">
               <tr>
                 <!-- Adjusted header cells for spacing, alignment, and consistent styling -->
                 <th
                   @click="sort('name')"
                   :aria-sort="sortKey==='name'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/5"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/5"
                 >
                   Site Name
                   <span v-if="sortKey === 'name'" class="ml-1">
@@ -83,7 +89,7 @@
                   @click="sort('version_combined')"
                   :aria-sort="sortKey==='version_combined'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/6"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/6"
                 >
                   Versions
                   <span v-if="sortKey === 'version_combined'" class="ml-1">
@@ -95,7 +101,7 @@
                   @click="sort('db_type')"
                   :aria-sort="sortKey==='db_type'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/8"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/8"
                 >
                   Database
                   <span v-if="sortKey === 'db_type'" class="ml-1">
@@ -107,7 +113,7 @@
                   @click="sort('path')"
                   :aria-sort="sortKey==='path'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/5"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/5"
                 >
                   Directory
                   <span v-if="sortKey === 'path'" class="ml-1">
@@ -119,7 +125,7 @@
                   @click="sort('status')"
                   :aria-sort="sortKey==='status'? sortOrder:'none'"
                   tabindex="0"
-                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/5"
+                  class="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/5"
                 >
                   Status
                   <span v-if="sortKey === 'status'" class="ml-1">
@@ -127,7 +133,7 @@
                     <PhCaretDown v-else class="inline-block w-3 h-3" />
                   </span>
                 </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 w-1/4">Actions</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-1/4">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -142,9 +148,9 @@
                   // { 'recently-created-site': isRecentlyCreated(site.name) }
                 ]"
               >
-                <td class="px-4 py-4 whitespace-nowrap">
+                <td class="px-6 py-4 whitespace-nowrap align-middle">
                   <div class="flex items-center">
-                    <span class="site-name-container text-sm font-medium text-gray-900 dark:text-white">
+                    <span class="site-name-container text-sm font-semibold text-gray-900 dark:text-white">
                       {{ site.name }}
                     </span>
                     <!-- Link to open site in browser -->
@@ -157,14 +163,14 @@
                       <PhLinkSimple class="inline w-4 h-4 text-blue-500 hover:text-blue-700" />
                     </a>
                     <!-- Inline status indicator that shows when an action is in progress -->
-                    <span v-if="activeActionSite === site.name" class="ml-2 text-xs text-blue-500 animate-pulse">
+                    <span v-if="activeActionSite === site.name" class="ml-2 text-xs text-blue-600 dark:text-blue-400 animate-pulse">
                       processing...
                     </span>
                   </div>
                 </td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ formatVersions(site) }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ site.db_type }}</td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300" :title="site.path">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 align-middle">{{ formatVersions(site) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 align-middle">{{ site.db_type }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 align-middle" :title="site.path">
                   <span class="directory-path inline-block align-middle" :title="site.path">
                     {{ formatPath(site.path) }}
                   </span>
@@ -187,7 +193,7 @@
                     <PhCode class="w-4 h-4 text-purple-500 hover:text-purple-700" />
                   </button>
                 </td>
-                <td class="px-4 py-4 whitespace-nowrap">
+                <td class="px-6 py-4 whitespace-nowrap align-middle">
                   <div class="flex items-center flex-wrap gap-2">
                     <div class="flex items-center">
                       <span class="compact-status-badge" :class="getStatusClasses(site.status)">
@@ -209,8 +215,8 @@
                     </button>
                   </div>
                 </td>
-                <td class="px-4 py-4 whitespace-nowrap">
-                  <div class="flex items-center space-x-1">
+                <td class="px-6 py-4 whitespace-nowrap align-middle">
+                  <div class="flex items-center space-x-2">
                     <!-- Start button with prominent spinner -->
                     <button v-if="site.status !== 'running'" 
                         @click="startSite(site.name)" 
@@ -274,7 +280,7 @@
             </tbody>
           </table>
         </div>
-        <div class="table-footer bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex justify-between items-center">
+        <div class="table-footer bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
           <div class="text-sm text-gray-500 dark:text-gray-400">
             Showing {{ paginatedSites.length }} of {{ sites.length }} sites
           </div>

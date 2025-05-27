@@ -72,11 +72,6 @@
           <div style="display: flex; align-items: center; gap: 0.75rem;">
             <DockerStatus />
             
-            <router-link to="/create" title="Create New Site" class="modern-new-site-button">
-              <PhPlus class="button-icon" weight="fill" />
-              <span>New Site</span>
-            </router-link>
-            
             <button @click="openSettings" title="Settings" class="modern-settings-button">
               <PhGear class="button-icon" />
             </button>
