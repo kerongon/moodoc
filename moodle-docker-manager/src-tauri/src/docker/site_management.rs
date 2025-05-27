@@ -265,6 +265,8 @@ fn create_site_internal(
             .args([
                 "clone",
                 "--depth=1",
+                "--single-branch",
+                "--no-tags",
                 "-b",
                 &moodle_branch,
                 "https://github.com/moodle/moodle.git",
