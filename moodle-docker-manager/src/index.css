@@ -60,6 +60,67 @@ body:not(.dark) .icon-action-btn svg {
 body:not(.dark) .icon-action-btn.bg-orange-600 {
   background-color: #ea580c !important;
 }
+/* ========================= */
+/* Remove Site modal - light theme fixes */
+@media (prefers-color-scheme: light) {
+  .remove-site-modal .bg-red-600 .text-white,
+  .remove-site-modal .bg-red-600 svg {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+  }
+  /* Ensure red background for the icon container in light mode */
+  .remove-site-modal .bg-red-600 {
+    background-color: #dc2626 !important;
+  }
+  .remove-site-modal button.bg-gray-200 {
+    background-color: #e5e7eb !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+  }
+  .remove-site-modal button.bg-gray-200:hover {
+    background-color: #d1d5db !important;
+  }
+}
+/* Class-based light theme */
+.light .remove-site-modal .bg-red-600 .text-white,
+.light .remove-site-modal .bg-red-600 svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+.light .remove-site-modal button.bg-gray-200 {
+  background-color: #e5e7eb !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+}
+.light .remove-site-modal button.bg-gray-200:hover {
+  background-color: #d1d5db !important;
+}
+/* Remove Site modal fixes for light mode */
+@media (prefers-color-scheme: light) {
+  .remove-site-modal .bg-red-600 svg {
+    color: white !important;
+  }
+  .remove-site-modal button.bg-gray-200 {
+    background-color: #e5e7eb !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+  }
+  .remove-site-modal button.bg-gray-200:hover {
+    background-color: #d1d5db !important;
+  }
+}
+/* Class-based light theme for Remove Site modal */
+.light .remove-site-modal .bg-red-600 svg {
+  color: white !important;
+}
+.light .remove-site-modal button.bg-gray-200 {
+  background-color: #e5e7eb !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+}
+.light .remove-site-modal button.bg-gray-200:hover {
+  background-color: #d1d5db !important;
+}
 
 /* Dark mode styles */
 .dark body {
@@ -93,6 +154,15 @@ body:not(.dark) .icon-action-btn.bg-orange-600 {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+/* Force Remove Site modal icon color in light mode */
+/* html:not(.dark) .remove-site-modal svg,
+body:not(.dark) .remove-site-modal svg,
+body[data-theme="light"] .remove-site-modal svg,
+.light .remove-site-modal svg {
+  color: white !important;
+  fill: white !important;
+  stroke: white !important;
+} */
 
 /* Hide scrollbar when not needed */
 * {

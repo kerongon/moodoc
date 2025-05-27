@@ -197,6 +197,45 @@ html:not(.dark) .site-list-container .bg-indigo-500 .text-white,
 body[data-theme="light"] .site-list-container .bg-indigo-500 .text-white {
   color: white !important;
 }
+/* Ensure Remove Site modal icon and background show correctly in light mode */
+html:not(.dark) .remove-site-modal .bg-red-600 {
+  background-color: #dc2626 !important;
+}
+html:not(.dark) .remove-site-modal .bg-red-600 .text-white,
+html:not(.dark) .remove-site-modal .bg-red-600 svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+.light .remove-site-modal .bg-red-600 {
+  background-color: #dc2626 !important;
+}
+.light .remove-site-modal .bg-red-600 .text-white,
+.light .remove-site-modal .bg-red-600 svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+/* Light mode fixes for Remove Site modal */
+html:not(.dark) .remove-site-modal .bg-red-600 svg,
+html:not(.dark) .remove-site-modal .bg-red-600 .text-white {
+  color: white !important;
+  fill: white !important;
+}
+.light .remove-site-modal .bg-red-600 .text-white,
+.light .remove-site-modal .bg-red-600 svg {
+  color: white !important;
+  fill: white !important;
+}
+
+/* Force fill on SVG paths in Remove Site modal for light theme */
+html:not(.dark) .remove-site-modal svg path,
+.light .remove-site-modal svg path {
+  fill: white !important;
+}
+.light .remove-site-modal .bg-red-600 svg,
+.light .remove-site-modal .bg-red-600 .text-white {
+  color: white !important;
+  fill: white !important;
+}
 
 /* Fix the container for the empty state message */
 .light .site-list-container > div > .p-8,
@@ -323,9 +362,70 @@ body[data-theme="light"] div.flex.items-center > div.bg-blue-600 {
   background-color: #2563eb !important; /* blue-600 */
 }
 
+/* ----------------------------------------------------- */
+/* Force Remove Site modal icon container and icon color */
+@media (prefers-color-scheme: light) {
+  .remove-site-modal .bg-red-600 {
+    background-color: #dc2626 !important;
+  }
+  .remove-site-modal .bg-red-600 svg,
+  .remove-site-modal .bg-red-600 svg path {
+    color: white !important;
+    fill: white !important;
+  }
+}
+.light .remove-site-modal .bg-red-600 {
+  background-color: #dc2626 !important;
+}
+.light .remove-site-modal .bg-red-600 svg,
+.light .remove-site-modal .bg-red-600 svg path {
+  color: white !important;
+  fill: white !important;
+}
+
 /* Fix icon color in the header in light mode */
 .light .site-list-container .text-white,
 html:not(.dark) .site-list-container .text-white,
 body[data-theme="light"] .site-list-container .text-white {
   color: white !important;
+}
+/* ----------------------------------------------------- */
+/* Remove Site modal light theme overrides */
+html:not(.dark) .remove-site-modal .bg-red-600 {
+  background-color: #dc2626 !important;
+}
+html:not(.dark) .remove-site-modal .bg-red-600 .text-white,
+html:not(.dark) .remove-site-modal .bg-red-600 svg,
+html:not(.dark) .remove-site-modal .bg-red-600 svg path {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.light .remove-site-modal .bg-red-600 {
+  background-color: #dc2626 !important;
+}
+.light .remove-site-modal .bg-red-600 .text-white,
+.light .remove-site-modal .bg-red-600 svg,
+.light .remove-site-modal .bg-red-600 svg path {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+/* Remove Site modal icon visibility fix for light mode */
+html:not(.dark) .remove-site-modal .bg-red-600 {
+  background-color: #dc2626 !important;
+}
+html:not(.dark) .remove-site-modal .bg-red-600 svg,
+html:not(.dark) .remove-site-modal .bg-red-600 .text-white {
+  color: white !important;
+  fill: white !important;
+}
+.light .remove-site-modal .bg-red-600 {
+  background-color: #dc2626 !important;
+}
+.light .remove-site-modal .bg-red-600 svg,
+.light .remove-site-modal .bg-red-600 .text-white {
+  color: white !important;
+  fill: white !important;
 }

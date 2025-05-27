@@ -1,7 +1,7 @@
 /* Light mode fixes for site creation progress modal */
 
 @media (prefers-color-scheme: light) {
-  .modal-backdrop {
+  .remove-site-modal .modal-backdrop {
     background-color: rgba(0, 0, 0, 0.4) !important;
   }
   

@@ -347,7 +347,7 @@
     />
     
     <!-- Confirmation Modal for Site Removal -->
-    <div v-if="showRemoveModal" class="fixed inset-0 z-50 overflow-y-auto hide-scrollbar">
+    <div v-if="showRemoveModal" class="fixed inset-0 z-50 overflow-y-auto hide-scrollbar remove-site-modal">
       <div class="flex items-center justify-center min-h-screen px-4">
         <!-- Modal backdrop -->
         <div class="fixed inset-0 bg-black/50 transition-opacity" @click="cancelRemove"></div>
@@ -359,8 +359,8 @@
             <!-- Header -->
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center">
-                <div class="bg-red-600 rounded-lg p-1.5 mr-3 shadow-sm">
-                  <PhTrash class="text-white w-6 h-6" weight="fill" />
+                <div class="bg-red-600 dark:bg-red-600 rounded-lg p-1.5 mr-3 shadow-sm">
+                  <PhTrash class="text-white dark:text-white w-6 h-6" weight="fill" />
                 </div>
                 <h2 class="text-base font-medium text-gray-900 dark:text-gray-100">Remove Site</h2>
               </div>
