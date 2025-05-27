@@ -242,6 +242,23 @@ html:not(.dark) .remove-site-modal .h-2.bg-gray-200,
 .light .remove-site-modal .h-2.bg-gray-200 {
   background-color: #e5e7eb !important; /* light gray bg for progress track */
 }
+/* Make cancel button more visible in remove site modal */
+html:not(.dark) .remove-site-modal button[class*="cancelRemove"],
+.light .remove-site-modal button[class*="cancelRemove"] {
+  background-color: #d1d5db !important;
+  color: #1f2937 !important;
+  border: 1px solid #9ca3af !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.dark .remove-site-modal button[class*="cancelRemove"] {
+  background-color: #d1d5db !important;
+  color: #1f2937 !important;
+  border: 1px solid #6b7280 !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
 html:not(.dark) .remove-site-modal .h-2.bg-red-500,
 .light .remove-site-modal .h-2.bg-red-500 {
   background-color: #dc2626 !important; /* red-600 for progress fill */

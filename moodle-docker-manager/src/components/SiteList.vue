@@ -395,7 +395,7 @@
             
             <!-- Footer -->
             <div class="mt-4 flex justify-end space-x-2">
-              <button @click="cancelRemove" class="flex items-center justify-center px-3 py-1.5 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 text-sm min-w-[80px]">
+              <button @click="cancelRemove" class="flex items-center justify-center px-3 py-1.5 bg-gray-300 dark:bg-gray-400 text-gray-800 dark:text-gray-800 font-medium rounded-md hover:bg-gray-400 dark:hover:bg-gray-300 transition-colors duration-200 text-sm min-w-[80px] border border-gray-400 dark:border-gray-500 shadow-sm">
                 Cancel
               </button>
               <button @click="confirmRemove" class="flex items-center justify-center px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm min-w-[100px]">
