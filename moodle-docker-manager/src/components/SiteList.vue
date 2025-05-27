@@ -151,7 +151,7 @@
             </div>
             <div class="moodle-data-cell">
               <div class="flex items-center">
-                <span class="compact-status-badge text-sm" :class="getStatusClasses(site.status)">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border" :class="getStatusClasses(site.status)">
                   <span class="inline-block w-2 h-2 rounded-full mr-1.5" :class="getStatusIndicatorClasses(site.status)"></span>
                   {{ site.status }}
                 </span>
@@ -200,7 +200,7 @@
                     :disabled="activeActionSite === site.name"
                     title="Start">
                   <template v-if="activeActionSite === site.name"><div class="custom-spinner-small"></div></template>
-                  <template v-else><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg></template>
+                  <template v-else><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"></path></svg></template>
                 </button>
                 <button v-else 
                     @click="stopSite(site.name)" 
@@ -209,7 +209,7 @@
                     :disabled="activeActionSite === site.name"
                     title="Stop">
                   <template v-if="activeActionSite === site.name"><div class="custom-spinner-small"></div></template>
-                  <template v-else><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></template>
+                  <template v-else><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg></template>
                 </button>
                 <button @click="viewLogs(site.name)" class="action-icon-button bg-blue-500 hover:bg-blue-600 text-white" title="Logs">
                   <PhFileText class="w-4 h-4" weight="fill" />
@@ -814,13 +814,13 @@ export default {
     const getStatusClasses = (status) => {
       switch (status) {
         case 'running':
-          return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+          return 'bg-green-100 text-green-800 border-green-500 dark:bg-green-900 dark:text-green-300 dark:border-green-500';
         case 'error':
-          return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+          return 'bg-red-100 text-red-800 border-red-500 dark:bg-red-900 dark:text-red-300 dark:border-red-500';
         case 'stopped':
-          return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-        default:
-          return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+          return 'bg-red-100 text-red-800 border-red-500 dark:bg-red-900 dark:text-red-300 dark:border-red-500';
+        default: // For 'starting', 'stopping', or any other status
+          return 'bg-yellow-100 text-yellow-800 border-yellow-500 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-500';
       }
     };
 
@@ -831,7 +831,7 @@ export default {
         case 'error':
           return 'bg-red-500';
         case 'stopped':
-          return 'bg-gray-400';
+          return 'bg-red-500'; // Changed from gray to red
         default:
           return 'bg-yellow-500';
       }
