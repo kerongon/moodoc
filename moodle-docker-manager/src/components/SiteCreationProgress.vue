@@ -443,6 +443,9 @@ export default {
 </template>
 
 <style scoped>
+/* Import light mode fixes */
+@import '../assets/site-creation-progress-light-mode-fix.css';
+
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -1029,7 +1032,4 @@ export default {
 .dark .cancel-button:hover {
   background-color: #374151;
 }
-
-/* Import light mode fixes */
-@import '../assets/site-creation-progress-light-mode-fix.css';
 </style>
