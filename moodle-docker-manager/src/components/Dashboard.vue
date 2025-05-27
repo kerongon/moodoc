@@ -59,8 +59,8 @@
                   <path transform="translate(287, 227) scale(0.78125)" d="M0 64H134.4L288 344.3L441.6 64H576V448H480V204.3L326.4 448H249.6L96 204.3V448H0V64Z" fill="white"/>
                   <!-- Server Rack: 450px wide, 120px tall. Top at y=627 -->
                   <rect x="287" y="627" width="450" height="120" rx="20" fill="white"/>
-                  <line x1="307" y1="663" x2="717" y2="663" stroke="#5A52A3" stroke-width="10" stroke-linecap="round"/>
-                  <line x1="307" y1="703" x2="717" y2="703" stroke="#5A52A3" stroke-width="10" stroke-linecap="round"/>
+                  <line x1="307" y1="663" x2="717" y2="663" stroke="#7066C6" stroke-width="10" stroke-linecap="round"/>
+                  <line x1="307" y1="703" x2="717" y2="703" stroke="#7066C6" stroke-width="10" stroke-linecap="round"/>
                 </g>
               </svg>
             </div>
@@ -317,7 +317,7 @@ export default {
   width: 28px;
   height: 28px;
   pointer-events: auto;
-  background-color: #6366F1;
+  background-color: #7066C6; /* Changed from #6366F1 to match SVG background */
   border-radius: 6px;
 }
 

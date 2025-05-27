@@ -53,8 +53,8 @@
                 <path transform="translate(287, 227) scale(0.78125)" d="M0 64H134.4L288 344.3L441.6 64H576V448H480V204.3L326.4 448H249.6L96 204.3V448H0V64Z" fill="white"/>
                 <!-- Server Rack: 450px wide, 120px tall. Top at y=627 -->
                 <rect x="287" y="627" width="450" height="120" rx="20" fill="white"/>
-                <line x1="307" y1="663" x2="717" y2="663" stroke="#5A52A3" stroke-width="10" stroke-linecap="round"/>
-                <line x1="307" y1="703" x2="717" y2="703" stroke="#5A52A3" stroke-width="10" stroke-linecap="round"/>
+                <line x1="307" y1="663" x2="717" y2="663" stroke="#7066C6" stroke-width="10" stroke-linecap="round"/>
+                <line x1="307" y1="703" x2="717" y2="703" stroke="#7066C6" stroke-width="10" stroke-linecap="round"/>
               </g>
             </svg>
           </div>
@@ -1696,6 +1696,17 @@ export default {
 @import '../assets/create-site.css';
 @import '../assets/create-site-compact.css'; /* Add this new import for fixes */
 @import '../assets/create-site-light-mode-fix.css'; /* Import light mode fixes */
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  pointer-events: auto;
+  background-color: #7066C6; /* Match SVG background */
+  border-radius: 6px;
+}
 
 .window-control-button {
   position: relative;
