@@ -145,8 +145,8 @@
                 {{ formatVersions(site) }}
               </span>
             </div>
-            <div class="moodle-data-cell text-sm text-gray-700 dark:text-gray-300">
-              <span class="px-2 py-1 rounded-full bg-green-100 dark:bg-green-600 text-green-700 dark:text-green-100 text-xs">
+            <div class="moodle-data-cell text-sm text-gray-700 dark:text-gray-300 flex items-center">
+              <span class="px-2 py-1 rounded-full bg-green-100 dark:bg-green-600 text-green-700 dark:text-green-100 text-xs flex items-center justify-center h-6">
                 {{ site.db_type }}
               </span>
             </div>
