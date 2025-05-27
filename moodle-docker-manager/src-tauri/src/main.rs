@@ -123,6 +123,7 @@ fn main() {
             docker::open_in_editor,
             docker::cancel_update,
             docker::check_port_available,
+            docker::get_used_ports,
             site_metrics::get_site_size,
             site_metrics::get_storage_info,
             open_logs_window,

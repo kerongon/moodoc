@@ -632,6 +632,93 @@ pub fn check_port_available(port: u16) -> bool {
     }
 }
 
+#[command]
+pub fn get_used_ports(app_handle: AppHandle) -> Result<Vec<u16>, String> {
+    let state = app_handle.state::<SiteState>();
+    let sites_map = state
+        .0
+        .lock()
+        .map_err(|_| "Failed to lock sites state".to_string())?;
+    
+    let mut used_ports = Vec::new();
+    
+    // Collect ports from existing sites
+    for site in sites_map.values() {
+        if let Some(web_port) = site.web_port {
+            used_ports.push(web_port);
+        }
+        if let Some(db_port) = site.db_port {
+            used_ports.push(db_port);
+        }
+    }
+    
+    // Add default/local ports that should be excluded from port generation
+    // These are commonly used system ports and local service ports
+    let reserved_ports = vec![
+        // System and well-known ports (0-1023)
+        20, 21,   // FTP
+        22,       // SSH
+        23,       // Telnet
+        25,       // SMTP
+        53,       // DNS
+        67, 68,   // DHCP
+        69,       // TFTP
+        80,       // HTTP
+        110,      // POP3
+        143,      // IMAP
+        443,      // HTTPS
+        993,      // IMAPS
+        995,      // POP3S
+        
+        // Common database ports
+        1433,     // SQL Server
+        1521,     // Oracle
+        3306,     // MySQL/MariaDB
+        5432,     // PostgreSQL
+        6379,     // Redis
+        27017,    // MongoDB
+        
+        // Common development/service ports
+        3000,     // Node.js development server
+        3001,     // Alternative Node.js
+        4000,     // Ruby on Rails
+        5000,     // Flask development
+        5432,     // PostgreSQL (duplicate but commonly used)
+        6000,     // X11
+        8000,     // Django development
+        8080,     // Alternative HTTP
+        8443,     // Alternative HTTPS
+        9000,     // PHP-FPM
+        9200,     // Elasticsearch
+        11211,    // Memcached
+        
+        // Moodle-docker common defaults
+        8000,     // Default web port for moodle-docker
+        3307,     // Common alternative MySQL port
+        5433,     // Common alternative PostgreSQL port
+        
+        // macOS specific common ports
+        548,      // AFP
+        631,      // CUPS printing
+        5353,     // Bonjour
+        62078,    // Apple Remote Desktop
+        
+        // Other common local services
+        1080,     // SOCKS proxy
+        3128,     // Squid proxy
+        8888,     // Jupyter notebooks
+        9090,     // Prometheus
+    ];
+    
+    used_ports.extend(reserved_ports);
+    
+    // Remove duplicates and sort
+    used_ports.sort();
+    used_ports.dedup();
+    
+    Ok(used_ports)
+}
+
 // This function will validate the Docker setup and ensure directories exist
 #[command]
 pub fn validate_environment(app_handle: AppHandle) -> Result<String, String> {

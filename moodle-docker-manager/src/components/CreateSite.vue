@@ -1176,8 +1176,27 @@ export default {
       const min = this.portRanges.web.min;
       const max = this.portRanges.web.max;
       
+      // Get list of used ports from existing sites and reserved ports
+      let usedPorts = [];
+      try {
+        usedPorts = await invoke('get_used_ports');
+      } catch (error) {
+        console.error('Error getting used ports:', error);
+        // Fallback to empty array if getting used ports fails
+        usedPorts = [];
+      }
+      
+      // Convert to Set for faster lookup
+      const usedPortsSet = new Set(usedPorts);
+      
       // Try sequential ports first for efficiency
       for (let port = min; port <= max; port++) {
+        // Skip if port is already used by existing sites or reserved
+        if (usedPortsSet.has(port)) {
+          continue;
+        }
+        
+        // Check if port is actually available on the system
         if (await this.isPortAvailable(port)) {
           return port;
         }
@@ -1192,8 +1211,27 @@ export default {
       const min = dbRange.min;
       const max = dbRange.max;
       
+      // Get list of used ports from existing sites and reserved ports
+      let usedPorts = [];
+      try {
+        usedPorts = await invoke('get_used_ports');
+      } catch (error) {
+        console.error('Error getting used ports:', error);
+        // Fallback to empty array if getting used ports fails
+        usedPorts = [];
+      }
+      
+      // Convert to Set for faster lookup
+      const usedPortsSet = new Set(usedPorts);
+      
       // Try sequential ports first for efficiency
       for (let port = min; port <= max; port++) {
+        // Skip if port is already used by existing sites or reserved
+        if (usedPortsSet.has(port)) {
+          continue;
+        }
+        
+        // Check if port is actually available on the system
         if (await this.isPortAvailable(port)) {
           return port;
         }
