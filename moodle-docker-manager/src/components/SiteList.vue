@@ -12,42 +12,7 @@
         </div>
       </div>
 
-      <div class="flex items-center space-x-3">
-        <!-- Batch Operations -->
-        <div v-if="sites.length > 0" class="flex items-center space-x-3">
-          <button
-            @click="batchStopAll"
-            :disabled="batchProcessing || !hasRunningSites"
-            class="inline-flex items-center justify-center h-10 px-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-150 text-sm"
-            title="Stop all running sites"
-          >
-            <template v-if="batchProcessing && currentBatchOperation === 'stop'">
-              <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-              Stopping All...
-            </template>
-            <template v-else>
-              <svg class="w-4 h-4 mr-2 -ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="6" y="6" width="12" height="12" rx="2" />
-              </svg>
-              Stop All
-            </template>
-          </button>
-          <button
-            @click="batchRemoveAll"
-            :disabled="batchProcessing"
-            class="inline-flex items-center justify-center h-10 px-4 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-150 text-sm"
-            title="Remove all sites"
-          >
-            <template v-if="batchProcessing && currentBatchOperation === 'remove'">
-              <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2 -ml-1"></div>
-              Removing All...
-            </template>
-            <template v-else>
-              <PhTrash class="w-4 h-4 mr-2 -ml-1" weight="bold" />
-              Remove All
-            </template>
-          </button>
-        </div>
+      <div class="flex items-center gap-3">
         <!-- search box -->
         <div v-if="sites.length > 0" class="relative">
           <input
@@ -61,14 +26,53 @@
             <PhMagnifyingGlass class="w-4 h-4 text-gray-400 dark:text-gray-500" />
           </div>
         </div>
-        <!-- Add new site button -->  
-        <router-link v-if="sites.length > 0"
-          to="/create" 
-          class="inline-flex items-center justify-center h-10 px-6 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-150 text-sm"
-        >
-          <PhPlus class="w-5 h-5 mr-2 -ml-1" weight="bold" />
-          New Site
-        </router-link>
+
+        <!-- Action buttons in a consistent group -->
+        <div v-if="sites.length > 0" class="flex items-center gap-2">
+          <!-- Bulk action buttons are now in dropdown at the bottom -->
+          <!-- 
+          <button
+            @click="batchStopAll"
+            :disabled="batchProcessing || !hasRunningSites"
+            class="inline-flex items-center justify-center h-10 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-150 text-sm px-4"
+            title="Stop all running sites"
+          >
+            <template v-if="batchProcessing && currentBatchOperation === 'stop'">
+              <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1.5"></div>
+              <span>Stop</span>
+            </template>
+            <template v-else>
+              <PhStop class="w-4 h-4 mr-1.5" />
+              <span>Stop All</span>
+            </template>
+          </button>
+
+          <button
+            @click="batchRemoveAll"
+            :disabled="batchProcessing"
+            class="inline-flex items-center justify-center h-10 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-medium rounded-lg shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-150 text-sm px-4"
+            title="Remove all sites"
+          >
+            <template v-if="batchProcessing && currentBatchOperation === 'remove'">
+              <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1.5"></div>
+              <span>Remove</span>
+            </template>
+            <template v-else>
+              <PhTrash class="w-4 h-4 mr-1.5" />
+              <span>Remove All</span>
+            </template>
+          </button>
+          -->
+
+          <!-- Add new site button -->  
+          <router-link
+            to="/create" 
+            class="inline-flex items-center justify-center h-10 px-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-150 text-sm"
+          >
+            <PhPlus class="w-4 h-4 mr-1.5" />
+            <span>New Site</span>
+          </router-link>
+        </div>
       </div>
     </div>
 
@@ -261,9 +265,7 @@
                     <div class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   </template>
                   <template v-else>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <rect x="6" y="6" width="12" height="12" rx="2" />
-                    </svg>
+                    <PhStop class="w-4 h-4" />
                   </template>
                 </button>
                 <button @click="viewLogs(site.name)" class="action-icon-button bg-blue-500 hover:bg-blue-600 text-white" title="Logs">
@@ -290,14 +292,82 @@
           </div>
         </div>
         <div class="table-footer bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between items-center rounded-b-lg">
-          <div class="text-sm text-gray-600 dark:text-gray-400">
-            Showing {{ paginatedSites.length }} of {{ sites.length }} sites
+          <div class="flex items-center space-x-4">
+            <!-- Bulk Actions Dropdown -->
+            <div v-if="sites.length > 0">
+              <button 
+                @click="toggleBulkActions"
+                ref="bulkActionsButton"
+                class="inline-flex items-center justify-center h-9 px-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 dark:from-indigo-600 dark:to-purple-600 dark:hover:from-indigo-700 dark:hover:to-purple-700 text-white font-medium rounded-lg text-sm shadow-md"
+              >
+                <span>Bulk Actions</span>
+                <svg class="w-5 h-5 ml-1 button-arrow-rotate" :class="{ 'button-arrow-rotate-active': showBulkActionsDropdown }" 
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              
+              <!-- Teleport the dropdown to the body to avoid any container constraints -->
+              <Teleport to="body">
+                <div 
+                  v-if="showBulkActionsDropdown"
+                  ref="bulkActionsDropdown"
+                  :style="dropdownStyle"
+                  class="absolute w-48 bg-white dark:bg-gray-800 shadow-xl rounded-lg z-[9999] py-1 border border-gray-300 dark:border-gray-700 overflow-hidden bulk-actions-dropdown"
+                >
+                  <button 
+                    @click="batchStartAll"
+                    :disabled="batchProcessing || !hasStoppedSites"
+                    class="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path d="M5 3v18l15-9L5 3z" />
+                    </svg>
+                    Start All
+                  </button>
+                  
+                  <button 
+                    @click="batchStopAll"
+                    :disabled="batchProcessing || !hasRunningSites"
+                    class="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    <PhStop class="w-4 h-4 mr-2 text-yellow-500" />
+                    Stop All
+                  </button>
+                  
+                  <button 
+                    @click="batchRestartAll"
+                    :disabled="batchProcessing || !hasRunningSites" 
+                    class="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    <PhArrowClockwise class="w-4 h-4 mr-2 text-blue-500" />
+                    Restart All
+                  </button>
+                  
+                  <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                  
+                  <button 
+                    @click="batchRemoveAll"
+                    :disabled="batchProcessing"
+                    class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    <PhTrash class="w-4 h-4 mr-2" />
+                    Remove All
+                  </button>
+                </div>
+              </Teleport>
+            </div>
+            
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              Showing {{ paginatedSites.length }} of {{ sites.length }} sites
+            </div>
           </div>
+          
           <div class="pagination-container flex items-center space-x-1">
             <button
               @click="currentPage = Math.max(currentPage-1,1)"
               :disabled="currentPage===1"
-              class="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-3 py-1 text-sm text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700 rounded-md hover:bg-indigo-50 dark:hover:bg-indigo-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400 dark:disabled:text-gray-600 disabled:border-gray-300 dark:disabled:border-gray-700 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"
             >Previous</button>
             <button
               v-for="page in totalPages"
@@ -306,7 +376,7 @@
               :class="[
                 'px-3 py-1 text-sm border rounded-md',
                 currentPage===page 
-                  ? 'bg-blue-600 text-white border-blue-600' 
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-indigo-500' 
                   : 'text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
               ]"
               aria-current="page"
@@ -314,7 +384,7 @@
             <button
               @click="currentPage = Math.min(currentPage+1,totalPages)"
               :disabled="currentPage===totalPages"
-              class="px-3 py-1 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="px-3 py-1 text-sm text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700 rounded-md hover:bg-indigo-50 dark:hover:bg-indigo-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400 dark:disabled:text-gray-600 disabled:border-gray-300 dark:disabled:border-gray-700 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"
             >Next</button>
           </div>
         </div>
@@ -542,7 +612,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass, PhFileText, PhCaretUp, PhCaretDown, PhCheckSquare, PhPlus, PhSquare, PhWrench, PhWarningCircle } from '@phosphor-icons/vue';
+import { PhList, PhArchiveBox, PhArrowClockwise, PhTrash, PhTerminal, PhRecycle, PhLinkSimple, PhFolder, PhCode, PhMagnifyingGlass, PhFileText, PhCaretUp, PhCaretDown, PhCheckSquare, PhPlus, PhSquare, PhWrench, PhWarningCircle, PhStop } from '@phosphor-icons/vue';
 import UpdateSite from './UpdateSite.vue';
 import DiagnosticModal from './DiagnosticModal.vue';
 import { Command } from '@tauri-apps/plugin-shell';
@@ -572,7 +642,8 @@ export default {
     PhPlus,
     PhSquare,
     PhWrench,
-    PhWarningCircle
+    PhWarningCircle,
+    PhStop
   },
   emits: ['action-start', 'action-end'],
   setup(props, { expose, emit }) {
@@ -612,6 +683,79 @@ export default {
     // Stop notification message
     const stopMessage = ref('');
 
+    // Bulk actions state
+    const showBulkActionsDropdown = ref(false);
+    const bulkActionsButton = ref(null); // Reference to the button element
+    const bulkActionsDropdown = ref(null);
+    
+    // Computed property for dropdown positioning
+    const dropdownStyle = computed(() => {
+      if (!bulkActionsButton.value) return {};
+      
+      const rect = bulkActionsButton.value.getBoundingClientRect();
+      
+      return {
+        position: 'fixed',
+        top: `${rect.bottom + window.scrollY + 8}px`, // 8px below the button for better visibility
+        left: `${rect.left + window.scrollX}px`,
+        zIndex: 9999, // Ensure it appears above other elements
+        backgroundColor: 'white', // Force white background in light mode
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)', // More visible shadow
+        border: '1px solid #d1d5db', // More visible border
+      };
+    });
+    
+    // Computed property to check if there are any stopped sites
+    const hasStoppedSites = computed(() => {
+      return sites.value.some(site => site.status !== 'running');
+    });
+    
+    // Toggle bulk actions dropdown
+    const toggleBulkActions = () => {
+      // Toggle the dropdown visibility
+      showBulkActionsDropdown.value = !showBulkActionsDropdown.value;
+      
+      if (showBulkActionsDropdown.value) {
+        // Allow the DOM to update first, then ensure the dropdown is correctly positioned
+        setTimeout(() => {
+          if (bulkActionsDropdown.value && bulkActionsButton.value) {
+            // Make sure the dropdown is visible and properly positioned
+            const rect = bulkActionsButton.value.getBoundingClientRect();
+            
+            // Position dropdown below the button with sufficient offset to be visible
+            bulkActionsDropdown.value.style.position = 'fixed';
+            bulkActionsDropdown.value.style.top = `${rect.bottom + window.scrollY + 8}px`;
+            bulkActionsDropdown.value.style.left = `${rect.left + window.scrollX}px`;
+            
+            // Ensure visibility with high z-index
+            bulkActionsDropdown.value.style.zIndex = '9999';
+            bulkActionsDropdown.value.style.backgroundColor = 'white';
+            bulkActionsDropdown.value.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.2)';
+            bulkActionsDropdown.value.style.border = '1px solid #d1d5db';
+            
+            // Log for debugging
+            console.log('Bulk actions dropdown positioned at:', {
+              top: bulkActionsDropdown.value.style.top,
+              left: bulkActionsDropdown.value.style.left
+            });
+          }
+        }, 0);
+      }
+    };
+    
+    // Hide dropdown when clicking outside
+    const handleClickOutside = (event) => {
+      if (showBulkActionsDropdown.value && 
+          bulkActionsButton.value && 
+          !bulkActionsButton.value.contains(event.target) &&
+          bulkActionsDropdown.value && 
+          !bulkActionsDropdown.value.contains(event.target)) {
+        showBulkActionsDropdown.value = false;
+      }
+    };
+    
+    // Event listeners will be added in the main onMounted function
+    
     // Check for recently created sites
     const loadRecentlyCreatedSites = () => {
       try {
@@ -1096,6 +1240,18 @@ export default {
       // Load settings first to ensure editor path is available
       await settingsStore.loadSettings();
       
+      // Add event listener for closing dropdown when clicking outside
+      document.addEventListener('click', handleClickOutside);
+      // Add resize listener to reposition dropdown if window is resized
+      window.addEventListener('resize', () => {
+        if (showBulkActionsDropdown.value && bulkActionsButton.value && bulkActionsDropdown.value) {
+          // Reposition the dropdown directly instead of toggling it
+          const rect = bulkActionsButton.value.getBoundingClientRect();
+          bulkActionsDropdown.value.style.top = `${rect.bottom + window.scrollY + 8}px`;
+          bulkActionsDropdown.value.style.left = `${rect.left + window.scrollX}px`;
+        }
+      });
+      
       loadSites();
       // Poll for status changes every 5 seconds without full re-render
       refreshTimer = setInterval(refreshStatuses, 5000);
@@ -1160,6 +1316,14 @@ export default {
       clearInterval(refreshTimer);
       if (progressUnlistener) progressUnlistener();
       if (completeUnlistener) completeUnlistener();
+      
+      // Remove event listeners for dropdown
+      document.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('resize', () => {
+        if (showBulkActionsDropdown.value) {
+          toggleBulkActions();
+        }
+      });
     });
     
     // Batch operations computed properties
@@ -1349,6 +1513,116 @@ export default {
       currentBatchOperation.value = '';
     };
     
+    // Batch start all sites
+    const batchStartAll = async () => {
+      if (batchProcessing.value || !hasStoppedSites.value) return;
+      
+      currentBatchOperation.value = 'start';
+      batchProcessing.value = true;
+      showBulkActionsDropdown.value = false;
+      
+      const stoppedSites = sites.value.filter(site => site.status !== 'running').map(site => site.name);
+      let succeeded = 0;
+      let failed = 0;
+      
+      try {
+        for (const siteName of stoppedSites) {
+          try {
+            activeActionSites.value.add(siteName);
+            await invoke('start_site', { name: siteName });
+            succeeded++;
+            // Add individual notification
+            addNotification(`Site '${siteName}' started successfully`, 'success');
+          } catch (err) {
+            failed++;
+            console.error(`Failed to start site ${siteName}:`, err);
+            addNotification(`Failed to start '${siteName}': ${err}`, 'error');
+          } finally {
+            activeActionSites.value.delete(siteName);
+          }
+        }
+        
+        // Add summary notification
+        if (succeeded > 0 && failed === 0) {
+          addNotification(`All ${succeeded} sites started successfully`, 'success');
+        } else if (succeeded > 0 && failed > 0) {
+          addNotification(`Started ${succeeded} sites, ${failed} failed`, 'warning');
+        } else if (succeeded === 0 && failed > 0) {
+          addNotification(`Failed to start ${failed} sites`, 'error');
+        }
+        
+        // Refresh statuses
+        await refreshStatuses();
+      } finally {
+        batchProcessing.value = false;
+        currentBatchOperation.value = null;
+      }
+    };
+    
+    // Batch restart all sites
+    const batchRestartAll = async () => {
+      if (batchProcessing.value || !hasRunningSites.value) return;
+      
+      currentBatchOperation.value = 'restart';
+      batchProcessing.value = true;
+      showBulkActionsDropdown.value = false;
+      
+      const runningSites = sites.value.filter(site => site.status === 'running').map(site => site.name);
+      let succeeded = 0;
+      let failed = 0;
+      
+      try {
+        // First stop all sites
+        for (const siteName of runningSites) {
+          try {
+            activeActionSites.value.add(siteName);
+            await invoke('stop_site', { name: siteName });
+          } catch (err) {
+            failed++;
+            console.error(`Failed to stop site ${siteName} during restart:`, err);
+            addNotification(`Failed to restart '${siteName}': Could not stop site`, 'error');
+            activeActionSites.value.delete(siteName);
+          }
+        }
+        
+        // Refresh status and wait a moment
+        await refreshStatuses();
+        await new Promise(r => setTimeout(r, 1000));
+        
+        // Then start all sites that were successfully stopped
+        for (const siteName of runningSites) {
+          if (!activeActionSites.value.has(siteName)) continue; // Skip sites that failed to stop
+          
+          try {
+            await invoke('start_site', { name: siteName });
+            succeeded++;
+            addNotification(`Site '${siteName}' restarted successfully`, 'success');
+          } catch (err) {
+            failed++;
+            console.error(`Failed to start site ${siteName} during restart:`, err);
+            addNotification(`Failed to restart '${siteName}': Could not start site`, 'error');
+          } finally {
+            activeActionSites.value.delete(siteName);
+          }
+        }
+        
+        // Add summary notification
+        if (succeeded > 0 && failed === 0) {
+          addNotification(`All ${succeeded} sites restarted successfully`, 'success');
+        } else if (succeeded > 0 && failed > 0) {
+          addNotification(`Restarted ${succeeded} sites, ${failed} failed`, 'warning');
+        } else if (succeeded === 0 && failed > 0) {
+          addNotification(`Failed to restart ${failed} sites`, 'error');
+        }
+        
+        // Final refresh
+        await refreshStatuses();
+      } finally {
+        batchProcessing.value = false;
+        currentBatchOperation.value = null;
+      }
+    };
+    
     // Expose the loadSites method to parent components
     expose({ loadSites });
 
@@ -1414,9 +1688,17 @@ export default {
       hasRunningSites,
       batchStopAll,
       batchRemoveAll,
+      batchStartAll,
+      batchRestartAll,
       batchNotifications,
       addNotification,
-      removeNotification
+      removeNotification,
+      // Bulk actions
+      showBulkActionsDropdown,
+      toggleBulkActions,
+      bulkActionsButton,
+      dropdownStyle,
+      bulkActionsDropdown,
     };
   }
 };
@@ -1439,6 +1721,17 @@ export default {
   background-color: #2c334b; /* Slightly lighter on hover for dark theme */
 }
 
+/* Ensure the dropdown menu is positioned properly */
+.bulk-actions-dropdown {
+  position: fixed !important; /* Use !important to override any conflicting styles */
+  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2) !important; /* Indigo shadow */
+  z-index: 9999 !important;
+  background-color: white !important; /* Force white background in light mode */
+  border: 1px solid #c7d2fe !important; /* Light indigo border */
+  border-top: 3px solid #4f46e5 !important; /* Indigo accent on top */
+  border-radius: 0.5rem !important; /* Rounded corners */
+}
+
 /* Ensure the overall container has a dark background if it's not already set by a parent */
 .dark .site-list-container {
   background-color: #1a202c; /* A common dark background color */
@@ -1459,18 +1752,59 @@ export default {
 }
 
 /* Notification animations */
-.notification-enter-active, .notification-leave-active {
-  transition: all 0.3s ease;
+
+/* Ensure the dropdown menu items have proper styling in both light and dark modes */
+.bulk-actions-dropdown button {
+  background-color: white;
+  color: #4f46e5; /* Indigo color matching theme */
+  transition: all 0.2s ease;
 }
 
-.notification-enter-from {
-  transform: translateX(100%);
-  opacity: 0;
+.bulk-actions-dropdown button:hover {
+  background-color: #f5f3ff; /* Very light purple background on hover */
+  color: #6d28d9; /* Purple text on hover */
 }
 
-.notification-leave-to {
-  transform: translateX(100%);
-  opacity: 0;
+.bulk-actions-dropdown button:disabled {
+  color: #a1a1aa; /* Muted color for disabled items */
+}
+
+.bulk-actions-dropdown button:hover:disabled {
+  background-color: white;
+  color: #a1a1aa;
+}
+
+.dark .bulk-actions-dropdown {
+  background-color: #1f2937 !important;
+  border-color: #4338ca !important; /* Indigo border in dark mode */
+}
+
+.dark .bulk-actions-dropdown button {
+  background-color: #1f2937;
+  color: #a78bfa; /* Light purple in dark mode */
+}
+
+.dark .bulk-actions-dropdown button:hover {
+  background-color: #312e81; /* Dark indigo background on hover */
+  color: #c4b5fd; /* Lighter purple text on hover */
+}
+
+.dark .bulk-actions-dropdown button:disabled {
+  color: #6b7280; /* Muted color for disabled items in dark mode */
+}
+
+.dark .bulk-actions-dropdown button:hover:disabled {
+  background-color: #1f2937;
+  color: #6b7280;
+}
+
+/* Add a slight rotate animation to the dropdown arrow when active */
+.button-arrow-rotate {
+  transition: transform 0.2s ease;
+}
+
+.button-arrow-rotate-active {
+  transform: rotate(180deg);
 }
 </style>
 <!-- Global light mode fixes for SiteList -->
