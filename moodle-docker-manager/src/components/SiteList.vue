@@ -20,7 +20,7 @@
             v-model="searchQuery"
             placeholder="Search sites..."
             aria-label="Search sites"
-            class="p-2 pl-3 pr-10 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 w-64"
+            class="h-10 px-4 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 w-64"
           />
           <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
             <PhMagnifyingGlass class="w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -29,7 +29,7 @@
         <!-- Add new site button -->  
         <router-link 
           to="/create" 
-          class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-150 text-sm"
+          class="inline-flex items-center justify-center h-10 px-6 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-all duration-150 text-sm"
         >
           <PhPlus class="w-5 h-5 mr-2 -ml-1" weight="bold" />
           New Site
