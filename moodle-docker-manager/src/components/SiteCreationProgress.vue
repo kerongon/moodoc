@@ -443,8 +443,9 @@ export default {
 </template>
 
 <style scoped>
-/* Import light mode fixes */
+/* Import mode-specific fixes */
 @import '../assets/site-creation-progress-light-mode-fix.css';
+@import '../assets/site-creation-progress-dark-mode.css';
 
 .modal-backdrop {
   position: fixed;
@@ -615,11 +616,13 @@ export default {
   border-radius: 8px;
   padding: 15px;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
 }
 
 .dark .animation-container {
   background-color: #293548;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .animation {
@@ -648,6 +651,11 @@ export default {
   border-radius: 3px;
   top: 22px;
   left: 45px;
+}
+
+/* We want the document to be white in both themes for better visibility */
+.dark .animation.preparing .document {
+  background-color: white;
 }
 
 .spinning {
@@ -891,7 +899,8 @@ export default {
 
 .logs-container {
   overflow-y: auto;
-  background-color: #f5f5f5;
+  background-color: #f8fafc; /* Light theme default */
+  color: #1e1e1e; /* Dark text for light theme */
   border-radius: 0 0 8px 8px;
   padding: 15px;
   max-height: 200px;
@@ -904,7 +913,7 @@ export default {
 }
 
 .dark .logs-container {
-  background-color: #374151;
+  background-color: #1e293b;
   color: #e5e7eb;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }

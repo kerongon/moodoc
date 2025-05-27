@@ -55,7 +55,8 @@
   }
   
   .logs-container {
-    background-color: #1e1e1e !important;
+    background-color: #f8fafc !important;
+    color: #1e1e1e !important;
     border-top: 1px solid #e5e7eb !important;
   }
 }
@@ -114,9 +115,39 @@
   background-color: #f9fafb !important;
 }
 
-.light .logs-container {
-  background-color: #1e1e1e !important;
+.light .logs-container,
+html:not(.dark) .logs-container,
+body:not(.dark) .logs-container,
+html[data-theme="light"] .logs-container,
+body[data-theme="light"] .logs-container {
+  background-color: #f8fafc !important;
+  color: #1e1e1e !important;
   border-top: 1px solid #e5e7eb !important;
+}
+
+/* Make log entries readable in light mode */
+.light .log-time,
+html:not(.dark) .log-time,
+body:not(.dark) .log-time,
+html[data-theme="light"] .log-time,
+body[data-theme="light"] .log-time {
+  color: #64748b !important;
+}
+
+.light .log-message,
+html:not(.dark) .log-message,
+body:not(.dark) .log-message,
+html[data-theme="light"] .log-message,
+body[data-theme="light"] .log-message {
+  color: #334155 !important;
+}
+
+.light .empty-logs-message,
+html:not(.dark) .empty-logs-message,
+body:not(.dark) .empty-logs-message,
+html[data-theme="light"] .empty-logs-message,
+body[data-theme="light"] .empty-logs-message {
+  color: #94a3b8 !important;
 }
 
 .light .done-button {
