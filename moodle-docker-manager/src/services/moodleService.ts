@@ -20,7 +20,7 @@ export class MoodleService {
       'MOODLE_310_STABLE',
       'MOODLE_39_STABLE',
       // Primary development branch
-      'master'
+      'main'
     ];
   }
 
@@ -89,8 +89,8 @@ export class MoodleService {
       recommendedVersion = '8.2';
       isCompatible = true;
     }
-    // Master branch (development) uses latest PHP
-    else if (branch === 'master') {
+    // Main branch (development) uses latest PHP
+    else if (branch === 'main') {
       recommendedVersion = '8.4';
       isCompatible = true;
     }
@@ -153,8 +153,8 @@ export class MoodleService {
       return php >= 8.2 && php <= 8.4;
     }
     
-    // Master branch: PHP 8.1+
-    if (moodleBranch === 'master') {
+    // Main branch: PHP 8.1+
+    if (moodleBranch === 'main') {
       return php >= 8.1;
     }
     
