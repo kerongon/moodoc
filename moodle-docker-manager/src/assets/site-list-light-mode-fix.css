@@ -236,6 +236,29 @@ html:not(.dark) .remove-site-modal svg path,
   color: white !important;
   fill: white !important;
 }
+/* Force progress bar and bounce dots color in Remove Site progress modal for light theme */
+/* Remove Site progress modal: ensure proper progress bar background and fill in light mode */
+html:not(.dark) .remove-site-modal .h-2.bg-gray-200,
+.light .remove-site-modal .h-2.bg-gray-200 {
+  background-color: #e5e7eb !important; /* light gray bg for progress track */
+}
+html:not(.dark) .remove-site-modal .h-2.bg-red-500,
+.light .remove-site-modal .h-2.bg-red-500 {
+  background-color: #dc2626 !important; /* red-600 for progress fill */
+}
+html:not(.dark) .remove-site-modal .h-3.bg-red-500,
+.light .remove-site-modal .h-3.bg-red-500 {
+  background-color: #dc2626 !important; /* red-600 for bounce dots */
+}
+/* Ensure the fill bar in progress bar uses red-600 instead of default red-500 */
+html:not(.dark) .remove-site-modal .h-2.bg-red-500 {
+  background-color: #dc2626 !important;
+}
+/* Ensure PhTrash in progress modal is visible */
+html:not(.dark) .remove-site-modal div.bg-red-600.ph-trash,
+.light .remove-site-modal div.bg-red-600.ph-trash {
+  background-color: #dc2626 !important;
+}
 
 /* Fix the container for the empty state message */
 .light .site-list-container > div > .p-8,

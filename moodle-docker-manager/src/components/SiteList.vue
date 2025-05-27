@@ -408,7 +408,7 @@
     </div>
     
     <!-- Site Removal Progress Modal -->
-    <div v-if="isRemovingSite" class="fixed inset-0 z-50 overflow-y-auto hide-scrollbar">
+    <div v-if="isRemovingSite" class="fixed inset-0 z-50 overflow-y-auto hide-scrollbar remove-site-modal">
       <div class="flex items-center justify-center min-h-screen px-4">
         <!-- Modal backdrop -->
         <div class="fixed inset-0 bg-black/50 transition-opacity"></div>
