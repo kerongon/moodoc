@@ -1,0 +1,22 @@
+# Environment files with signing secrets
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Code signing certificates and keys
+*.p12
+*.cer
+*.mobileprovision
+
+# Build artifacts
+target/
+dist/
+dist-ssr/
+
+# macOS specific
+.DS_Store
+*.app
+
+# Backup files
+*.backup

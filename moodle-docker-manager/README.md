@@ -12,6 +12,14 @@ Moodle Docker Manager is a desktop application designed for macOS that simplifie
 
 ## Installation
 
+### For End Users (Signed Release)
+1. Download the latest signed release from the releases page
+2. Ensure Docker is installed and running on your macOS system
+3. Open the downloaded `.dmg` file and drag the app to Applications
+4. Launch normally - no quarantine warnings should appear
+
+### For Developers
+
 1. Ensure that Docker is installed and running on your macOS system.
 2. Clone the repository:
    ```
@@ -33,6 +41,31 @@ Moodle Docker Manager is a desktop application designed for macOS that simplifie
    ```
    npm run tauri dev
    ```
+
+### Building Signed Releases
+
+To build signed releases that prevent macOS quarantine issues:
+
+1. **Set up Apple Developer credentials** (see `MACOS_SIGNING_SETUP.md` for detailed instructions)
+2. **Configure environment variables:**
+   ```bash
+   export APPLE_CERTIFICATE="Developer ID Application: Your Name (TEAM_ID)"
+   export APPLE_ID="your-apple-id@email.com"
+   export APPLE_PASSWORD="your-app-specific-password"
+   export APPLE_TEAM_ID="YOUR_TEAM_ID"
+   ```
+3. **Build signed release:**
+   ```bash
+   ./build_signed.sh
+   ```
+
+For detailed signing setup instructions, see [`MACOS_SIGNING_SETUP.md`](../MACOS_SIGNING_SETUP.md).
+
+## macOS Security Notes
+
+- **Unsigned builds** will trigger quarantine warnings on other users' Macs
+- **Signed builds** require an Apple Developer account but provide seamless user experience
+- **For testing unsigned builds locally:** Use `sudo xattr -r -d com.apple.quarantine "path/to/app"`
 
 ## Usage
 
