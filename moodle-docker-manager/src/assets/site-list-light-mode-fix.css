@@ -469,3 +469,8 @@ html:not(.dark) .remove-site-modal .bg-red-600 .text-white {
   color: white !important;
   fill: white !important;
 }
+
+
+body[data-theme="light"] .site-list-container a.block:hover {
+  color: #2563eb !important; /* blue-600 */
+}
