@@ -322,7 +322,7 @@
                 >
                   <button 
                     @click="batchStartAll"
-                    :disabled="batchProcessing || !hasStoppedSites"
+                    :disabled="batchProcessing"
                     class="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                   >
                     <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -712,7 +712,9 @@ export default {
     
     // Computed property to check if there are any stopped sites
     const hasStoppedSites = computed(() => {
-      return sites.value.some(site => site.status !== 'running');
+      const hasStopped = sites.value.some(site => site.status !== 'running');
+      console.log('hasStoppedSites evaluated:', hasStopped, 'Site statuses:', sites.value.map(s => `${s.name}: ${s.status}`));
+      return hasStopped;
     });
     
     // Toggle bulk actions dropdown
@@ -826,12 +828,23 @@ export default {
     const refreshStatuses = async () => {
       try {
         const updated = await invoke('list_sites');
+        console.log('Refreshing statuses, got:', updated.map(s => `${s.name}: ${s.status}`));
+        
+        let statusesChanged = false;
+        
         updated.forEach(u => {
           const existing = sites.value.find(s => s.name === u.name);
           if (existing && existing.status !== u.status) {
             existing.status = u.status;
+            statusesChanged = true;
           }
         });
+        
+        // Force reactivity update if statuses changed
+        if (statusesChanged) {
+          sites.value = [...sites.value];
+          console.log('Status changes detected, updated array for reactivity');
+        }
       } catch (err) {
         console.error('Failed to refresh site statuses:', err);
       }
@@ -1519,18 +1532,24 @@ export default {
     
     // Batch start all sites
     const batchStartAll = async () => {
-      if (batchProcessing.value || !hasStoppedSites.value) return;
+      if (batchProcessing.value) return;
+      
+      const stoppedSites = sites.value.filter(site => site.status !== 'running');
+      if (stoppedSites.length === 0) {
+        addNotification('No Stopped Sites', 'No stopped sites to start.', 'info');
+        return;
+      }
       
       currentBatchOperation.value = 'start';
       batchProcessing.value = true;
       showBulkActionsDropdown.value = false;
       
-      const stoppedSites = sites.value.filter(site => site.status !== 'running').map(site => site.name);
+      const stoppedSiteNames = stoppedSites.map(site => site.name);
       let succeeded = 0;
       let failed = 0;
       
       try {
-        for (const siteName of stoppedSites) {
+        for (const siteName of stoppedSiteNames) {
           try {
             activeActionSites.value.add(siteName);
             await invoke('start_site', { name: siteName });
