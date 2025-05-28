@@ -1141,18 +1141,21 @@ fn remove_site_blocking(
         }),
     );
 
+    // Get parent directory (main site folder) from moodle-docker directory
+    let parent_dir = site.path.parent().unwrap_or(&site.path).to_path_buf();
+    
     // Try to remove the site directory with robust error handling
     println!(
         "Attempting to remove site directory: {}",
-        site.path.display()
+        parent_dir.display()
     );
 
-    // First attempt: standard fs::remove_dir_all
-    match fs::remove_dir_all(&site.path) {
+    // First attempt: standard fs::remove_dir_all on parent directory
+    match fs::remove_dir_all(&parent_dir) {
         Ok(_) => {
             println!(
                 "Successfully removed site directory: {}",
-                site.path.display()
+                parent_dir.display()
             );
         }
         Err(e) => {
@@ -1163,9 +1166,9 @@ fn remove_site_blocking(
 
             // Fallback: use system command for forced removal
             let remove_cmd = if cfg!(target_os = "windows") {
-                format!("rmdir /s /q \"{}\"", site.path.display())
+                format!("rmdir /s /q \"{}\"", parent_dir.display())
             } else {
-                format!("rm -rf \"{}\"", site.path.display())
+                format!("rm -rf \"{}\"", parent_dir.display())
             };
 
             match Command::new("sh").arg("-c").arg(&remove_cmd).output() {
