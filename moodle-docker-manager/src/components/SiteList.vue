@@ -185,9 +185,14 @@
               </span>
             </div>
             <div class="moodle-data-cell text-sm text-gray-700 dark:text-gray-300 flex items-center">
-              <span class="px-2 py-1 rounded-full bg-green-100 dark:bg-green-600 text-green-700 dark:text-green-100 text-xs flex items-center justify-center h-6">
-                {{ site.db_type }}
-              </span>
+              <div class="flex flex-col items-start">
+                <span class="px-2 py-1 rounded-full bg-green-100 dark:bg-green-600 text-green-700 dark:text-green-100 text-xs flex items-center justify-center h-6">
+                  {{ site.db_type }}
+                </span>
+                <span v-if="site.db_port" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Port: {{ site.db_port }}
+                </span>
+              </div>
             </div>
             <div class="moodle-data-cell flex items-center min-w-[140px]">
               <div class="flex items-center flex-wrap gap-1.5">
