@@ -119,7 +119,7 @@
                   @click="sort('version_combined')"
                   :aria-sort="sortKey==='version_combined'? sortOrder:'none'"
                   tabindex="0">
-              Version
+              Branch / PHP
               <span v-if="sortKey === 'version_combined'" class="ml-1">
                 <PhCaretUp v-if="sortOrder === 'asc'" class="inline-block w-3 h-3" />
                 <PhCaretDown v-else class="inline-block w-3 h-3" />
@@ -1762,8 +1762,8 @@ export default {
 
 /* Custom grid layout for the table */
 .grid-cols-custom-table-layout {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 0.75fr) minmax(0, 0.75fr) minmax(0, 1fr) minmax(20px, 0.1fr) minmax(0, 1fr) repeat(2, minmax(0, 0.75fr)); 
-  /* Site Name (2fr), Version (0.75fr), DB (0.75fr), Status (1fr), Spacer (0.1fr), Resources (1fr), Actions (1.5fr) */
+  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 1.25fr) minmax(0, 0.75fr) minmax(0, 1fr) minmax(20px, 0.1fr) minmax(0, 1fr) repeat(2, minmax(0, 0.75fr)); 
+  /* Site Name (2fr), Version (1.25fr), DB (0.75fr), Status (1fr), Spacer (0.1fr), Resources (1fr), Actions (1.5fr) */
 }
 
 .bg-gray-750 {
