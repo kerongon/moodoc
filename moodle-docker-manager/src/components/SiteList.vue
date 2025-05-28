@@ -162,7 +162,13 @@
                 </div>
                 <div>
                   <span class="site-name-container text-sm font-semibold text-gray-900 dark:text-white">
-                    {{ site.name }}
+                    <!-- {{ site.name }} -->
+                    <span v-if="site.name.length > 25" :title="site.name">
+                      {{ site.name.substring(0, 22) }}...
+                    </span>
+                    <span v-else>
+                      {{ site.name }}
+                    </span>
                   </span>
                   <a v-if="site.web_port"
                     :href="`http://localhost:${site.web_port}`"
