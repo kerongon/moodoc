@@ -15,11 +15,11 @@ Moodle Docker Manager is a desktop application designed for macOS that simplifie
 1. Ensure that Docker is installed and running on your macOS system.
 2. Clone the repository:
    ```
-   git clone https://github.com/yourusername/moodle-docker-manager.git
+   git clone https://github.com/kerongon/moodoc.git
    ```
 3. Navigate to the project directory:
    ```
-   cd moodle-docker-manager
+   cd moodoc/moodle-docker-manager
    ```
 4. Install the dependencies:
    ```
