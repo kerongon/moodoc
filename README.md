@@ -15,6 +15,16 @@ desktop app for spinning up and managing Moodle instances locally.
 A desktop application that simplifies managing Moodle sites on Docker. It lets you
 create, configure, and run multiple Moodle instances without editing Docker files by hand.
 
+### Download
+
+Prebuilt macOS builds are published on the
+[**Releases**](https://github.com/kerongon/moodoc/releases) page.
+
+- Latest: [v0.1.0 (macOS)](https://github.com/kerongon/moodoc/releases/tag/v0.1.0) — download the zip, unzip it, and move **Moodle Docker Manager.app** to your Applications folder.
+
+> The build is unsigned. On first launch, right‑click the app and choose **Open**, or
+> allow it under **System Settings → Privacy & Security**. Docker must be installed and running.
+
 ### Features
 
 - **Site creation** — create new Moodle sites with a configurable site name, PHP version, database type, and Moodle branch version.
